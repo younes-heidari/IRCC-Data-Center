@@ -62,34 +62,35 @@ class Compressor:
         self.w_v = (self.h_2-self.h_1)/(1 + self.zeta_v)
         self.W_v = self.w_v * self.m_dot
 
-# Given Values
-R = "R290"
-T_o = 5 # Evaporating temperature in °C
-T_c = 45 # Condensing temperature in °C
-DT_SH = 10 # Superheat in K
+if __name__ == "__main__":
+    # Given Values
+    R = "R290"
+    T_o = 5 # Evaporating temperature in °C
+    T_c = 45 # Condensing temperature in °C
+    DT_SH = 10 # Superheat in K
 
-# Adjust temperatures for EOS to Kelvin
-T_o += 273.15 # K
-T_c += 273.15 # K
+    # Adjust temperatures for EOS to Kelvin
+    T_o += 273.15 # K
+    T_c += 273.15 # K
 
-# Retrieve saturation pressure for set temperature levels
-p_o = PropsSI("P", "T", T_o, "Q", 1, R)
-p_c = PropsSI("P", "T", T_c, "Q", 1, R)
+    # Retrieve saturation pressure for set temperature levels
+    p_o = PropsSI("P", "T", T_o, "Q", 1, R)
+    p_c = PropsSI("P", "T", T_c, "Q", 1, R)
 
-# Setup for test case
-recip = Compressor(eta_is=0.8, eta_vol=0.959, zeta_v=0.1, temp_in=T_o+DT_SH,
-                   d=0.075, z=4, s=0.055, n=1750, # only for recip (see comment below)
-                   pressure_in=p_o, pressure_out=p_c, refrigerant=R)
+    # Setup for test case
+    recip = Compressor(eta_is=0.8, eta_vol=0.959, zeta_v=0.1, temp_in=T_o+DT_SH,
+                       d=0.075, z=4, s=0.055, n=1750, # only for recip (see comment below)
+                       pressure_in=p_o, pressure_out=p_c, refrigerant=R)
 
-# Print relevant data
-print(f"Displacement: {recip.V_dot_disp * 3600:.1f} m^3/h")
-print(f"Volume flow inlet: {recip.V_dot_1 * 3600:.1f} m^3/h")
-# print(f"Mass flow: {recip.m_dot:.4f} kg/s")
-print(f"Mass flow: {recip.m_dot * 3600:.1f} kg/h")
-print(f"Pressure ratio: {recip.pressure_ratio:.2f} -")
-print(f"Discharge Temp.: {recip.T_2-273.15:.2f} °C")
-print(f"Specific compressor work: {recip.w_v/1000:.2f} kJ/kg")
-print(f"Compressor work: {recip.W_v / 1000:.2f} kW")
+    # Print relevant data
+    print(f"Displacement: {recip.V_dot_disp * 3600:.1f} m^3/h")
+    print(f"Volume flow inlet: {recip.V_dot_1 * 3600:.1f} m^3/h")
+    # print(f"Mass flow: {recip.m_dot:.4f} kg/s")
+    print(f"Mass flow: {recip.m_dot * 3600:.1f} kg/h")
+    print(f"Pressure ratio: {recip.pressure_ratio:.2f} -")
+    print(f"Discharge Temp.: {recip.T_2-273.15:.2f} °C")
+    print(f"Specific compressor work: {recip.w_v/1000:.2f} kJ/kg")
+    print(f"Compressor work: {recip.W_v / 1000:.2f} kW")
 
 ### Remarks: Currently, some measures regarding the cylinder are set above (diameter, stroke, cylinder amount and speed).
 ### This is only applicable for a recip compressor. Otherwise we can also just use the displacement or create a subclass
