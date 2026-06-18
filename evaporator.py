@@ -106,11 +106,17 @@ class Evaporator:
         G_eq = G * ((1 - x) + x * (rho_l / rho_v)**0.5)
         Re_eq = G_eq * self.D_h / mu_l
         f_tp = Ge3 * Re_eq**Ge4
-        # Eq. 12: dP_fr = f * (L_v * N_cp / D_h) * G_Eq^2 / rho_f
-        # (N_cp applied below; needed for the correlation to match Han's data)
+        # Eq. 12: dP_fr = f * (L_v * N / D_h) * G_Eq^2 / rho_f.
+        # N is HAN'S TEST-RIG refrigerant channel count (2), a fixed calibration
+        # constant the friction factor was regressed against -- NOT the design
+        # channel count self.N_cp. The design count enters only through
+        # G = m_dot / A_flow (the per-channel mass flux); using self.N_cp here
+        # over-predicts the boiling drop by N_cp/2. (Verified against Han's data
+        # in condenser.py; see the condensation-paper companion correlation.)
         dpdz_tp = f_tp * G_eq**2 / (rho_l * self.D_h)
 
-        delta_p_boiling = self.N_cp * np.trapezoid(dpdz_tp, x) * L_boiling / (1.0 - x_in)
+        N_HAN_CAL = 2
+        delta_p_boiling = N_HAN_CAL * np.trapezoid(dpdz_tp, x) * L_boiling / (1.0 - x_in)
 
         # Superheating zone: single-phase vapor, Fanning friction factor.
         # Smooth-channel (Blasius) estimate -- this zone is short so its
