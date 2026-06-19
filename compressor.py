@@ -3,22 +3,55 @@ from CoolProp.CoolProp import PropsSI
 
 class Compressor:
 
-    def __init__(self, eta_is, eta_vol, zeta_v,temp_in, d, z, s, n, pressure_in, pressure_out, refrigerant):
-        """Calculate the thermodynamic properties of a chosen compressor."""
+    def __init__(self, temp_in, n, pressure_in, pressure_out, refrigerant,
+                 displacement=None, eta_vol=0.9, zeta_v=0, eta_is=0.7, power_input=None, eta_m=0.92, mass_flow=None):
+        """Calculate the thermodynamic properties of a chosen compressor.
+        Enter either volumetric efficiency (eta_vol) or mass flow. Otherwise, eta_vol is set to standard value.
+        Enter either isentropic efficiency (eta_is) or electrical power input (power_input)
+
+        :param temp_in: inlet temperature in Kelvin.
+        :param n: Rotational speed in rpm.
+        :param pressure_in: Inlet pressure in Pa.
+        :param pressure_out: Outlet pressure in Pa.
+        :param refrigerant: Refrigerant string for coolprop ("RXXX").
+        :param displacement: Displacement in m^3/h.
+        :param eta_vol: Volumetric efficiency. Default value: 0.9
+        :param zeta_v:  Heat transfer ratio (q_v/w_v). q_v > 0 means heat loss.
+                        Default value: 0 (adiabatic). Typical value from literature: -0.07
+        :param eta_is: Isentropic efficiency. Default value: 0.7. Mutually exclusive with power_input.
+        :param power_input: Electrical power input in W. Mutually exclusive with eta_is.
+        :param eta_m: Motor efficiency, only used with power_input. Default value: 0.92.
+        :param mass_flow: Mass flow in kg/h. Mutually exclusive with eta_vol.
+
+        Notes:
+            - Enter either volumetric efficiency (eta_vol) or mass flow. Otherwise, eta_vol is set to default value.
+            - Enter either isentropic efficiency (eta_is) or electrical power input (power_input)
+        """
+
+        # Validation: enter either eta_vol or mass flow to calculate the other
+        if eta_is !=0.7 and power_input is not None:
+            raise ValueError("Either 'eta_is' or 'power_input' must be specified, not both.")
+        if eta_vol != 0.9 and mass_flow is not None:
+            raise ValueError("Either 'eta_vol' or 'mass_flow' must be specified, not both.")
+        if not displacement:
+            raise ValueError("'displacement' must be specified. Please use a subclass for geometric properties")
+
         # General properties
         self.R = refrigerant
-        self.w_v = None
-        self.W_v = None
-        self.m_dot = None
-        self.V_dot_disp = None
-        self.V_cyl = None
-        self.is_eff = eta_is
-        self.vol_eff = eta_vol
-        self.d = d
-        self.z = z
-        self.stroke = s
         self.n = n
         self.zeta_v = zeta_v
+        self.eta_m = eta_m
+        self.V_dot_disp = displacement / 3600 # convert from unit m^3/h to m^3/s
+
+        # Efficiency / Power input
+        self.eta_is = eta_is if power_input is None else None
+        self.P_el = power_input
+        self.eta_vol = eta_vol if mass_flow is None else None
+        self.m_dot = mass_flow / 3600  if mass_flow else None # convert from unit kg/h to kg/s
+
+        # Derived quantities (calculated below)
+        self.w_v = None
+        self.W_v = None
 
         # Inlet State (1)
         self.T_1 = temp_in
@@ -37,7 +70,6 @@ class Compressor:
         self.pressure_ratio = self.p_2 / self.p_1
 
         # Calculation methods for completing properties and EOS
-        self.calc_displacement()
         self.calc_inlet_state()
         self.calc_outlet_state()
 
@@ -46,56 +78,88 @@ class Compressor:
         self.rho_1 = PropsSI('D', 'T', self.T_1, 'P', self.p_1, self.R)
         self.h_1 = PropsSI('HMASS', 'T', self.T_1, 'P', self.p_1, self.R)
         self.s_1 = PropsSI('SMASS', 'T', self.T_1, 'P', self.p_1, self.R)
-        self.V_dot_1 = self.V_dot_disp * self.vol_eff
-        self.m_dot = self.V_dot_1 * self.rho_1
 
-    def calc_displacement(self):
-        """Calculate displacement by usage of geometric values and speed."""
-        self.V_cyl = np.pi / 4 * self.d**2
-        self.V_dot_disp = self.V_cyl * self.stroke * self.z * self.n / 60  # conversion from m^3/h to m^3/s
+        if self.m_dot is not None:
+            # mass flow given - calculate eta_vol
+            self.V_dot_1 = self.m_dot / self.rho_1
+            self.eta_vol = self.V_dot_1 / self.V_dot_disp
+        else:
+            # eta_vol given - calculate mass flow
+            self.V_dot_1 = self.V_dot_disp * self.eta_vol
+            self.m_dot = self.V_dot_1 * self.rho_1
+
 
     def calc_outlet_state(self):
-        """Calculate thermodynamic properties for outlet of the compressor (by using an isentropic efficiency). For the compressor work, a factor zeta_v is considered to take the heat loss into account."""
+        """Calculate thermodynamic properties for outlet of the compressor.
+
+        Uses isentropic efficiency (eta_is) and heat loss factor (zeta_v = q_v / w_v)
+        to determine the actual outlet state. A positive zeta_v means heat is added
+        from the environment. A negative heat loss means heat transfer to the environment,
+        therefore lowering the discharge temperature compared to adiabatic.
+        """
+
         self.h_2is = PropsSI('HMASS', 'SMASS', self.s_1, 'P', self.p_2, self.R)
-        self.h_2 = self.h_1 + ((self.h_2is - self.h_1) * (1 + self.zeta_v)) / self.is_eff
+
+        if self.eta_is is not None:
+            # Calculate specific compressor work, accounting for heat loss with zeta_v.
+            self.w_v = (self.h_2is - self.h_1) / (self.eta_is * (1 + self.zeta_v))
+            self.W_v = self.w_v * self.m_dot
+            self.P_el = self.W_v / self.eta_m
+        else:
+            # Calculate compressor work of power input and motor efficiency.
+            self.W_v = self.P_el * self.eta_m
+            self.w_v = self.W_v / self.m_dot
+            # Calculate isentropic efficiency of isentropic compression compared to actual power draw
+            self.eta_is = (self.h_2is - self.h_1) * self.eta_m / self.w_v
+
+        # Actual outlet enthalpy: h_2 = h_1 + w_v * (1 + zeta_v)
+        self.h_2 = self.h_1 + self.w_v * (1 + self.zeta_v)
         self.T_2 = PropsSI('T', 'HMASS', self.h_2, 'P', self.p_2, self.R)
-        self.w_v = (self.h_2-self.h_1)/(1 + self.zeta_v)
-        self.W_v = self.w_v * self.m_dot
 
-# Given Values
-R = "R290"
-T_o = 5 # Evaporating temperature in °C
-T_c = 45 # Condensing temperature in °C
-DT_SH = 10 # Superheat in K
 
-# Adjust temperatures for EOS to Kelvin
-T_o += 273.15 # K
-T_c += 273.15 # K
+class RecipCompressor(Compressor):
 
-# Retrieve saturation pressure for set temperature levels
-p_o = PropsSI("P", "T", T_o, "Q", 1, R)
-p_c = PropsSI("P", "T", T_c, "Q", 1, R)
+    def __init__(self, temp_in, n, pressure_in, pressure_out, refrigerant,
+                 d=None, z=None, s=None, displacement=None,
+                 eta_vol=0.9, zeta_v=0.0, eta_is=0.7, power_input=None, eta_m=0.92, mass_flow=None):
+        """
+        Calculate the thermodynamic properties of a chosen reciprocating compressor.
 
-# Setup for test case
-recip = Compressor(eta_is=0.8, eta_vol=0.959, zeta_v=0.1, temp_in=T_o+DT_SH,
-                   d=0.075, z=4, s=0.055, n=1750, # only for recip (see comment below)
-                   pressure_in=p_o, pressure_out=p_c, refrigerant=R)
+        :param d: Diameter of the cylinder in m.
+        :param z: Amount of cylinders
+        :param s: Stroke of the cylinders in m.
 
-# Print relevant data
-print(f"Displacement: {recip.V_dot_disp * 3600:.1f} m^3/h")
-print(f"Volume flow inlet: {recip.V_dot_1 * 3600:.1f} m^3/h")
-# print(f"Mass flow: {recip.m_dot:.4f} kg/s")
-print(f"Mass flow: {recip.m_dot * 3600:.1f} kg/h")
-print(f"Pressure ratio: {recip.pressure_ratio:.2f} -")
-print(f"Discharge Temp.: {recip.T_2-273.15:.2f} °C")
-print(f"Specific compressor work: {recip.w_v/1000:.2f} kJ/kg")
-print(f"Compressor work: {recip.W_v / 1000:.2f} kW")
+        All other parameters are passed to class Compressor. See Compressor documentation.
 
-### Remarks: Currently, some measures regarding the cylinder are set above (diameter, stroke, cylinder amount and speed).
-### This is only applicable for a recip compressor. Otherwise we can also just use the displacement or create a subclass
-### for the different types of compressors (scroll, screw, recip - centrifugal is probably not needed)
+        Notes:
+            - Enter either volumetric efficiency (eta_vol) or mass flow.
+            - Enter either displacement or d, n and s.
+        """
 
-### Probably I'll switch from isentropic efficiency to compressor work (or power input) and from volumetric efficiency
-### to mass flow as these will most likely be set by the compressor supplier
+        geo_given = all(v is not None for v in [d, z, s])
 
-### zeta_v is a best guess by the script of Prof. Bradshaw (we'll have to set a value based on our compressor choice
+        if not displacement and not geo_given:
+            raise ValueError("Either displacement or d, z and s must be specified.")
+        elif displacement and all([d, z, s]):
+            raise ValueError("Either displacement or d, z and s must be specified, not both.")
+
+        if geo_given:
+            self.d = d
+            self.z = z
+            self.stroke = s
+
+            # Calculate displacement, pass it to the class inheritance
+            volume_cyl = np.pi / 4 * d ** 2
+            displacement = volume_cyl * s * z * n * 60 # convert from rpm to rph - m^3/min to m^3/h
+        else:
+            self.d = None
+            self.z = None
+            self.stroke = None
+
+        super().__init__(temp_in=temp_in, n=n, pressure_in=pressure_in, pressure_out=pressure_out,
+                         refrigerant=refrigerant, displacement=displacement,
+                         eta_vol=eta_vol, zeta_v=zeta_v, eta_is=eta_is,
+                         power_input=power_input, eta_m=eta_m,mass_flow=mass_flow)
+
+
+### zeta_v is a guess value by the script of Prof. Bradshaw (we'll have to set a value based on our compressor choice
