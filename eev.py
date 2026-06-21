@@ -78,18 +78,3 @@ class EEV:
         rho_in = PropsSI('D', 'HMASS', self.h_in, 'P', self.p_in, self.R)
         self.A_orifice = self.m_dot_refrigerant / (self.Cd * np.sqrt(2 * rho_in * self.delta_p))
         self.d_orifice = np.sqrt(4 * self.A_orifice / np.pi)
-
-
-if __name__ == "__main__":
-    # Test case -- fed from the condenser outlet, expanding to the evaporator.
-    R = "R290"
-    p_c = PropsSI("P", "T", 45 + 273.15, "Q", 1, R)          # condensing pressure
-    p_o = PropsSI("P", "T", 5 + 273.15, "Q", 1, R)           # evaporating pressure
-    h_in = PropsSI("HMASS", "T", 42 + 273.15, "P", p_c, R)   # 3 K subcooled liquid (condenser out)
-
-    eev = EEV(m_dot_refrigerant=0.45, p_in=p_c, h_in=h_in, p_out=p_o, refrigerant=R)
-
-    print(f"Inlet : {eev.T_in - 273.15:.2f} C, {eev.subcooling_in:.2f} K subcooled @ {eev.p_in/1000:.0f} kPa")
-    print(f"Outlet: {eev.T_out - 273.15:.2f} C, quality {eev.x_out:.3f} @ {eev.p_out/1000:.0f} kPa")
-    print(f"Pressure drop: {eev.delta_p/1000:.1f} kPa")
-    print(f"Orifice area: {eev.A_orifice*1e6:.3f} mm^2  (d = {eev.d_orifice*1000:.2f} mm)")
