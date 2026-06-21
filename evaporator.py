@@ -153,3 +153,32 @@ class Evaporator:
 
     def calc_ua(self):
         self.UA = self.Q / self.LMTD
+
+
+if __name__ == "__main__":
+    # Cycle-side operating conditions (R290, 150 kW chilled-water duty)
+    R = "R290"
+    Q = 150e3                                                  # cooling load [W]
+    p_evap = PropsSI("P", "T", 5 + 273.15, "Q", 1, R)          # 5 C evaporating pressure
+    p_cond = PropsSI("P", "T", 45 + 273.15, "Q", 1, R)         # 45 C condensing pressure
+    h_in = PropsSI("HMASS", "T", 42 + 273.15, "P", p_cond, R)  # condenser out, isenthalpic through EEV
+    m_dot = 0.53                                               # refrigerant mass flow [kg/s] -- PLACEHOLDER (set for ~8 K superheat; from compressor)
+
+    # ==================================================================
+    # >>> GEOMETRY -- PLACEHOLDER, pending real SWEP/Kelvion datasheet <<<
+    D_h    = 0.004    # [m]   4mm -- locked: pco/D_h=1.25 consistent w/ Han's tested geometry
+    Lambda = 0.005    # [m]   5mm
+    beta   = 30       # [deg]
+    L      = 0.5      # [m]   ASSUMED, mid of typical 0.3-0.6m range
+    N_cp   = 38       # ASSUMED to target G~25 kg/m2s -- RECHECK vs real m_dot_refrigerant
+    A_flow = N_cp * (D_h * 1.17 / 2) * 0.2   # = 0.0178 m^2 (L_w=0.2m ASSUMED)
+    # ==================================================================
+
+    evap = Evaporator(m_dot_refrigerant=m_dot, p_in=p_evap, Q=Q, refrigerant=R,
+                      T_water_in=21 + 273.15, T_water_out=15 + 273.15, h_in=h_in,
+                      D_h=D_h, A_flow=A_flow, L=L, beta=beta, Lambda=Lambda, N_cp=N_cp)
+
+    print(f"Refrigerant out: {evap.T_out - 273.15:.2f} C, {evap.superheat:.2f} K superheat @ {evap.p_out/1000:.0f} kPa")
+    print(f"Pressure drop  : {evap.delta_p/1000:.2f} kPa")
+    print(f"Water flow     : {evap.m_dot_water:.3f} kg/s  (cp = {evap.cp_water} J/kg-K)")
+    print(f"LMTD / UA      : {evap.LMTD:.2f} K / {evap.UA:.0f} W/K")
