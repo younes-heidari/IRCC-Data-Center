@@ -159,29 +159,48 @@ ACR_TUBE_ID_M = {
 }
 
 
-def select_tube(m_dot_line, rho, v_design):
-    """Required ID for a target design velocity, then the smallest
-    standard ACR tube whose actual ID still clears it, and the resulting
-    actual velocity in that tube."""
-    ID_required = math.sqrt(4 * m_dot_line / (rho * v_design * math.pi))
-    for size, ID in sorted(ACR_TUBE_ID_M.items(), key=lambda kv: kv[1]):
-        if ID >= ID_required:
-            v_actual = m_dot_line / (rho * math.pi / 4 * ID ** 2)
-            return size, ID, ID_required, v_actual
-    raise ValueError(f"No standard ACR tube large enough for ID_required={ID_required*1000:.1f} mm")
+def select_tube(m_dot_line, rho, v_min, v_max, v_target):
+    """Picks the standard ACR tube whose resulting velocity best fits
+    inside the Table 1 guideline band [v_min, v_max] (closest to
+    v_target within the band). Tube IDs are discrete, so a single
+    design-velocity threshold (the old approach) can leave the actual
+    velocity outside the guideline band once mass flow changes -- this
+    checks the achieved band membership directly instead. Falls back to
+    the standard size that minimizes the band violation if no single
+    size satisfies both bounds at once (possible when the required ID
+    falls in a gap between standard sizes)."""
+    ID_target = math.sqrt(4 * m_dot_line / (rho * v_target * math.pi))
+    candidates = [(size, ID, m_dot_line / (rho * math.pi / 4 * ID ** 2))
+                  for size, ID in ACR_TUBE_ID_M.items()]
+
+    in_band = [c for c in candidates if v_min <= c[2] <= v_max]
+    if in_band:
+        size, ID, v_actual = min(in_band, key=lambda c: abs(c[2] - v_target))
+    else:
+        def violation(c):
+            v = c[2]
+            return (v_min - v) if v < v_min else (v - v_max)
+        size, ID, v_actual = min(candidates, key=violation)
+
+    return size, ID, ID_target, v_actual
 
 
 # Suction line: compressor suction state (T_o + DT_SH, p_o), gaseous low-pressure side
+# Table 1 guideline band: 4.5-20 m/s
 rho_suction = PropsSI('D', 'T', T_o + DT_SH, 'P', p_o, R)
-tube_suction, ID_suction, ID_req_suction, v_suction = select_tube(m_dot, rho_suction, v_design=15.0)
+tube_suction, ID_suction, ID_req_suction, v_suction = select_tube(
+    m_dot, rho_suction, v_min=4.5, v_max=20.0, v_target=15.0)
 
 # Discharge (hot gas) line: compressor discharge state (T_2, p_c), gaseous high-pressure side
+# Table 1 guideline band: 10-18 m/s
 rho_discharge = PropsSI('D', 'HMASS', h_2, 'P', p_c, R)
-tube_discharge, ID_discharge, ID_req_discharge, v_discharge = select_tube(m_dot, rho_discharge, v_design=14.0)
+tube_discharge, ID_discharge, ID_req_discharge, v_discharge = select_tube(
+    m_dot, rho_discharge, v_min=10.0, v_max=18.0, v_target=14.0)
 
-# Liquid line: condenser subcooled outlet (T_out, p_out), liquid <1.5 m/s
+# Liquid line: condenser subcooled outlet (T_out, p_out) -- Table 1 guideline: <1.5 m/s
 rho_liquid = PropsSI('D', 'T', condenser.T_out, 'P', condenser.p_out, R)
-tube_liquid, ID_liquid, ID_req_liquid, v_liquid = select_tube(m_dot, rho_liquid, v_design=1.45)
+tube_liquid, ID_liquid, ID_req_liquid, v_liquid = select_tube(
+    m_dot, rho_liquid, v_min=0.0, v_max=1.5, v_target=1.2)
 
 # ---------------------------------------------------------------------
 # 6) Design-day PUE: (IT load + other facility loads) / IT load. IT load
@@ -498,6 +517,7 @@ def run_full_cycle(T_air_C, label=""):
         "P_glycol_pump_kW": None, "P_chw_pump_kW": None,
         "fan_speed_pct": None, "P_fan_kW": None,
         "Q_delivered_kW": None, "P_other_kW": None, "PUE": None,
+        "COP_sys_fc": None,
     }
 
     if T_air_C <= FREE_COOLING_THRESHOLD_C:
@@ -518,6 +538,10 @@ def run_full_cycle(T_air_C, label=""):
         P_glycol_pump_row = glycol_pump.P_elec_free
         P_other_row = P_glycol_pump_row + P_fan + P_chw_pump  # compressor off
         PUE_row = (Q_TARGET + P_other_row) / Q_TARGET
+        # COP_sys,fc = Q_cool / (W_fan + W_pump) -- compressor excluded since
+        # it's off in free-cooling mode; only the dry-cooler fan and the two
+        # circulation pumps (glycol + CHW) are actually doing work.
+        COP_sys_fc = Q_TARGET / P_other_row
 
         row.update({
             "econ_dP_water_kPa": econ.delta_p_water / 1e3, "econ_dP_glycol_kPa": econ.delta_p_glycol / 1e3,
@@ -527,6 +551,7 @@ def run_full_cycle(T_air_C, label=""):
             "P_glycol_pump_kW": P_glycol_pump_row / 1e3, "P_chw_pump_kW": P_chw_pump / 1e3,
             "fan_speed_pct": fan_result["fan_speed_frac"] * 100, "P_fan_kW": P_fan / 1e3,
             "Q_delivered_kW": Q_TARGET / 1e3, "P_other_kW": P_other_row / 1e3, "PUE": PUE_row,
+            "COP_sys_fc": COP_sys_fc,
         })
         return row
 
@@ -562,11 +587,11 @@ def run_full_cycle(T_air_C, label=""):
                                N_cp=N_cp_evap, b=b, L_w=L_w, N_cp_water=N_cp_water)
 
     rho_suction_p = PropsSI('D', 'T', T_o_p + DT_SH, 'P', p_o_p, R)
-    tube_s, ID_s, IDreq_s, v_s = select_tube(m_dot_p, rho_suction_p, v_design=15.0)
+    tube_s, ID_s, IDreq_s, v_s = select_tube(m_dot_p, rho_suction_p, v_min=4.5, v_max=20.0, v_target=15.0)
     rho_discharge_p = PropsSI('D', 'HMASS', h_2_p, 'P', p_c_p, R)
-    tube_d, ID_d, IDreq_d, v_d = select_tube(m_dot_p, rho_discharge_p, v_design=14.0)
+    tube_d, ID_d, IDreq_d, v_d = select_tube(m_dot_p, rho_discharge_p, v_min=10.0, v_max=18.0, v_target=14.0)
     rho_liquid_p = PropsSI('D', 'T', condenser_p.T_out, 'P', condenser_p.p_out, R)
-    tube_l, ID_l, IDreq_l, v_l = select_tube(m_dot_p, rho_liquid_p, v_design=1.45)
+    tube_l, ID_l, IDreq_l, v_l = select_tube(m_dot_p, rho_liquid_p, v_min=0.0, v_max=1.5, v_target=1.2)
 
     T_glycol_hot_in_p = (tc_C_p - GLYCOL_APPROACH_K) + 273.15
     fan_result = DRY_COOLER.predict_off_design(
