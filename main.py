@@ -42,6 +42,8 @@ APPROACH_K = (T_c - 273.15) - T_AIR_DESIGN_C  # 17 K, fixed condensing approach 
                                                # all ambient conditions rather than re-solving the
                                                # dry cooler's eps-NTU model at each point
 GLYCOL_APPROACH_K = 6.0    # tc -> condenser glycol-leaving-temp approach (52->46 C at design)
+GLYCOL_RANGE_K = 6.0       # condenser glycol supply/return range (40->46 C at design,
+                           # matches DRY_COOLER's own 40/46 C design point below)
 FREE_COOLING_THRESHOLD_C = 4.0  # ASHRAE 90.1 full free-cooling threshold (economizer.py)
 ECON_L, ECON_L_W = 0.70, 0.25    # economizer's own larger frame (economizer.py's design point)
 
@@ -94,9 +96,16 @@ N_cp_cond = 38
 A_flow_cond = N_cp_cond * b * L_w
 N_cp_glycol = 24
 
+# Glycol boundary condition floats with the condensing temperature (fixed
+# 6 K approach to tc, fixed 6 K supply/return range) instead of a stale
+# hardcoded value -- this now matches DRY_COOLER's own 40/46 C design
+# point exactly (52 C tc -> 46/40 C glycol) instead of contradicting it.
+T_glycol_out = (T_c - 273.15 - GLYCOL_APPROACH_K) + 273.15
+T_glycol_in = T_glycol_out - GLYCOL_RANGE_K
+
 condenser = Condenser(m_dot_refrigerant=m_dot, p_in=p_c, refrigerant=R,
                        h_in=h_2, subcooling=SUBCOOLING,
-                       T_glycol_in=30 + 273.15, T_glycol_out=35 + 273.15,
+                       T_glycol_in=T_glycol_in, T_glycol_out=T_glycol_out,
                        D_h=D_h, A_flow=A_flow_cond, L=L, beta=beta, Lambda=Lambda,
                        N_cp=N_cp_cond, b=b, L_w=L_w, N_cp_glycol=N_cp_glycol)
 
@@ -569,9 +578,16 @@ def run_full_cycle(T_air_C, label=""):
     h_2_p = per_unit_p["h_suction"] + per_unit_p["P_w"] / (per_unit_p["m_dot_kgh"] / 3600.0)
     T_2_p = PropsSI("T", "HMASS", h_2_p, "P", p_c_p, R)
 
+    # Glycol boundary condition floats with tc_C_p (same fixed 6 K approach/
+    # 6 K range as the design-point section above) instead of the stale
+    # fixed 30/35 C that could fall below tc_C_p at low ambient -- see
+    # T_glycol_hot_in_p below, which is now just this same T_glycol_out_p.
+    T_glycol_out_p = (tc_C_p - GLYCOL_APPROACH_K) + 273.15
+    T_glycol_in_p = T_glycol_out_p - GLYCOL_RANGE_K
+
     condenser_p = Condenser(m_dot_refrigerant=m_dot_p, p_in=p_c_p, refrigerant=R,
                              h_in=h_2_p, subcooling=SUBCOOLING,
-                             T_glycol_in=30 + 273.15, T_glycol_out=35 + 273.15,
+                             T_glycol_in=T_glycol_in_p, T_glycol_out=T_glycol_out_p,
                              D_h=D_h, A_flow=A_flow_cond, L=L, beta=beta, Lambda=Lambda,
                              N_cp=N_cp_cond, b=b, L_w=L_w, N_cp_glycol=N_cp_glycol)
 
@@ -593,9 +609,8 @@ def run_full_cycle(T_air_C, label=""):
     rho_liquid_p = PropsSI('D', 'T', condenser_p.T_out, 'P', condenser_p.p_out, R)
     tube_l, ID_l, IDreq_l, v_l = select_tube(m_dot_p, rho_liquid_p, v_min=0.0, v_max=1.5, v_target=1.2)
 
-    T_glycol_hot_in_p = (tc_C_p - GLYCOL_APPROACH_K) + 273.15
     fan_result = DRY_COOLER.predict_off_design(
-        Q_target=condenser_p.Q, T_glycol_hot_in=T_glycol_hot_in_p, T_air_in=T_air_C + 273.15,
+        Q_target=condenser_p.Q, T_glycol_hot_in=T_glycol_out_p, T_air_in=T_air_C + 273.15,
     )
     P_fan = DRY_COOLER.fan_power(fan_result["fan_speed_frac"], P_FAN_DESIGN)
 
