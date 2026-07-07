@@ -92,7 +92,11 @@ T_2 = PropsSI("T", "HMASS", h_2, "P", p_c, R)
 # ---------------------------------------------------------------------
 D_h, Lambda, beta, L = 0.004, 0.005, 30, 0.5
 b, L_w = D_h * 1.17 / 2, 0.2
-N_cp_cond = 38
+# N_cp=47 (not 38, the evaporator's value) -- the condenser carries a higher
+# refrigerant mass flow than the evaporator, so it needs more channels to
+# hold the same G_c~25 kg/m2s design target inside Han's validated 13-34
+# kg/m2s range (Project_Report_full.txt Sec 3.11: N_cp ~= 0.553/(25*4.68e-4) ~= 47).
+N_cp_cond = 47
 A_flow_cond = N_cp_cond * b * L_w
 N_cp_glycol = 24
 
