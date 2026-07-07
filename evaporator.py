@@ -16,18 +16,21 @@ class Evaporator:
       h_in              : refrigerant inlet enthalpy [J/kg]  (from EEV / condenser outlet)
 
     INPUTS (heat-exchanger geometry -- my responsibility, from datasheet):
-      D_h, A_flow, L, beta, Lambda, N_cp  (see geometry block below)
+      D_h, A_flow, L, beta, Lambda, N_cp        (refrigerant side)
+      b, L_w, N_cp_water                        (water side; see geometry block below)
 
     OUTPUTS (for teammates' component models):
       h_out, p_out, T_out, superheat  -> compressor suction state
       delta_p                         -> evaporator refrigerant-side pressure loss
+      delta_p_water                   -> evaporator water-side pressure loss (Martin 1996)
       m_dot_water, cp_water           -> chilled-water pump sizing
       UA, LMTD                        -> plate-HX selection / sizing
     """
 
     def __init__(self, m_dot_refrigerant, p_in, Q, refrigerant,
                  T_water_in, T_water_out, h_in,
-                 D_h, A_flow, L, beta, Lambda, N_cp):
+                 D_h, A_flow, L, beta, Lambda, N_cp,
+                 b, L_w, N_cp_water):
         # General properties
         self.R = refrigerant
         self.m_dot_refrigerant = m_dot_refrigerant
@@ -45,6 +48,14 @@ class Evaporator:
         self.beta = beta        # chevron angle [deg]          (from horizontal; Han: 20-45)
         self.Lambda = Lambda    # corrugation pitch p_co [m]   (~5-7 mm)
         self.N_cp = N_cp        # number of refrigerant channels [-]  (Han Eq. 12 factor)
+
+        # Water-side channel geometry -- same corrugation family (D_h, beta,
+        # Lambda) as the refrigerant side, drives the Martin (1996) single-
+        # phase friction correlation (same one used in economizer.py).
+        self.b = b                    # mean channel gap [m]        (= D_h*phi/2)
+        self.L_w = L_w                # plate width [m]
+        self.N_cp_water = N_cp_water  # number of water channels [-]
+        self.A_flow_water = N_cp_water * b * L_w
         # ==================================================================
 
         # Refrigerant inlet (from EEV, two-phase)
@@ -69,11 +80,13 @@ class Evaporator:
         self.UA = None
 
         self.delta_p = None
+        self.delta_p_water = None
 
         self.calc_refrigerant_inlet_state()
         self.calc_pressure_drop()
         self.calc_refrigerant_outlet_state()
         self.calc_water_mass_flow()
+        self.calc_water_pressure_drop()
         self.calc_lmtd()
         self.calc_ua()
 
@@ -145,6 +158,38 @@ class Evaporator:
         delta_T_water = self.T_water_in - self.T_water_out
         self.m_dot_water = self.Q / (self.cp_water * delta_T_water)
 
+    # -- Single-phase friction: MARTIN (1996) generalised Leveque correlation --
+    # Same correlation as economizer.py (VDI Heat Atlas, Sec. N6); the water
+    # side here is single-phase liquid, so Han's two-phase correlation (used
+    # for the refrigerant side above) does not apply.
+    def _martin_dp(self, m_dot, A_flow, fluid, T_avg):
+        rho = PropsSI('D', 'T', T_avg, 'P', 101325, fluid)
+        mu = PropsSI('V', 'T', T_avg, 'P', 101325, fluid)
+        G = m_dot / A_flow
+        Re = G * self.D_h / mu
+        phi = np.radians(self.beta)
+
+        if Re < 2000:
+            f0 = 16.0 / Re
+            f1 = 149.0 / Re + 0.9625
+        else:
+            f0 = (1.56 * np.log(Re) - 3.0) ** (-2)
+            f1 = 9.75 / Re ** 0.289
+
+        inv_sqrt_f = (np.cos(phi) /
+                      np.sqrt(0.045 * np.tan(phi) + 0.09 * np.sin(phi) + f0 / np.cos(phi))
+                      + (1 - np.cos(phi)) / np.sqrt(3.8 * f1))
+        f = 1.0 / inv_sqrt_f ** 2
+
+        delta_p = 2 * f * G ** 2 * self.L / (rho * self.D_h)
+        return delta_p, Re, f, G, rho, mu
+
+    def calc_water_pressure_drop(self):
+        T_water_avg = (self.T_water_in + self.T_water_out) / 2
+        (self.delta_p_water, self.Re_water, self.f_water,
+         self.G_water, self.rho_water, self.mu_water) = \
+            self._martin_dp(self.m_dot_water, self.A_flow_water, "Water", T_water_avg)
+
     def calc_lmtd(self):
         # Counter-flow: water in vs refrigerant out, water out vs refrigerant in
         delta_T_1 = self.T_water_in - self.T_out
@@ -160,9 +205,10 @@ if __name__ == "__main__":
     R = "R290"
     Q = 150e3                                                  # cooling load [W]
     p_evap = PropsSI("P", "T", 5 + 273.15, "Q", 1, R)          # 5 C evaporating pressure
-    p_cond = PropsSI("P", "T", 45 + 273.15, "Q", 1, R)         # 45 C condensing pressure
-    h_in = PropsSI("HMASS", "T", 42 + 273.15, "P", p_cond, R)  # condenser out, isenthalpic through EEV
-    m_dot = 0.53                                               # refrigerant mass flow [kg/s] -- PLACEHOLDER (set for ~8 K superheat; from compressor)
+    p_cond = PropsSI("P", "T", 52 + 273.15, "Q", 1, R)         # 52 C condensing pressure (raised
+                                                                # from 45 C -- see condenser.py)
+    h_in = PropsSI("HMASS", "T", 47 + 273.15, "P", p_cond, R)  # condenser out, isenthalpic through EEV
+    m_dot = 0.56                                               # refrigerant mass flow [kg/s] -- PLACEHOLDER (set for ~8 K superheat at 52 C cond; from compressor)
 
     # ==================================================================
     # >>> GEOMETRY -- PLACEHOLDER, pending real SWEP/Kelvion datasheet <<<
@@ -172,13 +218,22 @@ if __name__ == "__main__":
     L      = 0.5      # [m]   ASSUMED, mid of typical 0.3-0.6m range
     N_cp   = 38       # ASSUMED to target G~25 kg/m2s -- RECHECK vs real m_dot_refrigerant
     A_flow = N_cp * (D_h * 1.17 / 2) * 0.2   # = 0.0178 m^2 (L_w=0.2m ASSUMED)
+
+    b          = D_h * 1.17 / 2   # mean channel gap [m]     (same corrugation family)
+    L_w        = 0.2              # plate width [m]          (matches refrigerant side)
+    N_cp_water = 24                # ASSUMED, same order as economizer.py's water side
     # ==================================================================
 
     evap = Evaporator(m_dot_refrigerant=m_dot, p_in=p_evap, Q=Q, refrigerant=R,
                       T_water_in=21 + 273.15, T_water_out=15 + 273.15, h_in=h_in,
-                      D_h=D_h, A_flow=A_flow, L=L, beta=beta, Lambda=Lambda, N_cp=N_cp)
+                      D_h=D_h, A_flow=A_flow, L=L, beta=beta, Lambda=Lambda, N_cp=N_cp,
+                      b=b, L_w=L_w, N_cp_water=N_cp_water)
 
     print(f"Refrigerant out: {evap.T_out - 273.15:.2f} C, {evap.superheat:.2f} K superheat @ {evap.p_out/1000:.0f} kPa")
     print(f"Pressure drop  : {evap.delta_p/1000:.2f} kPa")
     print(f"Water flow     : {evap.m_dot_water:.3f} kg/s  (cp = {evap.cp_water} J/kg-K)")
     print(f"LMTD / UA      : {evap.LMTD:.2f} K / {evap.UA:.0f} W/K")
+    print("--- Martin (1996) water-side pressure drop ---")
+    print(f"Water  : G={evap.G_water:5.1f} kg/m2s  Re={evap.Re_water:6.0f}  "
+          f"f={evap.f_water:.4f}  dP={evap.delta_p_water/1e3:5.2f} kPa  "
+          f"v={evap.G_water/evap.rho_water:.2f} m/s")

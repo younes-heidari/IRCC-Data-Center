@@ -16,7 +16,9 @@ from evaporator import Evaporator
 
 R = "R290"
 T_o = 5 + 273.15          # evaporating temperature [K]
-T_c = 45 + 273.15         # condensing temperature [K]
+T_c = 52 + 273.15         # condensing temperature [K] (raised from 45 C so the condenser's
+                          # saturation/subcooled approach stays positive against the dry
+                          # cooler's vendor-confirmed 40/46 C glycol loop -- see dry_cooler.py)
 DT_SH = 10                # suction superheat assumed by the compressor [K]
 SUBCOOLING = 5            # condenser design subcooling [K] (matches eev.py)
 
@@ -36,14 +38,16 @@ m_dot = compressor.m_dot
 #    evaporator (D_h, Lambda, beta, L), pending a real datasheet.
 # ---------------------------------------------------------------------
 D_h, Lambda, beta, L = 0.004, 0.005, 30, 0.5
+b, L_w = D_h * 1.17 / 2, 0.2
 N_cp_cond = 38
-A_flow_cond = N_cp_cond * (D_h * 1.17 / 2) * 0.2
+A_flow_cond = N_cp_cond * b * L_w
+N_cp_glycol = 24
 
 condenser = Condenser(m_dot_refrigerant=m_dot, p_in=compressor.p_2, refrigerant=R,
                        h_in=compressor.h_2, subcooling=SUBCOOLING,
                        T_glycol_in=30 + 273.15, T_glycol_out=35 + 273.15,
                        D_h=D_h, A_flow=A_flow_cond, L=L, beta=beta, Lambda=Lambda,
-                       N_cp=N_cp_cond)
+                       N_cp=N_cp_cond, b=b, L_w=L_w, N_cp_glycol=N_cp_glycol)
 
 # ---------------------------------------------------------------------
 # 3) EEV -- isenthalpic throttle from the condenser outlet to p_o
@@ -61,12 +65,13 @@ h_out_target = PropsSI('HMASS', 'T', T_o + DT_SH, 'P', p_o, R)   # = compressor 
 Q_actual = m_dot * (h_out_target - eev.h_out)
 
 N_cp_evap = 38
-A_flow_evap = N_cp_evap * (D_h * 1.17 / 2) * 0.2
+A_flow_evap = N_cp_evap * b * L_w
+N_cp_water = 24
 
 evaporator = Evaporator(m_dot_refrigerant=m_dot, p_in=p_o, Q=Q_actual, refrigerant=R,
                          T_water_in=21 + 273.15, T_water_out=15 + 273.15, h_in=eev.h_out,
                          D_h=D_h, A_flow=A_flow_evap, L=L, beta=beta, Lambda=Lambda,
-                         N_cp=N_cp_evap)
+                         N_cp=N_cp_evap, b=b, L_w=L_w, N_cp_water=N_cp_water)
 
 # ---------------------------------------------------------------------
 # Report
@@ -83,7 +88,8 @@ print()
 print("=== CONDENSER ===")
 print(f"Duty        : {condenser.Q/1e3:.2f} kW")
 print(f"Subcool     : {condenser.subcool:.2f} K @ {condenser.p_out/1000:.0f} kPa")
-print(f"Delta_p     : {condenser.delta_p/1e3:.2f} kPa")
+print(f"Delta_p     : {condenser.delta_p/1e3:.2f} kPa  (refrigerant side)")
+print(f"Delta_p     : {condenser.delta_p_glycol/1e3:.2f} kPa  (glycol side, Martin 1996)")
 print()
 print("=== EEV ===")
 print(f"Quality out : {eev.x_out:.3f}")
@@ -91,7 +97,8 @@ print(f"Kv required : {eev.Kv_required:.3f} m^3/h  (Loading vs E3V65: {eev.Kv_re
 print()
 print("=== EVAPORATOR ===")
 print(f"Superheat  : {evaporator.superheat:.2f} K @ {evaporator.p_out/1000:.0f} kPa")
-print(f"Delta_p    : {evaporator.delta_p/1e3:.2f} kPa")
+print(f"Delta_p    : {evaporator.delta_p/1e3:.2f} kPa  (refrigerant side)")
+print(f"Delta_p    : {evaporator.delta_p_water/1e3:.2f} kPa  (water side, Martin 1996)")
 print(f"Water flow : {evaporator.m_dot_water:.3f} kg/s")
 print()
 print("=== CYCLE CLOSURE CHECK ===")

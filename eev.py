@@ -69,9 +69,9 @@ class EEV:
 if __name__ == "__main__":
     # Test conditions matching design point
     R = "R290"
-    p_cond = PropsSI("P", "T", 45 + 273.15, "Q", 1, R)
+    p_cond = PropsSI("P", "T", 52 + 273.15, "Q", 1, R)  # raised from 45 C -- see condenser.py
     p_evap = PropsSI("P", "T", 5 + 273.15, "Q", 1, R)
-    T_in = 45 - 5 + 273.15  # 5 K subcooling
+    T_in = 52 - 5 + 273.15  # 5 K subcooling
     h_in = PropsSI('HMASS', 'T', T_in, 'P', p_cond, R)
     m_dot = 0.50  # Target mass flow
 

@@ -19,12 +19,14 @@ class Condenser:
       glycol            : secondary-fluid name [str]          (CoolProp INCOMP brine)
 
     INPUTS (heat-exchanger geometry -- my responsibility, from datasheet):
-      D_h, A_flow, L, beta, Lambda, N_cp  (see geometry block below)
+      D_h, A_flow, L, beta, Lambda, N_cp        (refrigerant side)
+      b, L_w, N_cp_glycol                       (glycol side; see geometry block below)
 
     OUTPUTS (for teammates' component models):
       Q                               -> condenser heat duty (should ~ Q_evap + W_comp)
       h_out, p_out, T_out, subcool    -> EEV / receiver inlet state
       delta_p                         -> condenser refrigerant-side pressure loss
+      delta_p_glycol                  -> condenser glycol-side pressure loss (Martin 1996)
       m_dot_glycol, cp_glycol         -> dry-cooler-loop pump sizing
       UA, LMTD                        -> plate-HX selection / sizing
     """
@@ -32,6 +34,7 @@ class Condenser:
     def __init__(self, m_dot_refrigerant, p_in, refrigerant, h_in, subcooling,
                  T_glycol_in, T_glycol_out,
                  D_h, A_flow, L, beta, Lambda, N_cp,
+                 b, L_w, N_cp_glycol,
                  glycol="INCOMP::MPG[0.30]"):
         # General properties
         self.R = refrigerant
@@ -50,6 +53,14 @@ class Condenser:
         self.beta = beta        # chevron angle [deg]          (from horizontal; Han: 20-45)
         self.Lambda = Lambda    # corrugation pitch p_co [m]   (~5-7 mm)
         self.N_cp = N_cp        # number of refrigerant channels [-]  (Han pressure-drop factor)
+
+        # Glycol-side channel geometry -- same corrugation family (D_h, beta,
+        # Lambda) as the refrigerant side, drives the Martin (1996) single-
+        # phase friction correlation (same one used in economizer.py).
+        self.b = b                      # mean channel gap [m]        (= D_h*phi/2)
+        self.L_w = L_w                  # plate width [m]
+        self.N_cp_glycol = N_cp_glycol  # number of glycol channels [-]
+        self.A_flow_glycol = N_cp_glycol * b * L_w
         # ==================================================================
 
         # Refrigerant inlet (from compressor, superheated vapor)
@@ -77,12 +88,14 @@ class Condenser:
         self.UA = None
 
         self.delta_p = None
+        self.delta_p_glycol = None
 
         self.calc_refrigerant_inlet_state()
         self.calc_heat_duty()
         self.calc_pressure_drop()
         self.calc_refrigerant_outlet_state()
         self.calc_glycol_mass_flow()
+        self.calc_glycol_pressure_drop()
         self.calc_lmtd()
         self.calc_ua()
 
@@ -174,6 +187,38 @@ class Condenser:
         delta_T_glycol = self.T_glycol_out - self.T_glycol_in
         self.m_dot_glycol = self.Q / (self.cp_glycol * delta_T_glycol)
 
+    # -- Single-phase friction: MARTIN (1996) generalised Leveque correlation --
+    # Same correlation as economizer.py (VDI Heat Atlas, Sec. N6); the glycol
+    # side here is single-phase liquid, so Han's two-phase correlation (used
+    # for the refrigerant side above) does not apply.
+    def _martin_dp(self, m_dot, A_flow, fluid, T_avg):
+        rho = PropsSI('D', 'T', T_avg, 'P', 101325, fluid)
+        mu = PropsSI('V', 'T', T_avg, 'P', 101325, fluid)
+        G = m_dot / A_flow
+        Re = G * self.D_h / mu
+        phi = np.radians(self.beta)
+
+        if Re < 2000:
+            f0 = 16.0 / Re
+            f1 = 149.0 / Re + 0.9625
+        else:
+            f0 = (1.56 * np.log(Re) - 3.0) ** (-2)
+            f1 = 9.75 / Re ** 0.289
+
+        inv_sqrt_f = (np.cos(phi) /
+                      np.sqrt(0.045 * np.tan(phi) + 0.09 * np.sin(phi) + f0 / np.cos(phi))
+                      + (1 - np.cos(phi)) / np.sqrt(3.8 * f1))
+        f = 1.0 / inv_sqrt_f ** 2
+
+        delta_p = 2 * f * G ** 2 * self.L / (rho * self.D_h)
+        return delta_p, Re, f, G, rho, mu
+
+    def calc_glycol_pressure_drop(self):
+        T_glycol_avg = (self.T_glycol_in + self.T_glycol_out) / 2
+        (self.delta_p_glycol, self.Re_glycol, self.f_glycol,
+         self.G_glycol, self.rho_glycol, self.mu_glycol) = \
+            self._martin_dp(self.m_dot_glycol, self.A_flow_glycol, self.glycol, T_glycol_avg)
+
     def calc_lmtd(self):
         # Counter-flow: hot refrigerant in vs glycol out, refrigerant out vs glycol in
         delta_T_1 = self.T_in - self.T_glycol_out
@@ -182,3 +227,47 @@ class Condenser:
 
     def calc_ua(self):
         self.UA = self.Q / self.LMTD
+
+
+if __name__ == "__main__":
+    # Cycle-side operating conditions (R290, matches main.py's design point)
+    R = "R290"
+    T_o = 5 + 273.15    # evaporating temperature [K]
+    T_c = 52 + 273.15   # condensing temperature [K] (raised from 45 C to keep a positive
+                        # approach against the dry cooler's 40/46 C glycol loop)
+    DT_SH = 10           # suction superheat assumed by the compressor [K]
+    SUBCOOLING = 5        # condenser design subcooling [K]
+
+    p_o = PropsSI("P", "T", T_o, "Q", 1, R)
+    p_c = PropsSI("P", "T", T_c, "Q", 1, R)
+    h_in = PropsSI("HMASS", "T", T_c + 20, "P", p_c, R)  # placeholder superheated discharge
+    m_dot = 0.53  # refrigerant mass flow [kg/s] -- PLACEHOLDER (matches evaporator.py's demo)
+
+    # ==================================================================
+    # >>> GEOMETRY -- PLACEHOLDER, pending real SWEP/Kelvion datasheet <<<
+    D_h    = 0.004    # [m]   4mm -- locked: pco/D_h=1.25 consistent w/ Han's tested geometry
+    Lambda = 0.005    # [m]   5mm
+    beta   = 30       # [deg]
+    L      = 0.5      # [m]   ASSUMED, mid of typical 0.3-0.6m range
+    N_cp   = 38       # ASSUMED to target G~25 kg/m2s -- RECHECK vs real m_dot_refrigerant
+    A_flow = N_cp * (D_h * 1.17 / 2) * 0.2   # = 0.0178 m^2 (L_w=0.2m ASSUMED)
+
+    b            = D_h * 1.17 / 2   # mean channel gap [m]     (same corrugation family)
+    L_w          = 0.2              # plate width [m]          (matches refrigerant side)
+    N_cp_glycol  = 24                # ASSUMED, same order as economizer.py's glycol side
+    # ==================================================================
+
+    cond = Condenser(m_dot_refrigerant=m_dot, p_in=p_c, refrigerant=R, h_in=h_in,
+                      subcooling=SUBCOOLING, T_glycol_in=30 + 273.15, T_glycol_out=35 + 273.15,
+                      D_h=D_h, A_flow=A_flow, L=L, beta=beta, Lambda=Lambda, N_cp=N_cp,
+                      b=b, L_w=L_w, N_cp_glycol=N_cp_glycol)
+
+    print(f"Duty           : {cond.Q/1e3:.2f} kW")
+    print(f"Subcool        : {cond.subcool:.2f} K @ {cond.p_out/1000:.0f} kPa")
+    print(f"Pressure drop  : {cond.delta_p/1000:.2f} kPa  (refrigerant side)")
+    print(f"Glycol flow    : {cond.m_dot_glycol:.3f} kg/s  (cp = {cond.cp_glycol} J/kg-K)")
+    print(f"LMTD / UA      : {cond.LMTD:.2f} K / {cond.UA:.0f} W/K")
+    print("--- Martin (1996) glycol-side pressure drop ---")
+    print(f"Glycol : G={cond.G_glycol:5.1f} kg/m2s  Re={cond.Re_glycol:6.0f}  "
+          f"f={cond.f_glycol:.4f}  dP={cond.delta_p_glycol/1e3:5.2f} kPa  "
+          f"v={cond.G_glycol/cond.rho_glycol:.2f} m/s")

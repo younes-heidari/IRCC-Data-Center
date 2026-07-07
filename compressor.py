@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # Given Values
     R = "R290"
     T_o = 5 # Evaporating temperature in °C
-    T_c = 45 # Condensing temperature in °C
+    T_c = 52 # Condensing temperature in °C (raised from 45 C -- see condenser.py)
     DT_SH = 10 # Superheat in K
 
     # Adjust temperatures for EOS to Kelvin
