@@ -1,4 +1,18 @@
 import numpy as np
+from CoolProp.CoolProp import PropsSI
+
+# Digitized from Bell & Gossett Series e-1510 curve sheet (B-261G), 1.5AD
+# frame, 1750 RPM composite chart, standard (non "-es") curve. Points read
+# directly off the vendor chart in its native units (GPM, ft) -- same
+# digitization approach as dry_cooler_pump.py's 2AD/7.0in fit. Module-level
+# so other drivers (e.g. main.py's PUE calculation) can reuse it directly.
+TRIM_CURVES_1_5AD_1750RPM = {
+    "5.0": [(0, 24), (25, 23), (50, 22), (75, 19), (90, 15), (100, 12)],
+    "5.5": [(0, 29), (25, 28.5), (50, 27), (75, 24), (100, 18), (110, 13)],
+    "6.0": [(0, 34), (25, 33.5), (50, 32), (75, 29), (100, 24), (120, 16)],
+    "6.5": [(0, 39), (25, 38.5), (50, 37), (75, 34), (100, 29), (125, 21), (135, 15)],
+    "7.0": [(0, 44), (25, 43), (50, 41), (75, 38), (100, 33.5), (125, 26), (150, 15)],
+}
 
 
 class CHWPump:
@@ -31,14 +45,21 @@ class CHWPump:
                                                  CRAH coils run 40-70 kPa at
                                                  this flow -- FLAG pending
                                                  vendor confirmation)
-      Piping / fittings / elevation           -- ASSUMED PLACEHOLDER, 25.0 kPa
-                                                 (project brief explicitly says
-                                                 to NEGLECT piping losses --
-                                                 this term is retained anyway
-                                                 as a deliberate OVER-DESIGN
-                                                 margin, per project decision,
-                                                 not as a literal piping
-                                                 calculation)
+      Piping / fittings / elevation           -- Darcy-Weisbach (Swamee-Jain),
+                                                 same method as the glycol
+                                                 loop's piping term
+                                                 (dry_cooler_pump.py), sized to
+                                                 the SAME 65 m equivalent
+                                                 length / 8x12 m footprint
+                                                 assumption. Project brief says
+                                                 to NEGLECT CHW piping losses --
+                                                 this term is retained anyway as
+                                                 a deliberate OVER-DESIGN margin
+                                                 per project decision, but is
+                                                 now a real calculation instead
+                                                 of a flat placeholder (pass
+                                                 dp_piping_kpa explicitly to
+                                                 override)
       -----------------------------------------------------------------
       TOTAL (design basis used here)                          ~82.7 kPa
 
@@ -71,11 +92,16 @@ class CHWPump:
       dp_hx_kpa           : worst-case HX branch water-side dP [kPa]
                              (evaporator: 7.73 kPa > economizer: 6.67 kPa)
       dp_crah_kpa         : ASSUMED CRAH coil dP [kPa]           (flagged)
-      dp_piping_kpa       : ASSUMED piping/fittings dP [kPa]     (flagged;
-                             spec says neglect, retained here as an explicit
-                             over-design margin per project decision)
       trim_curves_gpm_ft  : dict {trim_label: [(Q_gpm, H_ft), ...]} digitized
                              points per impeller trim, native vendor units
+      dp_piping_kpa       : piping/fittings dP [kPa]. If None (default),
+                             computed via Darcy-Weisbach from D_pipe/
+                             pipe_roughness/L_eq_total; pass a number to
+                             override with a different value.
+      D_pipe, pipe_roughness, L_eq_total : CHW piping geometry -- ASSUMED,
+                             sized for ~1.8 m/s at design flow (same hydronic
+                             velocity guideline as the glycol loop), same 65 m
+                             equivalent length / 8x12 m footprint assumption.
       speed_rpm           : synchronous speed of the digitized chart [RPM]
 
     OUTPUTS (for plant selection / PUE):
@@ -91,16 +117,25 @@ class CHWPump:
     GPM_PER_M3S = 15850.3  # 1 m^3/s = 15850.3 US GPM
     FT_PER_M = 3.28084
 
-    def __init__(self, m_dot_water, dp_hx_kpa, dp_crah_kpa, dp_piping_kpa,
-                 trim_curves_gpm_ft, speed_rpm=1750.0):
+    def __init__(self, m_dot_water, dp_hx_kpa, dp_crah_kpa, trim_curves_gpm_ft,
+                 dp_piping_kpa=None, D_pipe=0.0627, pipe_roughness=0.045e-3,
+                 L_eq_total=65.0, speed_rpm=1750.0, water="Water"):
         self.m_dot_water = m_dot_water
         self.dp_hx_kpa = dp_hx_kpa
         self.dp_crah_kpa = dp_crah_kpa
-        self.dp_piping_kpa = dp_piping_kpa
+        self.D_pipe = D_pipe
+        self.pipe_roughness = pipe_roughness
+        self.L_eq_total = L_eq_total
+        self.water = water
         self.speed_rpm = speed_rpm
 
+        # Piping loss: real Darcy-Weisbach/Swamee-Jain calc (same method and
+        # 65 m equivalent length as the glycol loop's piping term in
+        # dry_cooler_pump.py) -- replaces the earlier flat 25 kPa placeholder.
+        self.dp_piping_kpa = dp_piping_kpa if dp_piping_kpa is not None else self._darcy_dp_kpa()
+
         # ---- Design duty point, SI -> US customary (vendor chart units) ----
-        self.dp_total_kpa = dp_hx_kpa + dp_crah_kpa + dp_piping_kpa
+        self.dp_total_kpa = dp_hx_kpa + dp_crah_kpa + self.dp_piping_kpa
         self.Q_m3s = m_dot_water / self.RHO_WATER
         self.Q_gpm = self.Q_m3s * self.GPM_PER_M3S
         self.H_m = (self.dp_total_kpa * 1000.0) / (self.RHO_WATER * self.G)
@@ -122,6 +157,20 @@ class CHWPump:
         self.Q_full_gpm = None
         self.H_full_ft = None
         self.speed_ratio = None
+
+    def _darcy_dp_kpa(self, T_avg=291.15):
+        """CHW piping pressure drop via Darcy-Weisbach with the Swamee-Jain
+        explicit friction factor -- same method as dry_cooler_pump.py's
+        glycol-loop piping term, evaluated at the ~18 C CHW loop average
+        temperature (21/15 C design in/out)."""
+        rho = PropsSI('D', 'T', T_avg, 'P', 101325, self.water)
+        mu = PropsSI('V', 'T', T_avg, 'P', 101325, self.water)
+        v = self.m_dot_water / rho / (np.pi / 4 * self.D_pipe ** 2)
+        Re = rho * v * self.D_pipe / mu
+        f = 0.25 / (np.log10(self.pipe_roughness / (3.7 * self.D_pipe)
+                              + 5.74 / Re ** 0.9)) ** 2
+        dP = f * (self.L_eq_total / self.D_pipe) * (rho * v ** 2 / 2)
+        return dP / 1000.0
 
     def system_curve(self, Q_gpm):
         """H_sys(Q) = k * Q^2, quadratic loss assumption [ft]."""
@@ -201,42 +250,26 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------ #
     # DESIGN POINT: CHW flow from evaporator.py / economizer.py (agree at  #
     # 5.97 kg/s, 21->15 C). Worst-case HX branch = evaporator (7.73 kPa). #
-    # CRAH coil and piping are ASSUMED placeholders -- flagged pending    #
-    # vendor CRAH data. Per project decision, using the higher/           #
-    # over-designed ~83 kPa total (piping term retained as margin, even   #
-    # though the project brief says to neglect piping losses).           #
+    # CRAH coil is still an ASSUMED placeholder, pending vendor data.     #
+    # Piping is now a real Darcy-Weisbach calc (was a flat 25 kPa         #
+    # placeholder), sized to the same 65 m equivalent length / 8x12 m     #
+    # footprint assumption as the glycol loop -- retained per project     #
+    # decision even though the brief says to neglect CHW piping losses.  #
     # ------------------------------------------------------------------ #
     m_dot_water = 5.97          # [kg/s]  from evaporator.py / economizer.py
     dp_hx_kpa = 7.73             # [kPa]   evaporator water-side (Martin 1996), worst-case branch
     dp_crah_kpa = 50.0           # [kPa]   ASSUMED -- no vendor CRAH unit specified (FLAG)
-    dp_piping_kpa = 25.0         # [kPa]   ASSUMED -- spec says neglect; retained as over-design margin (FLAG)
-
-    # ==================================================================
-    # >>> VENDOR CURVE DATA <<<
-    # Digitized from Bell & Gossett Series e-1510 curve sheet (B-261G),
-    # 1.5AD frame, 1750 RPM composite chart, standard (non "-es") curve.
-    # Points read directly off the vendor chart in its native units
-    # (GPM, ft) -- same digitization approach as dry_cooler_pump.py's
-    # 2AD/7.0in fit.
-    # ==================================================================
-    trim_curves_1_5AD_1750rpm = {
-        "5.0": [(0, 24), (25, 23), (50, 22), (75, 19), (90, 15), (100, 12)],
-        "5.5": [(0, 29), (25, 28.5), (50, 27), (75, 24), (100, 18), (110, 13)],
-        "6.0": [(0, 34), (25, 33.5), (50, 32), (75, 29), (100, 24), (120, 16)],
-        "6.5": [(0, 39), (25, 38.5), (50, 37), (75, 34), (100, 29), (125, 21), (135, 15)],
-        "7.0": [(0, 44), (25, 43), (50, 41), (75, 38), (100, 33.5), (125, 26), (150, 15)],
-    }
 
     pump = CHWPump(m_dot_water=m_dot_water, dp_hx_kpa=dp_hx_kpa,
-                    dp_crah_kpa=dp_crah_kpa, dp_piping_kpa=dp_piping_kpa,
-                    trim_curves_gpm_ft=trim_curves_1_5AD_1750rpm,
+                    dp_crah_kpa=dp_crah_kpa,
+                    trim_curves_gpm_ft=TRIM_CURVES_1_5AD_1750RPM,
                     speed_rpm=1750.0)
 
     print("=== CHW (DATA-CENTER / CRAH-SIDE) CIRCULATION PUMP ===")
     print(f"Design flow      : {pump.Q_m3s*3600:.2f} m3/h ({pump.Q_gpm:.1f} GPM), "
           f"m_dot = {m_dot_water:.2f} kg/s")
     print(f"System curve dP  : HX {dp_hx_kpa:.2f} + CRAH {dp_crah_kpa:.1f} (assumed) "
-          f"+ piping {dp_piping_kpa:.1f} (assumed) = {pump.dp_total_kpa:.2f} kPa")
+          f"+ piping {pump.dp_piping_kpa:.2f} (Darcy-Weisbach) = {pump.dp_total_kpa:.2f} kPa")
     print(f"Design head      : {pump.H_m:.2f} m ({pump.H_ft:.2f} ft)")
     print(f"System curve k   : {pump.k_sys:.6e}  (H_sys = k*Q_gpm^2, ft)")
 
