@@ -8,15 +8,18 @@ The economizer is NOT part of this chain: it is a parallel, refrigerant-
 free waterside loop (glycol <-> chilled water) that only runs when the
 compressor is off, so it has no shared m_dot with the cycle below.
 """
+import csv
 import math
 import time
 
+import numpy as np
 from CoolProp.CoolProp import PropsSI
 
 from compressor import CompressorBank
 from condenser import Condenser
 from dry_cooler import DryCooler
 from dry_cooler_pump import GlycolLoopPump
+from economizer import Economizer
 from eev import EEV
 from evaporator import Evaporator
 from water_side_pump import CHWPump, TRIM_CURVES_1_5AD_1750RPM
@@ -40,8 +43,17 @@ APPROACH_K = (T_c - 273.15) - T_AIR_DESIGN_C  # 17 K, fixed condensing approach 
                                                # dry cooler's eps-NTU model at each point
 GLYCOL_APPROACH_K = 6.0    # tc -> condenser glycol-leaving-temp approach (52->46 C at design)
 FREE_COOLING_THRESHOLD_C = 4.0  # ASHRAE 90.1 full free-cooling threshold (economizer.py)
+ECON_L, ECON_L_W = 0.70, 0.25    # economizer's own larger frame (economizer.py's design point)
 
 p_c = PropsSI("P", "T", T_c, "Q", 1, R)
+
+# Shared dry cooler instance (same vendor-validated design point everywhere it's used --
+# predict_off_design() doesn't mutate instance state, so reusing one object across the
+# design-point report, the annual loop, and the monthly/seasonal report is safe).
+DRY_COOLER = DryCooler(
+    Q_design=213.23e3, T_glycol_hot_in=46 + 273.15, T_glycol_cold_out=40 + 273.15,
+    T_air_in_design=T_AIR_DESIGN_C + 273.15, dT_air_design=5.56,
+)
 
 # ---------------------------------------------------------------------
 # 1) Compressor bank -- solves for the evaporating temperature (and unit
@@ -314,10 +326,6 @@ def run_annual_simulation():
     wx = ChampaignWeather()
     bank_obj = CompressorBank(n_units=N_UNITS, superheat_K=DT_SH, subcooling_K=SUBCOOLING,
                                to_bounds_C=(-10.0, 15.0))
-    dry_cooler_annual = DryCooler(
-        Q_design=213.23e3, T_glycol_hot_in=46 + 273.15, T_glycol_cold_out=40 + 273.15,
-        T_air_in_design=T_AIR_DESIGN_C + 273.15, dT_air_design=5.56,
-    )
     P_FAN_RATED = 10.74e3  # W, vendor-confirmed (Kelvion ULF-PA104Y4V-096Z100)
 
     results = []
@@ -332,11 +340,11 @@ def run_annual_simulation():
             T_glycol_hot_in_hour = (r["tc_C"] - GLYCOL_APPROACH_K) + 273.15
 
         Q_cond_hour = r["Q_delivered_w"] + r["P_compressor_w"]
-        fan_result = dry_cooler_annual.predict_off_design(
+        fan_result = DRY_COOLER.predict_off_design(
             Q_target=Q_cond_hour, T_glycol_hot_in=T_glycol_hot_in_hour, T_air_in=T_air_C + 273.15,
         )
         r["fan_speed_frac"] = fan_result["fan_speed_frac"]
-        r["P_fan_w"] = dry_cooler_annual.fan_power(fan_result["fan_speed_frac"], P_FAN_RATED)
+        r["P_fan_w"] = DRY_COOLER.fan_power(fan_result["fan_speed_frac"], P_FAN_RATED)
         r["hour_of_year"] = hr.hour_of_year
         results.append(r)
 
@@ -441,9 +449,218 @@ def plot_annual_cop_load(results, save_path="annual_cop_load.png"):
     print(f"\nSaved annual COP/load chart -> {save_path}")
 
 
+# =======================================================================
+# MONTHLY / SEASONAL DETAILED REPORT: runs the FULL cycle (same physics as
+# the single design-point section at the top of this file -- compressor
+# bank, condenser, EEV, evaporator, refrigerant piping sizing, dry cooler
+# fan, both pumps, PUE) at each month's and each season's AVERAGE dry-bulb
+# temperature, instead of the lightweight compressor-only solve used for
+# the 8760-hour annual loop above. 16 total runs (12 months + 4 seasons),
+# so the extra per-run detail (full Condenser/EEV/Evaporator instances,
+# 200-point Han/Martin integration, etc.) is cheap here.
+#
+# Reuses the module-level glycol_pump/chw_pump built by the design-point
+# section: their trim/selection depends only on the two FIXED reference
+# duty points (mechanical 9.07 kg/s @ 40/46 C, free-cooling 6.52 kg/s @
+# 9/15 C, and the evaporator's own worst-case-branch water-side dP for the
+# CHW pump) -- none of that changes with ambient, so P_elec_mech/
+# P_elec_free/P_chw_pump are constants pulled from the SAME already-built
+# instances rather than re-selected per period.
+#
+# INHERITED SIMPLIFICATIONS (same ones already flagged elsewhere in this
+# file, not expanded here): the condenser's glycol temperatures stay fixed
+# at 30/35 C regardless of month (the known, still-unresolved mismatch
+# against the dry cooler's 40/46 C design point); the 4-10 C partial-
+# free-cooling band is folded into full mechanical mode (same threshold
+# as run_annual_simulation()).
+# =======================================================================
+def run_full_cycle(T_air_C, label=""):
+    """Runs the full detailed cycle at one ambient dry-bulb temperature.
+    Returns a flat dict covering every mass flow, pressure drop,
+    temperature, and power figure needed for the monthly/seasonal report;
+    fields that don't apply to the active mode are left as None."""
+    row = {
+        "label": label, "T_air_C": T_air_C, "mode": None,
+        "m_dot_refrigerant_kgs": None, "n_active_compressors": None,
+        "to_C": None, "tc_C": None, "T_discharge_C": None,
+        "P_compressor_kW": None, "COP_compressor": None,
+        "Q_condenser_kW": None, "condenser_subcool_K": None,
+        "condenser_dP_ref_kPa": None, "condenser_dP_glycol_kPa": None,
+        "eev_quality": None, "eev_Kv_m3h": None,
+        "evaporator_superheat_K": None, "evaporator_dP_ref_kPa": None,
+        "evaporator_dP_water_kPa": None,
+        "econ_dP_water_kPa": None, "econ_dP_glycol_kPa": None,
+        "econ_UA_kWK": None, "econ_LMTD_K": None,
+        "tube_suction": None, "v_suction_ms": None,
+        "tube_discharge": None, "v_discharge_ms": None,
+        "tube_liquid": None, "v_liquid_ms": None,
+        "m_dot_water_kgs": None, "m_dot_glycol_kgs": None,
+        "P_glycol_pump_kW": None, "P_chw_pump_kW": None,
+        "fan_speed_pct": None, "P_fan_kW": None,
+        "Q_delivered_kW": None, "P_other_kW": None, "PUE": None,
+    }
+
+    if T_air_C <= FREE_COOLING_THRESHOLD_C:
+        row["mode"] = "free_cooling"
+
+        econ = Economizer(
+            Q=Q_TARGET, T_water_in=21 + 273.15, T_water_out=15 + 273.15,
+            T_glycol_in=9 + 273.15, T_glycol_out=15 + 273.15,
+            D_h=D_h, L=ECON_L, beta=beta, Lambda=Lambda, b=b, L_w=ECON_L_W,
+            N_cp_water=24, N_cp_glycol=24, U=3500.0,
+        )
+
+        fan_result = DRY_COOLER.predict_off_design(
+            Q_target=Q_TARGET, T_glycol_hot_in=15 + 273.15, T_air_in=T_air_C + 273.15,
+        )
+        P_fan = DRY_COOLER.fan_power(fan_result["fan_speed_frac"], P_FAN_DESIGN)
+
+        P_glycol_pump_row = glycol_pump.P_elec_free
+        P_other_row = P_glycol_pump_row + P_fan + P_chw_pump  # compressor off
+        PUE_row = (Q_TARGET + P_other_row) / Q_TARGET
+
+        row.update({
+            "econ_dP_water_kPa": econ.delta_p_water / 1e3, "econ_dP_glycol_kPa": econ.delta_p_glycol / 1e3,
+            "econ_UA_kWK": econ.UA / 1e3, "econ_LMTD_K": econ.LMTD,
+            "m_dot_water_kgs": econ.m_dot_water, "m_dot_glycol_kgs": econ.m_dot_glycol,
+            "P_compressor_kW": 0.0,
+            "P_glycol_pump_kW": P_glycol_pump_row / 1e3, "P_chw_pump_kW": P_chw_pump / 1e3,
+            "fan_speed_pct": fan_result["fan_speed_frac"] * 100, "P_fan_kW": P_fan / 1e3,
+            "Q_delivered_kW": Q_TARGET / 1e3, "P_other_kW": P_other_row / 1e3, "PUE": PUE_row,
+        })
+        return row
+
+    # ---- MECHANICAL MODE ----
+    row["mode"] = "mechanical"
+    tc_C_p = T_air_C + APPROACH_K
+    p_c_p = PropsSI("P", "T", tc_C_p + 273.15, "Q", 1, R)
+
+    result = bank.solve_with_bypass(Q_TARGET, tc_C_p)
+    T_o_p = result["to_C"] + 273.15
+    p_o_p = PropsSI("P", "T", T_o_p, "Q", 1, R)
+    m_dot_p = result["m_dot_total_kgh"] / 3600.0
+    per_unit_p = result["per_unit"]
+
+    h_2_p = per_unit_p["h_suction"] + per_unit_p["P_w"] / (per_unit_p["m_dot_kgh"] / 3600.0)
+    T_2_p = PropsSI("T", "HMASS", h_2_p, "P", p_c_p, R)
+
+    condenser_p = Condenser(m_dot_refrigerant=m_dot_p, p_in=p_c_p, refrigerant=R,
+                             h_in=h_2_p, subcooling=SUBCOOLING,
+                             T_glycol_in=30 + 273.15, T_glycol_out=35 + 273.15,
+                             D_h=D_h, A_flow=A_flow_cond, L=L, beta=beta, Lambda=Lambda,
+                             N_cp=N_cp_cond, b=b, L_w=L_w, N_cp_glycol=N_cp_glycol)
+
+    eev_p = EEV(m_dot_refrigerant=m_dot_p, p_in=condenser_p.p_out, h_in=condenser_p.h_out,
+                p_out=p_o_p, refrigerant=R)
+
+    h_out_target_p = PropsSI('HMASS', 'T', T_o_p + DT_SH, 'P', p_o_p, R)
+    Q_actual_p = m_dot_p * (h_out_target_p - eev_p.h_out)
+
+    evaporator_p = Evaporator(m_dot_refrigerant=m_dot_p, p_in=p_o_p, Q=Q_actual_p, refrigerant=R,
+                               T_water_in=21 + 273.15, T_water_out=15 + 273.15, h_in=eev_p.h_out,
+                               D_h=D_h, A_flow=A_flow_evap, L=L, beta=beta, Lambda=Lambda,
+                               N_cp=N_cp_evap, b=b, L_w=L_w, N_cp_water=N_cp_water)
+
+    rho_suction_p = PropsSI('D', 'T', T_o_p + DT_SH, 'P', p_o_p, R)
+    tube_s, ID_s, IDreq_s, v_s = select_tube(m_dot_p, rho_suction_p, v_design=15.0)
+    rho_discharge_p = PropsSI('D', 'HMASS', h_2_p, 'P', p_c_p, R)
+    tube_d, ID_d, IDreq_d, v_d = select_tube(m_dot_p, rho_discharge_p, v_design=14.0)
+    rho_liquid_p = PropsSI('D', 'T', condenser_p.T_out, 'P', condenser_p.p_out, R)
+    tube_l, ID_l, IDreq_l, v_l = select_tube(m_dot_p, rho_liquid_p, v_design=1.45)
+
+    T_glycol_hot_in_p = (tc_C_p - GLYCOL_APPROACH_K) + 273.15
+    fan_result = DRY_COOLER.predict_off_design(
+        Q_target=condenser_p.Q, T_glycol_hot_in=T_glycol_hot_in_p, T_air_in=T_air_C + 273.15,
+    )
+    P_fan = DRY_COOLER.fan_power(fan_result["fan_speed_frac"], P_FAN_DESIGN)
+
+    P_compressor_p = result["P_total_w"]
+    P_glycol_pump_p = glycol_pump.P_elec_mech
+    P_other_p = P_compressor_p + P_glycol_pump_p + P_fan + P_chw_pump
+    Q_delivered_p = evaporator_p.Q
+    PUE_p = (Q_delivered_p + P_other_p) / Q_delivered_p
+
+    row.update({
+        "m_dot_refrigerant_kgs": m_dot_p, "n_active_compressors": result["n_active"],
+        "to_C": result["to_C"], "tc_C": tc_C_p, "T_discharge_C": T_2_p - 273.15,
+        "P_compressor_kW": P_compressor_p / 1e3, "COP_compressor": result["COP"],
+        "Q_condenser_kW": condenser_p.Q / 1e3, "condenser_subcool_K": condenser_p.subcool,
+        "condenser_dP_ref_kPa": condenser_p.delta_p / 1e3,
+        "condenser_dP_glycol_kPa": condenser_p.delta_p_glycol / 1e3,
+        "eev_quality": eev_p.x_out, "eev_Kv_m3h": eev_p.Kv_required,
+        "evaporator_superheat_K": evaporator_p.superheat, "evaporator_dP_ref_kPa": evaporator_p.delta_p / 1e3,
+        "evaporator_dP_water_kPa": evaporator_p.delta_p_water / 1e3,
+        "tube_suction": tube_s, "v_suction_ms": v_s,
+        "tube_discharge": tube_d, "v_discharge_ms": v_d,
+        "tube_liquid": tube_l, "v_liquid_ms": v_l,
+        "m_dot_water_kgs": evaporator_p.m_dot_water, "m_dot_glycol_kgs": condenser_p.m_dot_glycol,
+        "P_glycol_pump_kW": P_glycol_pump_p / 1e3, "P_chw_pump_kW": P_chw_pump / 1e3,
+        "fan_speed_pct": fan_result["fan_speed_frac"] * 100, "P_fan_kW": P_fan / 1e3,
+        "Q_delivered_kW": Q_delivered_p / 1e3, "P_other_kW": P_other_p / 1e3, "PUE": PUE_p,
+    })
+    return row
+
+
+def compute_monthly_seasonal_averages():
+    """Groups the real 8760-hour Champaign TMY3 dry-bulb data by calendar
+    month (1-12) and by standard meteorological season (Winter=Dec/Jan/Feb,
+    Spring=Mar/Apr/May, Summer=Jun/Jul/Aug, Fall=Sep/Oct/Nov). Returns two
+    dicts of {label: average T_db [C]}."""
+    wx = ChampaignWeather()
+    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    monthly_avg = {
+        month_names[m - 1]: float(wx.T_db[wx.month == m].mean())
+        for m in range(1, 13)
+    }
+
+    season_months = {
+        "Winter": (12, 1, 2), "Spring": (3, 4, 5),
+        "Summer": (6, 7, 8), "Fall": (9, 10, 11),
+    }
+    seasonal_avg = {
+        season: float(wx.T_db[np.isin(wx.month, months)].mean())
+        for season, months in season_months.items()
+    }
+    return monthly_avg, seasonal_avg
+
+
+def run_monthly_seasonal_reports():
+    """Runs run_full_cycle() at each month's and each season's average
+    dry-bulb temperature and saves two CSV files -- monthly_report.csv
+    (12 rows) and seasonal_report.csv (4 rows) -- covering every mass
+    flow, pressure drop, temperature, and power figure from each run."""
+    monthly_avg, seasonal_avg = compute_monthly_seasonal_averages()
+
+    monthly_rows = [run_full_cycle(T_air_C, label=month) for month, T_air_C in monthly_avg.items()]
+    seasonal_rows = [run_full_cycle(T_air_C, label=season) for season, T_air_C in seasonal_avg.items()]
+
+    fieldnames = list(monthly_rows[0].keys())
+
+    with open("monthly_report.csv", "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(monthly_rows)
+
+    with open("seasonal_report.csv", "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(seasonal_rows)
+
+    print(f"\nSaved monthly_report.csv ({len(monthly_rows)} rows) "
+          f"and seasonal_report.csv ({len(seasonal_rows)} rows)")
+    return monthly_rows, seasonal_rows
+
+
 print()
 print("=" * 72)
 print("ANNUAL SIMULATION -- first pass (raw per-hour results, no aggregation yet)")
 print("=" * 72)
 annual_results = run_annual_simulation()
 plot_annual_cop_load(annual_results)
+
+print()
+print("=" * 72)
+print("MONTHLY / SEASONAL DETAILED REPORT")
+print("=" * 72)
+monthly_rows, seasonal_rows = run_monthly_seasonal_reports()
