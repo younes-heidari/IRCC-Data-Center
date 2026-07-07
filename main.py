@@ -355,8 +355,95 @@ def run_annual_simulation():
     return results
 
 
+def plot_annual_cop_load(results, save_path="annual_cop_load.png"):
+    """Saves a two-panel PNG (delivered load, compressor COP) across all
+    8760 hours, hour-of-year on a shared x-axis. Two stacked panels
+    instead of one dual-axis plot, since load [kW] and COP [-] are
+    different units/scales -- a dual y-axis chart is never the right call.
+
+    Load is delivered duty (essentially flat at the 150 kW design target
+    year-round, per the project's own "near-constant IT load" assumption
+    -- see Project3_Description.txt); COP = Q_delivered/P_compressor is
+    only defined for mechanical-mode hours (compressor running) and is
+    left as a gap during free-cooling hours (compressor off), which are
+    shaded in the background on both panels so the gaps read as
+    intentional, not missing data.
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    hours = np.array([r["hour_of_year"] for r in results])
+    load_kw = np.array([r["Q_delivered_w"] for r in results]) / 1e3
+    is_free = np.array([r["mode"] == "free_cooling" for r in results])
+    cop = np.array([
+        r["Q_delivered_w"] / r["P_compressor_w"] if r["P_compressor_w"] > 0 else np.nan
+        for r in results
+    ])
+
+    # Colors: validated categorical palette (dataviz skill reference palette)
+    BLUE = "#2a78d6"
+    AQUA = "#1baf7a"
+    SURFACE = "#fcfcfb"
+    PRIMARY_INK = "#0b0b0b"
+    SECONDARY_INK = "#52514e"
+    MUTED = "#898781"
+    GRID = "#e1e0d9"
+    BASELINE = "#c3c2b7"
+
+    # Approximate month tick positions (365-day nominal TMY3 year, matches weather.py's 8760 rows)
+    month_starts = [0, 744, 1416, 2160, 2880, 3624, 4344, 5088, 5832, 6552, 7296, 8016]
+    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+    # Contiguous free-cooling hour ranges, for the shared background shading
+    bands = []
+    band_start = None
+    for h, f in zip(hours, is_free):
+        if f and band_start is None:
+            band_start = h
+        elif not f and band_start is not None:
+            bands.append((band_start, h))
+            band_start = None
+    if band_start is not None:
+        bands.append((band_start, hours[-1]))
+
+    fig, (ax_load, ax_cop) = plt.subplots(2, 1, figsize=(11, 6), sharex=True, facecolor=SURFACE)
+
+    for ax in (ax_load, ax_cop):
+        ax.set_facecolor(SURFACE)
+        ax.grid(True, color=GRID, linewidth=0.8, zorder=0)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["left"].set_color(BASELINE)
+        ax.spines["bottom"].set_color(BASELINE)
+        ax.tick_params(colors=MUTED, labelsize=8)
+        for lo, hi in bands:
+            ax.axvspan(lo, hi, color=AQUA, alpha=0.10, linewidth=0, zorder=0)
+
+    ax_load.plot(hours, load_kw, color=BLUE, linewidth=1.2, zorder=2)
+    ax_load.set_ylabel("Cooling load [kW]", color=SECONDARY_INK, fontsize=9)
+    ax_load.set_title("Delivered cooling load and compressor COP across the year "
+                       "(Champaign, IL TMY3)", color=PRIMARY_INK, fontsize=11, loc="left")
+
+    ax_cop.plot(hours, cop, color=BLUE, linewidth=1.0, zorder=2)
+    ax_cop.set_ylabel("COP [-]", color=SECONDARY_INK, fontsize=9)
+    ax_cop.set_xlabel("Month", color=SECONDARY_INK, fontsize=9)
+    ax_cop.set_xlim(0, 8760)
+    ax_cop.set_xticks(month_starts)
+    ax_cop.set_xticklabels(month_labels)
+
+    ax_cop.text(0.0, -0.34, "Aqua shading = free-cooling hours (compressor off, COP undefined)",
+                transform=ax_cop.transAxes, fontsize=8, color=MUTED)
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, facecolor=SURFACE)
+    plt.close(fig)
+    print(f"\nSaved annual COP/load chart -> {save_path}")
+
+
 print()
 print("=" * 72)
 print("ANNUAL SIMULATION -- first pass (raw per-hour results, no aggregation yet)")
 print("=" * 72)
 annual_results = run_annual_simulation()
+plot_annual_cop_load(annual_results)
