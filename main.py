@@ -9,15 +9,18 @@ free waterside loop (glycol <-> chilled water) that only runs when the
 compressor is off, so it has no shared m_dot with the cycle below.
 """
 import math
+import time
 
 from CoolProp.CoolProp import PropsSI
 
 from compressor import CompressorBank
 from condenser import Condenser
+from dry_cooler import DryCooler
 from dry_cooler_pump import GlycolLoopPump
 from eev import EEV
 from evaporator import Evaporator
 from water_side_pump import CHWPump, TRIM_CURVES_1_5AD_1750RPM
+from weather import ChampaignWeather
 
 R = "R290"
 T_c = 52 + 273.15         # condensing temperature [K] (raised from 45 C so the condenser's
@@ -27,6 +30,16 @@ DT_SH = 10                # suction superheat assumed by the compressor [K]
 SUBCOOLING = 5            # condenser design subcooling [K] (matches eev.py)
 Q_TARGET = 150e3          # design cooling duty [W]
 N_UNITS = 2               # project's dual 75 kW parallel-circuit design (compressor.py)
+
+# Annual-simulation constants (used by run_annual_simulation() below)
+T_AIR_DESIGN_C = 35.0
+APPROACH_K = (T_c - 273.15) - T_AIR_DESIGN_C  # 17 K, fixed condensing approach (same
+                                               # simplification already used in compressor.py's
+                                               # IPLV.IP calc) -- holds tc-T_air constant across
+                                               # all ambient conditions rather than re-solving the
+                                               # dry cooler's eps-NTU model at each point
+GLYCOL_APPROACH_K = 6.0    # tc -> condenser glycol-leaving-temp approach (52->46 C at design)
+FREE_COOLING_THRESHOLD_C = 4.0  # ASHRAE 90.1 full free-cooling threshold (economizer.py)
 
 p_c = PropsSI("P", "T", T_c, "Q", 1, R)
 
@@ -250,3 +263,100 @@ print(f"Dry cooler fans      : {P_FAN_DESIGN/1e3:.2f} kW  (vendor-confirmed, des
 print(f"CHW/CRAH pump        : {P_chw_pump/1e3:.2f} kW")
 print(f"Other facility loads : {P_other/1e3:.2f} kW")
 print(f"PUE = (IT + other)/IT = {PUE:.3f}")
+
+
+# =======================================================================
+# ANNUAL SIMULATION (first pass): loops the real 8760-hour Champaign TMY3
+# weather file, classifying each hour as mechanical (OAT > 4 C) or full
+# free-cooling (OAT <= 4 C). SIMPLIFICATION: the partial-free-cooling band
+# (4-10 C, per economizer.py's own regime table) is folded into mechanical
+# mode for this first pass -- no partial-load economizer blend is modeled
+# yet (same open item already flagged in the LaTeX report). This produces
+# RAW per-hour results only (mode, compressor power, fan power, delivered
+# duty); aggregating into annual energy / IPLV / PUE numbers is the next
+# step, not attempted here.
+# =======================================================================
+def mechanical_hour(bank_obj, T_air_C, Q_target=Q_TARGET):
+    """Lightweight per-hour solve for a mechanical-mode hour: floats the
+    condensing temperature with ambient via the design point's fixed
+    17 K approach (same simplification already used in compressor.py's
+    IPLV.IP calculation), then solves the compressor bank for the
+    required duty. Skips re-instantiating the full condenser/EEV/
+    evaporator chain -- not needed for an annual energy sum, only for the
+    single design-point validation already done above."""
+    tc_C = T_air_C + APPROACH_K
+    result = bank_obj.solve_with_bypass(Q_target, tc_C)
+    return {
+        "mode": "mechanical", "T_air_C": T_air_C, "tc_C": tc_C,
+        "P_compressor_w": result["P_total_w"], "Q_delivered_w": result["Q_total_w"],
+        "status": result["status"],
+    }
+
+
+def free_cooling_hour(T_air_C, Q_target=Q_TARGET):
+    """Per-hour solve for a full-free-cooling hour (OAT <= 4 C): compressor
+    off, economizer covers the full duty at its own fixed design point
+    (9->15 C glycol, 21->15 C water) -- economizer.py's duty doesn't vary
+    with ambient as long as the dry cooler can deliver cold-enough glycol,
+    which is checked separately via the dry cooler's predict_off_design()
+    in run_annual_simulation() below."""
+    return {
+        "mode": "free_cooling", "T_air_C": T_air_C, "tc_C": None,
+        "P_compressor_w": 0.0, "Q_delivered_w": Q_target, "status": "ok",
+    }
+
+
+def run_annual_simulation():
+    """Runs mechanical_hour()/free_cooling_hour() plus the dry cooler's
+    off-design fan solve across every hour of the real embedded Champaign
+    TMY3 weather file. Returns the list of per-hour result dicts (not yet
+    aggregated -- that's the next step)."""
+    wx = ChampaignWeather()
+    bank_obj = CompressorBank(n_units=N_UNITS, superheat_K=DT_SH, subcooling_K=SUBCOOLING,
+                               to_bounds_C=(-10.0, 15.0))
+    dry_cooler_annual = DryCooler(
+        Q_design=213.23e3, T_glycol_hot_in=46 + 273.15, T_glycol_cold_out=40 + 273.15,
+        T_air_in_design=T_AIR_DESIGN_C + 273.15, dT_air_design=5.56,
+    )
+    P_FAN_RATED = 10.74e3  # W, vendor-confirmed (Kelvion ULF-PA104Y4V-096Z100)
+
+    results = []
+    t0 = time.time()
+    for hr in wx:
+        T_air_C = hr.T_db
+        if T_air_C <= FREE_COOLING_THRESHOLD_C:
+            r = free_cooling_hour(T_air_C)
+            T_glycol_hot_in_hour = 15 + 273.15
+        else:
+            r = mechanical_hour(bank_obj, T_air_C)
+            T_glycol_hot_in_hour = (r["tc_C"] - GLYCOL_APPROACH_K) + 273.15
+
+        Q_cond_hour = r["Q_delivered_w"] + r["P_compressor_w"]
+        fan_result = dry_cooler_annual.predict_off_design(
+            Q_target=Q_cond_hour, T_glycol_hot_in=T_glycol_hot_in_hour, T_air_in=T_air_C + 273.15,
+        )
+        r["fan_speed_frac"] = fan_result["fan_speed_frac"]
+        r["P_fan_w"] = dry_cooler_annual.fan_power(fan_result["fan_speed_frac"], P_FAN_RATED)
+        r["hour_of_year"] = hr.hour_of_year
+        results.append(r)
+
+    elapsed = time.time() - t0
+    n_mech = sum(1 for r in results if r["mode"] == "mechanical")
+    n_free = len(results) - n_mech
+    print(f"\nAnnual simulation: {len(results)} hours processed in {elapsed:.1f} s")
+    print(f"  Mechanical-mode hours (incl. unmodeled partial-free-cooling band) : "
+          f"{n_mech} ({n_mech/len(results)*100:.1f}%)")
+    print(f"  Full free-cooling hours (OAT <= {FREE_COOLING_THRESHOLD_C:.0f} C)             : "
+          f"{n_free} ({n_free/len(results)*100:.1f}%)")
+    n_over_speed = sum(1 for r in results if r["fan_speed_frac"] > 1.0)
+    if n_over_speed:
+        print(f"  WARNING: {n_over_speed} hour(s) require >100% fan speed to hit duty -- "
+              f"dry cooler capacity-ceiling hours, flagged for follow-up.")
+    return results
+
+
+print()
+print("=" * 72)
+print("ANNUAL SIMULATION -- first pass (raw per-hour results, no aggregation yet)")
+print("=" * 72)
+annual_results = run_annual_simulation()
