@@ -10,6 +10,7 @@ compressor is off, so it has no shared m_dot with the cycle below.
 """
 import csv
 import math
+import os
 import time
 
 import numpy as np
@@ -25,49 +26,93 @@ from evaporator import Evaporator
 from water_side_pump import CHWPump, TRIM_CURVES_1_5AD_1750RPM
 from weather import ChampaignWeather
 
+# ---------------------------------------------------------------------
+# Report output layout -- every figure/table this file produces lands
+# directly in the matching report/ subfolder (mirrors the project spec's
+# own deliverable structure: 1f seasonal performance, not an arbitrary
+# "which script produced this" split), so nothing needs to be manually
+# moved before it's \includegraphics{}'d / \input{}'d into the LaTeX report.
+# ---------------------------------------------------------------------
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPORT_DIR = os.path.join(_HERE, "report")
+FIG_PERF_DESIGN = os.path.join(REPORT_DIR, "figures", "performance", "design_point")
+FIG_PERF_MONTHLY = os.path.join(REPORT_DIR, "figures", "performance", "monthly")
+FIG_PERF_SEASONAL = os.path.join(REPORT_DIR, "figures", "performance", "seasonal")
+FIG_PERF_ANNUAL = os.path.join(REPORT_DIR, "figures", "performance", "annual")
+TABLE_PERF_MONTHLY = os.path.join(REPORT_DIR, "tables", "performance", "monthly")
+TABLE_PERF_SEASONAL = os.path.join(REPORT_DIR, "tables", "performance", "seasonal")
+for _d in (FIG_PERF_DESIGN, FIG_PERF_MONTHLY, FIG_PERF_SEASONAL, FIG_PERF_ANNUAL,
+           TABLE_PERF_MONTHLY, TABLE_PERF_SEASONAL):
+    os.makedirs(_d, exist_ok=True)
+
 R = "R290"
-T_c = 52 + 273.15         # condensing temperature [K] (raised from 45 C so the condenser's
-                          # saturation/subcooled approach stays positive against the dry
-                          # cooler's vendor-confirmed 40/46 C glycol loop -- see dry_cooler.py)
+# =======================================================================
+# DESIGN REVISION (efficiency compliance -- see report Ch. Performance):
+# the original design condensed at 52 C (17 K air-to-refrigerant approach:
+# dry cooler 5 K + glycol rise 6 K + condenser 6 K) and evaporated 8 K
+# below the leaving chilled water. That design missed both efficiency
+# targets (AHRI full-load COP 2.64 < 3.5, IPLV.IP 4.43 < 5.0). Revised:
+#   * condensing approach 17 -> 10 K (dry cooler 3 K + glycol rise 4 K +
+#     condenser 3 K), i.e. tc = 45 C at the 35 C design ambient -- larger
+#     dry cooler + condenser area, same hardware families;
+#   * evaporator approach 8 -> 5 K, i.e. to = 10 C at 15 C LCHW -- more
+#     evaporator plates;
+#   * a VFD on the compressors: at full load the bank over-delivers at the
+#     evaporator-dictated to = 10 C, so the drive trims speed to deliver
+#     exactly 150 kW there instead of letting to float down (fixed-speed
+#     behaviour), and below the old turndown floor it modulates speed
+#     instead of hot-gas bypassing (compressor.solve_with_vfd()).
+# Result: AHRI full-load COP 3.53 >= 3.5, IPLV.IP 5.23 >= 5.0.
+# =======================================================================
+T_c = 45 + 273.15         # condensing temperature [K] at the 35 C design ambient
+                          # (10 K total air-to-refrigerant approach, design revision)
 DT_SH = 10                # suction superheat assumed by the compressor [K]
 SUBCOOLING = 5            # condenser design subcooling [K] (matches eev.py)
 Q_TARGET = 150e3          # design cooling duty [W]
 N_UNITS = 2               # project's dual 75 kW parallel-circuit design (compressor.py)
+TO_SETPOINT_C = 10.0      # evaporating temp the evaporator's installed area sustains at
+                          # full load: LCHW 15 C - 5 K design approach (design revision)
 
 # Annual-simulation constants (used by run_annual_simulation() below)
 T_AIR_DESIGN_C = 35.0
-APPROACH_K = (T_c - 273.15) - T_AIR_DESIGN_C  # 17 K, fixed condensing approach (same
+APPROACH_K = (T_c - 273.15) - T_AIR_DESIGN_C  # 10 K, fixed condensing approach (same
                                                # simplification already used in compressor.py's
                                                # IPLV.IP calc) -- holds tc-T_air constant across
                                                # all ambient conditions rather than re-solving the
                                                # dry cooler's eps-NTU model at each point
-GLYCOL_APPROACH_K = 6.0    # tc -> condenser glycol-leaving-temp approach (52->46 C at design)
-GLYCOL_RANGE_K = 6.0       # condenser glycol supply/return range (40->46 C at design,
-                           # matches DRY_COOLER's own 40/46 C design point below)
+GLYCOL_APPROACH_K = 3.0    # tc -> condenser glycol-leaving-temp approach (45->42 C at design)
+GLYCOL_RANGE_K = 4.0       # condenser glycol supply/return range (38->42 C at design,
+                           # matches DRY_COOLER's revised 38/42 C design point below)
 FREE_COOLING_THRESHOLD_C = 4.0  # ASHRAE 90.1 full free-cooling threshold (economizer.py)
 ECON_L, ECON_L_W = 0.70, 0.25    # economizer's own larger frame (economizer.py's design point)
 
 p_c = PropsSI("P", "T", T_c, "Q", 1, R)
 
-# Shared dry cooler instance (same vendor-validated design point everywhere it's used --
-# predict_off_design() doesn't mutate instance state, so reusing one object across the
-# design-point report, the annual loop, and the monthly/seasonal report is safe).
+# Shared dry cooler instance. REVISED design point: glycol 42 -> 38 C
+# (3 K approach to the 35 C design air), duty ~182 kW (150 kW + ~32 kW
+# compressor power at the revised COP). This is a LARGER unit than the
+# original vendor selection (Kelvion ULF-PA104Y4V, 46/40 C, 48.26 kPa,
+# 10.74 kW fans) -- the vendor re-selection at the new 3 K approach is an
+# open item; the original unit's dT_air and fan power are carried as
+# placeholders pending it.
 DRY_COOLER = DryCooler(
-    Q_design=213.23e3, T_glycol_hot_in=46 + 273.15, T_glycol_cold_out=40 + 273.15,
+    Q_design=182.1e3, T_glycol_hot_in=42 + 273.15, T_glycol_cold_out=38 + 273.15,
     T_air_in_design=T_AIR_DESIGN_C + 273.15, dT_air_design=5.56,
 )
 
 # ---------------------------------------------------------------------
-# 1) Compressor bank -- solves for the evaporating temperature (and unit
-#    staging) that hits the Q_TARGET design duty at this condensing
-#    temperature, with hot-gas bypass covering anything below the bank's
-#    turndown floor. This is what actually closes the 40%-shortfall gap
-#    from the earlier single-fixed-compressor version of this file: T_o
-#    is now DERIVED from the real two-unit vendor map, not assumed.
+# 1) Compressor bank -- VFD operating model (design revision): the
+#    evaporator's installed area fixes to = TO_SETPOINT_C (10 C) at full
+#    load, and since the two-unit bank at full speed over-delivers there
+#    (~201 kW at to=10/tc=45), the VFD trims speed (~75%) so the bank
+#    delivers exactly Q_TARGET at that setpoint -- rather than letting
+#    the evaporating temperature float down as a fixed-speed bank must
+#    (which is worth ~1 COP point at this design point). Staging still
+#    picks the fewest units that can reach the load at the setpoint.
 # ---------------------------------------------------------------------
 bank = CompressorBank(n_units=N_UNITS, superheat_K=DT_SH, subcooling_K=SUBCOOLING,
                        to_bounds_C=(-10.0, 15.0))
-bank_result = bank.solve_with_bypass(Q_TARGET, T_c - 273.15)
+bank_result = bank.solve_with_vfd(Q_TARGET, T_c - 273.15, to_setpoint_C=TO_SETPOINT_C)
 
 T_o = bank_result["to_C"] + 273.15
 p_o = PropsSI("P", "T", T_o, "Q", 1, R)
@@ -323,13 +368,14 @@ print(f"PUE = (IT + other)/IT = {PUE:.3f}")
 def mechanical_hour(bank_obj, T_air_C, Q_target=Q_TARGET):
     """Lightweight per-hour solve for a mechanical-mode hour: floats the
     condensing temperature with ambient via the design point's fixed
-    17 K approach (same simplification already used in compressor.py's
-    IPLV.IP calculation), then solves the compressor bank for the
-    required duty. Skips re-instantiating the full condenser/EEV/
-    evaporator chain -- not needed for an annual energy sum, only for the
-    single design-point validation already done above."""
+    10 K approach (same simplification already used in compressor.py's
+    IPLV.IP calculation), then runs the VFD operating model at the
+    evaporator-dictated to = 10 C setpoint (design revision). Skips
+    re-instantiating the full condenser/EEV/evaporator chain -- not
+    needed for an annual energy sum, only for the single design-point
+    validation already done above."""
     tc_C = T_air_C + APPROACH_K
-    result = bank_obj.solve_with_bypass(Q_target, tc_C)
+    result = bank_obj.solve_with_vfd(Q_target, tc_C, to_setpoint_C=TO_SETPOINT_C)
     return {
         "mode": "mechanical", "T_air_C": T_air_C, "tc_C": tc_C,
         "P_compressor_w": result["P_total_w"], "Q_delivered_w": result["Q_total_w"],
@@ -395,7 +441,7 @@ def run_annual_simulation():
     return results
 
 
-def plot_annual_cop_load(results, save_path="annual_cop_load.png"):
+def plot_annual_cop_load(results, save_path=None):
     """Saves a two-panel PNG (delivered load, compressor COP) across all
     8760 hours, hour-of-year on a shared x-axis. Two stacked panels
     instead of one dual-axis plot, since load [kW] and COP [-] are
@@ -411,6 +457,9 @@ def plot_annual_cop_load(results, save_path="annual_cop_load.png"):
     """
     import numpy as np
     import matplotlib.pyplot as plt
+
+    if save_path is None:
+        save_path = os.path.join(FIG_PERF_ANNUAL, "annual_cop_load.png")
 
     hours = np.array([r["hour_of_year"] for r in results])
     load_kw = np.array([r["Q_delivered_w"] for r in results]) / 1e3
@@ -573,7 +622,7 @@ def run_full_cycle(T_air_C, label=""):
     tc_C_p = T_air_C + APPROACH_K
     p_c_p = PropsSI("P", "T", tc_C_p + 273.15, "Q", 1, R)
 
-    result = bank.solve_with_bypass(Q_TARGET, tc_C_p)
+    result = bank.solve_with_vfd(Q_TARGET, tc_C_p, to_setpoint_C=TO_SETPOINT_C)
     T_o_p = result["to_C"] + 273.15
     p_o_p = PropsSI("P", "T", T_o_p, "Q", 1, R)
     m_dot_p = result["m_dot_total_kgh"] / 3600.0
@@ -582,8 +631,8 @@ def run_full_cycle(T_air_C, label=""):
     h_2_p = per_unit_p["h_suction"] + per_unit_p["P_w"] / (per_unit_p["m_dot_kgh"] / 3600.0)
     T_2_p = PropsSI("T", "HMASS", h_2_p, "P", p_c_p, R)
 
-    # Glycol boundary condition floats with tc_C_p (same fixed 6 K approach/
-    # 6 K range as the design-point section above) instead of the stale
+    # Glycol boundary condition floats with tc_C_p (same fixed 3 K approach/
+    # 4 K range as the design-point section above) instead of the stale
     # fixed 30/35 C that could fall below tc_C_p at low ambient -- see
     # T_glycol_hot_in_p below, which is now just this same T_glycol_out_p.
     T_glycol_out_p = (tc_C_p - GLYCOL_APPROACH_K) + 273.15
@@ -681,19 +730,141 @@ def run_monthly_seasonal_reports():
 
     fieldnames = list(monthly_rows[0].keys())
 
-    with open("monthly_report.csv", "w", newline="") as f:
+    monthly_csv_path = os.path.join(TABLE_PERF_MONTHLY, "monthly_report.csv")
+    seasonal_csv_path = os.path.join(TABLE_PERF_SEASONAL, "seasonal_report.csv")
+
+    with open(monthly_csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(monthly_rows)
 
-    with open("seasonal_report.csv", "w", newline="") as f:
+    with open(seasonal_csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(seasonal_rows)
 
-    print(f"\nSaved monthly_report.csv ({len(monthly_rows)} rows) "
-          f"and seasonal_report.csv ({len(seasonal_rows)} rows)")
+    print(f"\nSaved {monthly_csv_path} ({len(monthly_rows)} rows) "
+          f"and {seasonal_csv_path} ({len(seasonal_rows)} rows)")
     return monthly_rows, seasonal_rows
+
+
+def _row_cop_total(row):
+    """Unified system COP = Q_delivered / P_other, valid in either mode:
+    algebraically identical to 1/(PUE-1) since PUE = (Q+P_other)/Q, so this
+    single formula reproduces both COP_compressor-derived (mechanical) and
+    COP_sys_fc (free-cooling) without needing an if/else on mode."""
+    return 1.0 / (row["PUE"] - 1.0)
+
+
+def plot_period_performance(rows, save_path, title):
+    """Saves a two-panel bar chart (COP, PUE) across the given rows (12
+    months or 4 seasons), bars colored by mode -- mechanical vs free-
+    cooling -- matching the annual chart's blue/aqua convention. Two
+    stacked panels instead of one dual-axis plot, since COP [-] and PUE
+    [-] use very different numeric ranges (COP up to ~80 in free-cooling
+    vs PUE always close to 1) -- a dual y-axis chart is never the right
+    call. Direct value labels are used instead of a hover layer, since
+    this is a static PNG for a printed/PDF report, not an interactive
+    chart."""
+    import matplotlib.pyplot as plt
+
+    BLUE = "#2a78d6"
+    AQUA = "#1baf7a"
+    SURFACE = "#fcfcfb"
+    PRIMARY_INK = "#0b0b0b"
+    SECONDARY_INK = "#52514e"
+    MUTED = "#898781"
+    GRID = "#e1e0d9"
+    BASELINE = "#c3c2b7"
+
+    labels = [r["label"] for r in rows]
+    is_free = [r["mode"] == "free_cooling" for r in rows]
+    colors = [AQUA if f else BLUE for f in is_free]
+    cop = [_row_cop_total(r) for r in rows]
+    pue = [r["PUE"] for r in rows]
+    x = np.arange(len(rows))
+
+    fig, (ax_cop, ax_pue) = plt.subplots(2, 1, figsize=(9, 6), facecolor=SURFACE)
+
+    for ax in (ax_cop, ax_pue):
+        ax.set_facecolor(SURFACE)
+        ax.grid(True, axis="y", color=GRID, linewidth=0.8, zorder=0)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["left"].set_color(BASELINE)
+        ax.spines["bottom"].set_color(BASELINE)
+        ax.tick_params(colors=MUTED, labelsize=8)
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, fontsize=8)
+
+    bars_cop = ax_cop.bar(x, cop, color=colors, width=0.6, zorder=2)
+    ax_cop.set_ylabel("Total system COP [-]", color=SECONDARY_INK, fontsize=9)
+    ax_cop.set_title(title, color=PRIMARY_INK, fontsize=11, loc="left")
+    for b, v in zip(bars_cop, cop):
+        ax_cop.text(b.get_x() + b.get_width() / 2, v, f"{v:.1f}", ha="center",
+                    va="bottom", fontsize=7, color=SECONDARY_INK)
+
+    bars_pue = ax_pue.bar(x, pue, color=colors, width=0.6, zorder=2)
+    ax_pue.set_ylabel("PUE [-]", color=SECONDARY_INK, fontsize=9)
+    for b, v in zip(bars_pue, pue):
+        ax_pue.text(b.get_x() + b.get_width() / 2, v, f"{v:.2f}", ha="center",
+                    va="bottom", fontsize=7, color=SECONDARY_INK)
+
+    ax_pue.text(0.0, -0.30, "Aqua = free-cooling (compressor off)   Blue = mechanical",
+                transform=ax_pue.transAxes, fontsize=8, color=MUTED)
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, facecolor=SURFACE)
+    plt.close(fig)
+    print(f"Saved {save_path}")
+
+
+def _latex_escape(val):
+    if isinstance(val, float):
+        return f"{val:.2f}"
+    s = str(val)
+    return s.replace("_", "\\_") if s else "--"
+
+
+def write_summary_latex_table(rows, out_path, caption, label):
+    """Writes a compact tabularx snippet (label, T_air, mode, COP, PUE,
+    compressor power, delivered duty) meant to be \\input{} directly into
+    the report, rather than hand-copying numbers from the CSV -- so the
+    report table always matches whatever main.py last computed."""
+    cols = [
+        ("label", "Period"), ("T_air_C", "$T_{air}$ [C]"), ("mode", "Mode"),
+        ("P_compressor_kW", "$P_{comp}$ [kW]"), ("Q_delivered_kW", "$Q$ [kW]"),
+        ("PUE", "PUE [-]"),
+    ]
+    lines = []
+    lines.append(r"\begin{table}[h!]")
+    lines.append(rf"\caption{{{caption}}}")
+    lines.append(rf"\label{{{label}}}")
+    lines.append(r"\begin{tabularx}{\linewidth}{l" + "L" * (len(cols) - 1) + "}")
+    lines.append(r"\toprule")
+    lines.append(" & ".join(f"\\textbf{{{h}}}" for _, h in cols) + r" \\")
+    lines.append(r"\midrule")
+    for row in rows:
+        cop_total = _row_cop_total(row)
+        vals = []
+        for key, _ in cols:
+            if key == "PUE":
+                vals.append(f"{row['PUE']:.2f} (COP {cop_total:.1f})")
+            elif key == "T_air_C":
+                vals.append(f"{row['T_air_C']:.1f}")
+            elif key in ("P_compressor_kW", "Q_delivered_kW"):
+                v = row[key]
+                vals.append(f"{v:.2f}" if v not in (None, "") else "--")
+            else:
+                vals.append(_latex_escape(row[key]))
+        lines.append(" & ".join(vals) + r" \\")
+    lines.append(r"\bottomrule")
+    lines.append(r"\end{tabularx}")
+    lines.append(r"\end{table}")
+
+    with open(out_path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+    print(f"Saved {out_path}")
 
 
 print()
@@ -708,3 +879,20 @@ print("=" * 72)
 print("MONTHLY / SEASONAL DETAILED REPORT")
 print("=" * 72)
 monthly_rows, seasonal_rows = run_monthly_seasonal_reports()
+
+plot_period_performance(
+    monthly_rows, os.path.join(FIG_PERF_MONTHLY, "monthly_cop_pue.png"),
+    "Monthly-average total system COP and PUE (Champaign, IL TMY3)",
+)
+plot_period_performance(
+    seasonal_rows, os.path.join(FIG_PERF_SEASONAL, "seasonal_cop_pue.png"),
+    "Seasonal-average total system COP and PUE (Champaign, IL TMY3)",
+)
+write_summary_latex_table(
+    monthly_rows, os.path.join(TABLE_PERF_MONTHLY, "monthly_summary.tex"),
+    "Monthly-average system performance summary.", "tab:monthly_summary",
+)
+write_summary_latex_table(
+    seasonal_rows, os.path.join(TABLE_PERF_SEASONAL, "seasonal_summary.tex"),
+    "Seasonal-average system performance summary.", "tab:seasonal_summary",
+)

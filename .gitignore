@@ -10,3 +10,11 @@ venv/
 .idea/
 .DS_Store
 Thumbs.db
+
+# LaTeX build intermediates (report/Project_Report_full.txt is the source; PDF is committed as the deliverable)
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.tex
+report/compile*.log

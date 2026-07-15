@@ -263,6 +263,74 @@ class CompressorBank:
         result["status"] = "below_floor_bypass"
         return result
 
+    def solve_with_vfd(self, Q_required_w, tc_C, to_setpoint_C=None):
+        """VFD (variable-speed) operating model -- the design revision that
+        replaces hot-gas bypass (Ch. Performance, design revision).
+
+        Two behaviours, both under the standard simplification that COP is
+        speed-invariant (capacity and power both scale ~linearly with speed
+        for a reciprocating compressor over a normal VFD range, so their
+        ratio holds; real part-speed COP is typically equal or slightly
+        better at moderate turndown, so this is neutral-to-conservative):
+
+        1. to_setpoint_C given (integrated-cycle use): the evaporator's
+           installed area fixes the highest evaporating temperature it can
+           sustain at full load (to = LCHW - design approach). If the bank
+           at full speed OVER-delivers at that setpoint, the VFD trims
+           speed so the bank delivers exactly Q_required at to_setpoint --
+           instead of letting to float down (colder, lower COP) as a
+           fixed-speed bank must. If even full speed under-delivers at the
+           setpoint, falls back to the fixed-speed floating solve.
+
+        2. No setpoint (rating-point use, e.g. IPLV): identical to
+           solve_with_bypass() except that below the turndown floor the
+           unit MODULATES SPEED down to the required duty instead of
+           bypassing hot gas. Power scales down with capacity, so COP holds
+           at the floor operating point's map value -- conservative, since
+           in reality reduced speed lets the evaporating temperature float
+           upward (better COP). Status 'below_floor_vfd'.
+        """
+        if to_setpoint_C is not None:
+            perf = self.units[0].performance(to_setpoint_C, tc_C,
+                                             self.superheat_K, self.subcooling_K)
+            for n_active in range(1, self.n_units + 1):
+                if n_active * perf["Q_w"] >= Q_required_w:
+                    break
+            if n_active * perf["Q_w"] >= Q_required_w:
+                speed_frac = Q_required_w / (n_active * perf["Q_w"])
+                return {
+                    "n_active": n_active,
+                    "to_C": to_setpoint_C,
+                    "tc_C": tc_C,
+                    "Q_total_w": Q_required_w,
+                    "P_total_w": Q_required_w / perf["COP"],
+                    "m_dot_total_kgh": n_active * perf["m_dot_kgh"] * speed_frac,
+                    "COP": perf["COP"],
+                    "speed_frac": speed_frac,
+                    "status": "vfd_setpoint",
+                    "per_unit": perf,   # per-unit SPECIFIC states at the map point
+                }
+            # full speed at the setpoint under-delivers -> to must float below
+            # the setpoint; fixed-speed floating solve is the honest fallback
+
+        result = self.solve(Q_required_w, tc_C)
+        if result["status"] != "below_floor":
+            return result
+
+        # Below the fixed-speed turndown floor: modulate speed instead of
+        # bypassing. COP held at the floor point's map value (conservative).
+        perf_floor = self.units[0].performance(self.to_bounds_C[0], tc_C,
+                                               self.superheat_K, self.subcooling_K)
+        speed_frac = Q_required_w / result["Q_total_w"]
+        result = dict(result)
+        result["Q_total_w"] = Q_required_w
+        result["P_total_w"] = Q_required_w / perf_floor["COP"]
+        result["COP"] = perf_floor["COP"]
+        result["m_dot_total_kgh"] = result["m_dot_total_kgh"] * speed_frac
+        result["speed_frac"] = speed_frac
+        result["status"] = "below_floor_vfd"
+        return result
+
 
 if __name__ == "__main__":
     # ------------------------------------------------------------------ #

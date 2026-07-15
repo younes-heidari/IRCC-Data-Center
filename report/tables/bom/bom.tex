@@ -1,0 +1,44 @@
+\begin{table}[h!]
+\caption{Bill of materials --- major equipment and accessories. Model numbers and
+key ratings are drawn from each component's own chapter; quantities reflect the
+dual 75\,kW parallel-circuit architecture (Chapter~\ref{ch:comp}).}
+\label{tab:bom}
+\small
+\begin{tabularx}{\linewidth}{lLlLl}
+\toprule
+\textbf{Item} & \textbf{Component} & \textbf{Qty} & \textbf{Selected model / spec} & \textbf{Ref.} \\
+\midrule
+\multicolumn{5}{l}{\textit{Refrigerant loop}} \\
+\midrule
+1 & Working fluid (R-290) & --- & Propane, ASHRAE A3, GWP\,3; $\approx$10.5\,kg system charge & Ch.~\ref{ch:refrigerant}, \ref{ch:receiver} \\
+2 & Compressor & 2 & Bitzer 4FEP-35Z, semi-hermetic reciprocating, R-290, with VFD (efficiency revision, \S\ref{perf:sec:revision}) & Ch.~\ref{ch:comp}, \ref{ch:performance} \\
+3 & Evaporator BPHE & 1 & Kelvion GB-DW family, 45\,bar double-wall; $\approx$119 plates after the 5\,K-approach revision --- exceeds the 500H frame, re-selection pending (\S\ref{perf:sec:hardware}) & Ch.~\ref{ch:evap}, \ref{ch:performance} \\
+4 & Condenser BPHE & 1 & Kelvion GB-DW family, 45\,bar double-wall; $\approx$146 plates after the 3\,K-approach revision --- exceeds the 500H frame, re-selection pending (\S\ref{perf:sec:hardware}) & Ch.~\ref{ch:cond}, \ref{ch:performance} \\
+5 & Electronic expansion valve & 2 & $\approx$25.7\,mm$^2$ orifice ($d\approx5.7$\,mm); Danfoss ETS / Emerson EX class & Ch.~\ref{ch:eev} \\
+6 & Oil separator & 1 & Bitzer OA1954, primary, A3-rated, 28\,bar, 18\,L oil charge & Ch.~\ref{ch:oilsep} \\
+7 & Liquid receiver & 1 & Bitzer F252HP, horizontal, 25\,L, 33\,bar, 11.3\,kg R-290 max & Ch.~\ref{ch:receiver} \\
+8 & Discharge check valve & 2 & One per compressor discharge branch (idle-unit isolation) & Ch.~\ref{ch:comp} \\
+9 & Suction shut-off solenoid & 2 & One per compressor suction branch (idle-unit isolation) & Ch.~\ref{ch:comp} \\
+\midrule
+\multicolumn{5}{l}{\textit{Heat rejection \& free cooling (glycol loop)}} \\
+\midrule
+10 & Dry cooler & 1 & Kelvion ULF flatbed series, EC axial fans; $\approx$2.5$\times$ the original UA after the 3\,K-approach revision --- re-selection pending (\S\ref{perf:sec:hardware}) & Ch.~\ref{ch:dry}, \ref{ch:performance} \\
+11 & Free-cooling economizer & 1 & Kelvion GB-series, single-wall, G3-port frame, $\approx$49 plates & Ch.~\ref{ch:econ} \\
+12 & Glycol circulation pump & 1 & Bell \& Gossett e-1510, 1750\,RPM, VFD; frame re-check at the revised $+28$\,\% flow (2AD vs.\ 2.5AC, \S\ref{perf:sec:hardware}) & Ch.~\ref{ch:pump}, \ref{ch:performance} \\
+13 & Secondary fluid & --- & 30\,\% propylene glycol (PG) & Ch.~\ref{ch:dry} \\
+\midrule
+\multicolumn{5}{l}{\textit{Chilled-water loop (data-hall side)}} \\
+\midrule
+14 & CHW circulation pump & 1 & Bell \& Gossett e-1510 1.5AD, 7.0\,in trim, 1750\,RPM, 1.5\,hp, VFD & Ch.~\ref{ch:chwpump} \\
+15 & CRAH / in-row units & --- & Not vendor-selected; 50\,kPa coil $\Delta P$ placeholder & Ch.~\ref{ch:chwpump} \\
+\midrule
+\multicolumn{5}{l}{\textit{Piping (diameters only, per project scope)}} \\
+\midrule
+16 & Suction line & --- & 2-5/8\,in ACR copper, Type L & Ch.~\ref{ch:piping} \\
+17 & Discharge (hot-gas) line & --- & 1-5/8\,in ACR copper, Type L & Ch.~\ref{ch:piping} \\
+18 & Liquid line & --- & 1-3/8\,in ACR copper, Type L (1.20\,m/s at the revised state points, 20\,\% margin to the 1.5\,m/s ceiling) & Ch.~\ref{ch:piping} \\
+19 & Glycol loop piping & --- & 3\,in Schedule 40 steel & Ch.~\ref{ch:piping} \\
+20 & Chilled-water loop piping & --- & 2-1/2\,in Schedule 40 steel & Ch.~\ref{ch:piping} \\
+\bottomrule
+\end{tabularx}
+\end{table}
