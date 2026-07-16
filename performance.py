@@ -53,8 +53,8 @@ IPLV_TARGET = 5.0
 # Kelvion ULF-PA106K4V-091F095 (see main.py's P_FAN_DESIGN note -- the single
 # largest remaining uncertainty in this figure).
 PUE_LOADS_KW = {
-    "Compressor bank": 31.72,
-    "Glycol loop pump": 2.56,
+    "Compressor bank": 32.12,
+    "Glycol loop pump": 2.57,
     "Dry cooler fans": 10.60,
     "CHW/CRAH pump": 1.11,
 }

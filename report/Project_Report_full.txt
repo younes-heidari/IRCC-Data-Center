@@ -145,10 +145,11 @@ Piping          & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:piping
 Liquid receiver & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:receiver} \\
 System performance (COP / IPLV / PUE) & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:performance} \\
 Cycle representation (p-h chart) & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:cyclerep} \\
+Charge analysis \& safety measures & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:safety} \\
 Bill of materials & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:bom} \\
 Piping \& instrumentation diagram & Pending \\
-Safety measures / charge analysis & Pending \\
 Commissioning procedure & Pending \\
+Compressor--EEV control interaction & Pending \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -4340,6 +4341,18 @@ The very thin margin this leaves is flagged explicitly in
 \S\ref{receiver:sec:limitations} and should be re-checked once the charge estimate is
 firmed up.
 
+\begin{quote}
+\noindent\textbf{SUPERSEDED --- this selection does not survive the charge analysis.}
+The full inventory of Chapter~\ref{ch:safety} (\S\ref{safe:sec:inventory}) returns
+\textbf{13.9--20.3\,kg}, not $\approx$10.5\,kg: the estimate below omits the receiver's
+own content and the oil separator's, and predates the confirmed (larger) vendor plate.
+\textbf{F252HP is undersized against even the low bound} and must be replaced ---
+see \S\ref{safe:sec:receiver_undersized}, which recommends F392TP/F402HP (39\,L,
+17.6\,kg) as the minimum and also resolves the connection-size mismatch of open
+item~4. Open item~3 below anticipated precisely this outcome. The sections that follow
+remain valid as the sizing \emph{method}; the model number does not.
+\end{quote}
+
 \zonedivider{Part B \quad---\quad Safety, Connections, and Open Items}
 
 % ── §11.6 ─────────────────────────────────────────────────────────────────────
@@ -5002,6 +5015,247 @@ its duty, then superheats to 18\,\textdegree C in a short tail. Its approach is 
 the cold end, where the 15\,\textdegree C leaving chilled water meets the
 10\,\textdegree C evaporating refrigerant --- the 5\,K approach the revision tightened
 from 8\,K, bought with the extra plates of \S\ref{perf:sec:hardware}.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Refrigerant Charge Analysis and Safety Measures}
+\label{ch:safety}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\zonedivider{Part A \quad---\quad Charge Inventory}
+
+\section{Why This Chapter Is a Condition, Not an Addendum}
+\label{safe:sec:why}
+
+The project brief admits a refrigerant of safety class A3 \emph{only}
+``\textbf{with charge analysis}'' (subtask~1a). R-290 is A3, so this chapter is a
+\textbf{condition on the working-fluid selection itself}
+(Chapter~\ref{ch:refrigerant}) rather than an optional extra: without it, the R-290
+choice is not substantiated. It also carries subtask~1i (safety measures), which
+the per-component chapters have until now addressed only piecemeal.
+
+\section{Charge Inventory}
+\label{safe:sec:inventory}
+
+The inventory below is built component by component from the same geometry and
+CoolProp properties the rest of the model uses (\texttt{charge\_analysis.py}), at
+the revised design point. It is reported as a \textbf{range}, not a point value:
+refrigerant redistributes with operating mode, and the void fractions in the two
+two-phase exchangers are genuinely uncertain. Safety systems are sized on the
+\emph{upper} bound.
+
+\input{tables/safety/charge_inventory.tex}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{figures/safety/charge_inventory.png}
+\caption{R-290 charge inventory at the revised design point. Whiskers show the
+bounds from void fraction, receiver fill level, and oil-dissolved refrigerant.}
+\label{fig:charge_inv}
+\end{figure}
+
+\subsection{Finding: the Charge Is Substantially Higher Than Previously Estimated}
+\label{safe:sec:higher}
+
+The total comes to \textbf{13.9--20.3\,kg}, against the
+$\approx$10.5\,kg order-of-magnitude figure carried in Chapter~\ref{ch:receiver}
+(\S\ref{receiver:sec:charge}). Three causes, all of which make the earlier estimate
+an under-count rather than a disagreement:
+
+\begin{enumerate}
+  \item \textbf{The earlier estimate omitted the vessels themselves.} The liquid
+        receiver's own operating content (2.97--6.16\,kg) and the oil separator's
+        40\,L of discharge vapour (1.37\,kg) were not counted --- together
+        $\approx$4.3--7.5\,kg, the largest single correction.
+  \item \textbf{The confirmed vendor plate is larger.} The Kelvion HP\,DW\,500H
+        plate (195\,$\times$\,600\,mm) supersedes the $A\times B$ placeholder
+        (\S\ref{perf:sec:uvalues}), raising both exchangers' internal volume.
+  \item \textbf{Suction and discharge lines were neglected} as ``$<$1\,kg''; they
+        are 1.12\,kg combined.
+\end{enumerate}
+
+\subsection{The Dominant Uncertainty --- and the Design Lever}
+\label{safe:sec:linelength}
+
+The single largest line item is the \textbf{liquid line at 6.33\,kg}, and it rests
+entirely on an \assumed{} 15\,m length --- the project brief scopes piping to
+diameters only (\S\ref{piping:sec:scope}). The charge scales almost linearly with
+it:
+
+\begin{table}[h!]
+\caption{System charge vs.\ the assumed liquid-line length. The liquid line is both
+the dominant uncertainty and the most effective charge-reduction lever.}
+\label{tab:charge_sensitivity}
+\begin{tabularx}{\linewidth}{lLL}
+\toprule
+\textbf{Liquid-line length} & \textbf{Total charge} & \textbf{Receiver volume required ($90\,\%$ fill)} \\
+\midrule
+5\,m  & 9.6--16.0\,kg  & $\approx$36\,L \\
+10\,m & 11.8--18.2\,kg & $\approx$40\,L \\
+\textbf{15\,m (assumed)} & \textbf{13.9--20.3\,kg} & $\approx$\textbf{45\,L} \\
+20\,m & 16.0--22.4\,kg & $\approx$50\,L \\
+25\,m & 18.1--24.5\,kg & $\approx$54\,L \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent This is not merely an uncertainty to be flagged --- it is an actionable
+design instruction. For an A3 refrigerant, \textbf{every metre of liquid line is
+charge}, and charge is what drives the EN~378 obligations of Part~B. The
+architecture should therefore \textbf{co-locate the compressor pack, condenser and
+receiver as tightly as the layout permits}, and the liquid line should be the first
+thing shortened if the plant room is laid out for real.
+
+\subsection{Consequence: the Selected Liquid Receiver Is Undersized}
+\label{safe:sec:receiver_undersized}
+
+A liquid receiver must accept the entire charge on pump-down while retaining vapour
+headspace (Chapter~\ref{ch:receiver}, \S\ref{receiver:sec:basis}). Against the
+revised inventory:
+
+\begin{table}[h!]
+\caption{Bitzer P-series receivers against the revised charge estimate.}
+\begin{tabularx}{\linewidth}{lLLL}
+\toprule
+\textbf{Model} & \textbf{Max R-290 charge} & \textbf{vs.\ low bound (13.9\,kg)} & \textbf{vs.\ high bound (20.3\,kg)} \\
+\midrule
+F202HP & 9.0\,kg & Undersized & Undersized \\
+\textbf{F252HP (currently selected)} & \textbf{11.3\,kg} & \textbf{Undersized} & \textbf{Undersized} \\
+F302NP & 13.5\,kg & Marginal & Undersized \\
+F392TP\,/\,F402HP & 17.6\,kg & \textbf{Adequate} & Undersized \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent \textbf{The F252HP selected in Chapter~\ref{ch:receiver} is undersized
+against even the low bound} and must be replaced. Chapter~\ref{ch:receiver}'s own
+open item~3 anticipated exactly this outcome, stating that if ``the pending EN~378
+calculation finds additional charge elsewhere in the circuit, F302NP (13.5\,kg) or
+F392TP/F402HP (17.6\,kg) should be adopted instead'' --- and item~4 separately
+flagged the F252HP's undersized 22\,mm connections. Both are now confirmed.
+
+\textbf{Recommendation: adopt F392TP/F402HP (39\,L, 17.6\,kg)} as the minimum, which
+also resolves the connection-size mismatch (28\,mm vs.\ the 1-3/8\,in liquid line).
+Note that even this does not cover the 20.3\,kg upper bound; a $\approx$45\,L vessel
+would. The honest resolution is to \emph{first} shorten the liquid line
+(\S\ref{safe:sec:linelength}) and re-run this inventory against real layout
+geometry, rather than buy a larger vessel to hold an avoidable charge --- larger
+charge is itself the thing A3 safety practice is trying to minimise
+(\S\ref{safe:sec:minimisation}).
+
+\zonedivider{Part B \quad---\quad EN 378 Safety Assessment}
+
+\section{Flammability Assessment}
+\label{safe:sec:en378}
+
+\input{tables/safety/en378_assessment.tex}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{figures/safety/charge_concentration.png}
+\caption{Room concentration following a full release of the upper-bound charge, vs.\
+room volume, against the EN~378 thresholds.}
+\label{fig:charge_conc}
+\end{figure}
+
+The assessment is decisive and is worth stating plainly. Diluting a full
+20.3\,kg release below R-290's practical limit by room volume alone would require a
+\textbf{2{,}533\,m$^3$} plant room; even reaching the bare LFL needs
+\textbf{533\,m$^3$}. A realistically sized machinery room for a 150\,kW chiller
+($\approx$90\,m$^3$) would reach $\approx$225\,g/m$^3$ --- \textbf{5.9$\times$ the
+LFL}. \textbf{Room volume is therefore not a viable safety strategy}, and the
+installation cannot rely on dilution.
+
+Compliance instead rests on treating the plant room as a \textbf{dedicated
+refrigerating machinery room} under EN~378, whose provisions decouple the permitted
+charge from room volume:
+
+\begin{itemize}
+  \item \textbf{Refrigerant detection} at or below 20\,\% LFL
+        ($\mathbf{7.6\,g/m^3}$), which alarms and starts emergency ventilation
+        long before a flammable mixture can form.
+  \item \textbf{Emergency mechanical ventilation} of
+        $\dot V = 0.014\,m^{2/3} = \mathbf{375\,m^3/h}$ (0.104\,m$^3$/s) per
+        EN~378-3 --- a modest fan, and a reminder that \emph{detection plus
+        ventilation}, not volume, is what makes A3 installations safe.
+  \item \textbf{Ignition-source control} in the machinery room: no open flames, and
+        electrical equipment either outside the room or rated for the zone.
+\end{itemize}
+
+\section{Charge-Minimisation and A3 Measures Already in the Design}
+\label{safe:sec:minimisation}
+
+Several decisions made earlier in this report are, in effect, A3 safety measures.
+They are consolidated here (subtask~1i) rather than left scattered:
+
+\begin{table}[h!]
+\caption{A3 safety measures already embedded in the design.}
+\begin{tabularx}{\linewidth}{lLL}
+\toprule
+\textbf{Measure} & \textbf{What it does} & \textbf{Where} \\
+\midrule
+\textbf{Double-wall BPHEs} & Prevents an R-290 leak reaching the chilled water and
+hence the occupied data hall --- the single most important barrier in the design,
+and the reason the plant room is the \emph{only} space with a refrigerant
+inventory & \S\ref{ch:evap}, \S\ref{ch:cond} \\
+Glycol loop (not direct DX) & The refrigerant never leaves the plant room; the data
+hall sees only water & Ch.~\ref{ch:overview} \\
+Semi-hermetic compressor & No external shaft seal --- removes a leak path an
+open-drive machine would have & \S9.2 \\
+Float-valve oil return (not solenoid) & Avoids an electrical ignition source in the
+refrigerant-wetted oil path & \S\ref{oilsep:sec:oilreturn} \\
+Relief discharge routed outdoors & A relieving vessel vents flammable gas to a safe
+outdoor location, never into the plant room & \S\ref{receiver:sec:safety} \\
+Pressure vessels rated 28--45\,bar & All clear the 19.07\,bar 55\,\textdegree C
+standstill pressure with large margin & \S\ref{receiver:sec:pressure} \\
+\midrule
+\textbf{Short liquid line} (recommended) & The most effective remaining
+charge-reduction lever & \S\ref{safe:sec:linelength} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Limitations and Open Items}
+\label{safe:sec:limitations}
+
+\begin{enumerate}
+  \item \textbf{The inventory is an engineering estimate, not a commissioning
+        charge.} Void fractions in the two-phase exchangers are bounded rather than
+        modelled, and the 6.4\,kg spread between low and high bounds reflects that
+        honestly. The real charge is established by weighing at commissioning ---
+        which is itself still an outstanding deliverable (subtask~2).
+  \item \textbf{The 15\,m line lengths are assumed}, and the charge scales nearly
+        linearly with the liquid line (\S\ref{safe:sec:linelength}). This is the
+        dominant uncertainty in the whole chapter and should be closed with a real
+        layout before the receiver is procured.
+  \item \textbf{The 90\,m$^3$ machinery room is assumed}, not specified: the brief
+        gives the data hall footprint (8\,$\times$\,12\,m) but not the plant room.
+        The EN~378 conclusion is insensitive to it --- no plausible plant room
+        dilutes this charge below the LFL --- but the ventilation design needs the
+        real geometry.
+  \item \textbf{Ventilation is sized by the EN~378-3 emergency formula only.} A
+        full design must also check normal ventilation, the detector count and
+        placement (R-290 is heavier than air and pools low), and the airflow path.
+  \item \textbf{No formal risk assessment or zone classification} (e.g.\ ATEX) has
+        been carried out; the ignition-source control above states intent, not a
+        classified drawing.
+\end{enumerate}
+
+\section{References}
+
+\begin{enumerate}
+  \item EN 378-1, \textit{Refrigerating systems and heat pumps --- Safety and
+        environmental requirements. Part 1: Basic requirements, definitions,
+        classification and selection criteria} --- LFL, practical limits, charge
+        limits by occupancy.
+  \item EN 378-3, \textit{Part 3: Installation site and personal protection} ---
+        machinery-room requirements, emergency ventilation
+        ($\dot V = 0.014\,m^{2/3}$), detection.
+  \item IEC 60335-2-40, \textit{Particular requirements for electrical heat pumps,
+        air-conditioners and dehumidifiers} --- appliance-level A3 charge limits.
+  \item ASHRAE 15, \textit{Safety Standard for Refrigeration Systems} ---
+        machinery-room and standstill-pressure basis.
+\end{enumerate}
 
 
 % ══════════════════════════════════════════════════════════════════════════════

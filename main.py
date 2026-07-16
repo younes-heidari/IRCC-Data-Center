@@ -66,7 +66,11 @@ R = "R290"
 # =======================================================================
 T_c = 45 + 273.15         # condensing temperature [K] at the 35 C design ambient
                           # (10 K total air-to-refrigerant approach, design revision)
-DT_SH = 10                # suction superheat assumed by the compressor [K]
+DT_SH = 8                 # suction superheat [K] -- the compressor vendor's own selection
+                          # basis (Ch. Compressor: "useful superheat 8 K, 15 C return gas").
+                          # Was 10 K, an undocumented deviation that made this file's
+                          # design-point COP read 4.73 against performance.py's 4.67;
+                          # aligned to 8 K so the report quotes one design-point COP.
 SUBCOOLING = 5            # condenser design subcooling [K] (matches eev.py)
 Q_TARGET = 150e3          # design cooling duty [W]
 N_UNITS = 2               # project's dual 75 kW parallel-circuit design (compressor.py)
