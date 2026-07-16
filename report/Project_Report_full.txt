@@ -1922,6 +1922,16 @@ noise near occupied space may be a constraint. The 12.2\,\% capacity margin over
 190\,kW target is an accepted consequence of the catalog's discrete speed-tap steps
 (``Z090''--``Z110'' variants of the same physical unit).
 
+\begin{quote}
+\noindent\textbf{SUPERSEDED --- see \S\ref{dry:sec:reselection}.} This unit was selected
+against the \emph{original} 46/40\,\textdegree C glycol design point. The efficiency
+revision (Chapter~\ref{ch:performance}, \S\ref{perf:sec:revision}) moves the glycol loop
+to 42/38\,\textdegree C, at which this unit \emph{cannot} meet duty. The sections that
+follow document the original selection and remain valid as the method and the
+$\varepsilon$-NTU model's validation; \S\ref{dry:sec:reselection} carries the
+re-selection that supersedes the unit itself.
+\end{quote}
+
 % ── §5.6 ──────────────────────────────────────────────────────────────────────
 \section{Selected Unit Datasheet: Kelvion ULF-PA104Y4V-096Z100}
 \label{dry:sec:datasheet}
@@ -2213,6 +2223,118 @@ Data source                  & Kelvion Select RT                    & \texttt{dr
 \bottomrule
 \end{tabularx}
 \end{table}
+
+% ── §5.12b ────────────────────────────────────────────────────────────────────
+\section{Re-Selection for the Revised Design Point}
+\label{dry:sec:reselection}
+
+The efficiency revision (Chapter~\ref{ch:performance}, \S\ref{perf:sec:revision}) moves
+the glycol loop from 46/40\,\textdegree C to \textbf{42/38\,\textdegree C} --- a 3\,K
+approach to the 35\,\textdegree C design air instead of 5\,K --- which forces a
+re-selection of this unit.
+
+\subsection{Why the Original Unit Cannot Serve the Revised Duty}
+
+The revised duty (181.7\,kW) is \emph{lower} than the original unit's 213.23\,kW rating,
+which invites the intuition that the existing unit must therefore suffice. It does not,
+because \textbf{a dry-cooler capacity is a number at a condition, not a property of the
+box}. The rating and the duty are quoted at different conditions:
+
+\begin{table}[h!]
+\caption{The same coil at two conditions --- why the 213\,kW rating does not carry over.}
+\begin{tabularx}{\linewidth}{lLLL}
+\toprule
+\textbf{Condition} & \textbf{Glycol} & \textbf{Driving $\Delta T$ (glycol-in $-$ air-in)} & \textbf{ULF-PA104Y4V delivers} \\
+\midrule
+Original rating & 46\,$\to$\,40\,\textdegree C & 11\,K & 213.2\,kW \\
+Revised duty    & 42\,$\to$\,38\,\textdegree C & 7\,K ($-36$\,\%) & $\approx$145.7\,kW \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent At the revised condition the original coil reaches only $\approx$146\,kW at
+100\,\% fan speed against the $\approx$182\,kW required --- it would need $\approx$150\,\%
+fan speed, which does not exist. This is precisely the \textbf{17 fan-ceiling hours} the
+annual simulation flagged.
+
+The 3\,K approach is moreover \emph{forced}, not chosen: $t_c = 45$\,\textdegree C with
+5\,K subcooling puts the refrigerant leaving the condenser at 40.0\,\textdegree C, so the
+glycol must enter the condenser \emph{below} 40\,\textdegree C. Glycol at
+40\,\textdegree C --- exactly the original unit's 5\,K approach --- would pinch the
+condenser's cold end to zero driving force. Redistributing the burden onto glycol flow
+instead (a 2\,K range) was checked and rejected: pump power scales roughly with
+$\mdot^3$, taking the glycol pump to $\approx$19\,kW and PUE to $\approx$1.42, worse than
+the original design.
+
+\subsection{Re-Selected Unit: Kelvion ULF-PA106K4V-091F095}
+
+Select RT was re-run at the revised duty (620\,MBH, glycol 107.6/100.4\,\textdegree F,
+ambient 95\,\textdegree F). The returned candidates were screened on the criteria that
+actually bind:
+
+\begin{table}[h!]
+\caption{Re-selection screening at the revised 42/38\,\textdegree C duty (620\,MBH required).}
+\begin{tabularx}{\linewidth}{lLLLLL}
+\toprule
+\textbf{Type} & \textbf{MBH (margin)} & \textbf{$\Delta P$} & \textbf{Fan speed} & \textbf{$L_{pA}$} & \textbf{Note} \\
+\midrule
+ULF-PA106Y4V-096Z110 & 639.5 (3\,\%) & 4\,psi & 1100/1100 & 64\,dB(A) & Low $\Delta P$, but \textbf{no fan headroom} \\
+ULF-PA107Y4V-091Z100 & 630.8 (2\,\%) & 4\,psi & 1000/1100 & 67\,dB(A) & Low $\Delta P$, thin margin, loud \\
+\textbf{ULF-PA106K4V-091F095} & \textbf{670.4 (8\,\%)} & 8\,psi & \textbf{950/1050} & \textbf{60\,dB(A)} & \textbf{Selected} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent\textbf{ULF-PA106K4V-091F095 is selected}, on the same criterion the original
+selection was made on: at \textbf{60\,dB(A)} it holds the original unit's sound level,
+which \S\ref{dry:sec:vendor} identified as decisive for a data-centre site. It also carries
+the best capacity margin (8\,\%) and \textbf{10\,\% fan-speed headroom} (950 of 1050\,rpm)
+--- the latter deliberately preferred over the lower-$\Delta P$ ``Z110'' variants, which
+run 1100/1100, i.e.\ flat out at design with no reserve for a hotter-than-design day, coil
+fouling, or a failed fan. Buying a unit with no fan headroom is what produced the
+fan-ceiling problem in the first place.
+
+\begin{table}[h!]
+\caption{Re-selected unit --- key specifications (Kelvion Select RT, revised duty).}
+\label{tab:dry_reselected}
+\begin{tabularx}{\linewidth}{lL}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Model & ULF-PA106K4V-091F095 \\
+Capacity & 670.36\,MBH $=$ \textbf{196.5\,kW} at glycol 42\,/\,38\,\textdegree C, air 35\,\textdegree C \\
+Surface area & 20{,}977\,ft$^2$ $=$ \textbf{1{,}949\,m$^2$} ($2.1\times$ the original's 938\,m$^2$) \\
+Air volume flow & 93{,}782\,cfm; air outlet 101.7\,\textdegree F $\Rightarrow$ $\Delta T_{\mathrm{air}} = 3.72$\,K \\
+Fans & 6 $\times$ 0.910\,m EC axial, 950\,/\,1050\,rpm (10\,\% headroom) \\
+Sound pressure, $L_{pA}$ (33\,ft) & 60\,dB(A) \\
+Glycol-side pressure drop & 8\,psi $=$ \textbf{55.16\,kPa} (was 7\,psi) \\
+Coils $\times$ sections $\times$ circuits & $1\times2\times29$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent Note the re-selected unit's \emph{lower} headline capacity (670 vs.\ 727\,MBH)
+despite being a physically far larger coil ($2.1\times$ the surface). The two numbers are
+quoted at different conditions --- 670\,MBH at the hard 3\,K approach versus 727\,MBH at
+the easy 5\,K approach. \textbf{Surface area is the condition-independent measure}, and by
+it the re-selected unit is unambiguously the larger machine.
+
+With this unit the annual simulation runs \textbf{clean across all 8{,}760 hours} --- the
+17 fan-ceiling hours are resolved.
+
+\subsection{Open Item: Fan Power Not Vendor-Reported}
+\label{dry:sec:fanpower_open}
+
+The Select RT results table does not report fan power. The value carried in the model
+(\textbf{10.6\,kW}) is therefore an \textbf{estimate}, scaled from the original unit's
+confirmed 2.685\,kW/fan (0.960\,m at 1000\,rpm) by the fan laws
+($P \sim N^3 D^5$): $6 \times 2.685 \times (950/1000)^3 \times (0.910/0.960)^5 =
+10.6$\,kW. It is nearly unchanged from the original 10.74\,kW despite 50\,\% more fans,
+because the $2.1\times$ coil surface lowers face velocity and hence air-side $\Delta P$
+per unit of flow (specific fan power 0.113 vs.\ 0.150\,kW/kcfm) --- physically consistent,
+but not confirmed. \textbf{This is the single largest remaining uncertainty in the revised
+PUE} (\S\ref{perf:sec:pue}) and must be read off the unit's datasheet. The free-cooling
+operating point should be re-run on this unit at the same time.
 
 % ── §5.13 ──────────────────────────────────────────────────────────────────────
 \section{Air-Side Pressure Drop --- Scope Note}
@@ -4473,10 +4595,13 @@ electrical loads at the 35\,\textdegree C / full-load design point.
 The design-day PUE is \textbf{1.31} (improved from the original design's 1.40),
 dominated by the compressor bank (31.7\,kW of the 46.0\,kW total --- itself down from
 47.1\,kW, the revision's lift reduction at work). The glycol pump load roughly doubles
-(1.18\,$\to$\,2.43\,kW) because the tighter 4\,K glycol range demands
-$\approx$28\,\% more flow, and the confirmed (longer) vendor plate raises the
-condenser's glycol-side pressure drop --- both real, counted costs of the revision,
-together far outweighed by the 15.4\,kW compressor saving. This is the
+(1.18\,$\to$\,2.56\,kW): the tighter 4\,K glycol range demands $\approx$28\,\% more
+flow, the confirmed (longer) vendor plate raises the condenser's glycol-side pressure
+drop, and the re-selected dry cooler adds 1\,psi --- all real, counted costs of the
+revision, together far outweighed by the 15.4\,kW compressor saving. Fan power is
+essentially unchanged (10.74\,$\to$\,10.6\,kW) despite a $2.1\times$ larger coil, since
+the greater face area offsets the extra fans (\S\ref{dry:sec:fanpower_open} --- an
+estimate, and the largest remaining uncertainty in this figure). This is the
 \emph{worst-case} PUE --- it occurs only at the hottest design ambient; the seasonal
 analysis below shows the annual-average PUE is far more favourable because most of
 the year runs at part load or in free cooling.
@@ -4535,11 +4660,10 @@ hottest monthly average (July) holds PUE 1.23, and the worst-case design day 1.3
 Roughly 29\,\% of the year is full free cooling and a further 15.5\,\% is partial free
 cooling (Chapter~\ref{ch:dry}, \S\ref{dry:sec:annualregime}), so the
 \emph{annual-average} efficiency is far better than any single design-point number ---
-the central benefit of the glycol-loop free-cooling architecture. One flag from the
-revised annual run: 17 of the year's hottest hours now exceed the (placeholder) dry
-cooler's fan capacity at the revised duty --- a capacity-ceiling artefact of carrying
-the original vendor unit's air-side data pending the re-selection at the larger 3\,K
-approach (\S\ref{perf:sec:hardware}), to be closed out with that re-selection.
+the central benefit of the glycol-loop free-cooling architecture. With the re-selected
+dry cooler (\S\ref{dry:sec:reselection}) the annual run is \textbf{clean across all
+8{,}760 hours}; the 17 fan-ceiling hours seen while the original unit was still carried
+are resolved.
 
 % ── §12.6 ─────────────────────────────────────────────────────────────────────
 \section{Compliance Summary}
@@ -4662,15 +4786,18 @@ Condenser BPHE & LMTD 14.5\,K, $UA$ 13.1\,kW/K, $U$ 2{,}500, 5.25\,m$^2$ &
 LMTD 9.0\,K, $UA$ 20.2\,kW/K, $U$ 2{,}000 (DW), 10.12\,m$^2$,
 $\approx$\textbf{104 plates} & \textbf{Fits the frame} with $\approx$16 plates
 spare \\
-Dry cooler & $UA = 47.3$\,kW/K (Kelvion ULF-PA104Y4V) & $UA \approx 118$\,kW/K
-($\approx$2.5$\times$) & Substantially larger unit; vendor re-selection at the 3\,K
-approach required (17 fan-ceiling hours in the annual run until then). \textbf{The
-revision's dominant hardware cost} \\
-Glycol loop & 9.07\,kg/s (6\,K range), condenser-side $\Delta P$ 17.5\,kPa &
-11.6\,kg/s (4\,K range, $+28$\,\%), condenser-side $\Delta P$ $\approx$35.8\,kPa &
-Pump duty rises (electrical 1.18\,$\to$\,2.43\,kW); system curve and trim selection
-in Ch.~\ref{ch:pump} superseded --- re-derive against the 2.5AC frame
-(\S\ref{perf:sec:pue}, Ch.~\ref{ch:pump} open item~3) \\
+Dry cooler & Kelvion ULF-PA104Y4V, 938\,m$^2$, $UA = 47.3$\,kW/K, 60\,dB(A) &
+\textbf{Kelvion ULF-PA106K4V-091F095}, 1{,}949\,m$^2$ ($2.1\times$), 60\,dB(A),
+10\,\% fan headroom & \textbf{Re-selected} (\S\ref{dry:sec:reselection}) --- the
+original unit reaches only $\approx$146\,kW of the $\approx$182\,kW required at the
+3\,K approach. \textbf{The revision's dominant hardware cost}; resolves the 17
+fan-ceiling hours \\
+Glycol loop & 9.07\,kg/s (6\,K range), condenser $\Delta P$ 17.5\,kPa, dry cooler
+7\,psi & 11.6\,kg/s (4\,K range, $+28$\,\%), condenser $\Delta P$
+$\approx$35.8\,kPa, dry cooler 8\,psi & Pump duty rises (electrical
+1.18\,$\to$\,2.56\,kW); system curve and trim selection in Ch.~\ref{ch:pump}
+superseded --- re-derive against the 2.5AC frame (\S\ref{perf:sec:pue},
+Ch.~\ref{ch:pump} open item~3) \\
 Compressors & 2 $\times$ fixed-speed 4FEP-35Z & same units $+$ VFDs & Standard drive
 addition; also resolves the turndown-floor and 30\,kW minimum-load open items \\
 \bottomrule

@@ -49,12 +49,13 @@ IPLV_TARGET = 5.0
 # here so the performance chapter is self-contained). These are the
 # mechanical-mode design-point electrical loads at 35 C ambient / 150 kW full
 # load. Compressor power reflects the VFD-trimmed operating point (to=10 C,
-# tc=45 C, COP 4.67); fan power is the original vendor unit's rated value,
-# carried as a placeholder pending re-selection at the larger 3 K approach.
+# tc=45 C, COP 4.67); fan power is the fan-law estimate for the re-selected
+# Kelvion ULF-PA106K4V-091F095 (see main.py's P_FAN_DESIGN note -- the single
+# largest remaining uncertainty in this figure).
 PUE_LOADS_KW = {
     "Compressor bank": 31.72,
-    "Glycol loop pump": 2.43,
-    "Dry cooler fans": 10.74,
+    "Glycol loop pump": 2.56,
+    "Dry cooler fans": 10.60,
     "CHW/CRAH pump": 1.11,
 }
 

@@ -88,16 +88,32 @@ ECON_L, ECON_L_W = 0.70, 0.25    # economizer's own larger frame (economizer.py'
 
 p_c = PropsSI("P", "T", T_c, "Q", 1, R)
 
-# Shared dry cooler instance. REVISED design point: glycol 42 -> 38 C
-# (3 K approach to the 35 C design air), duty ~182 kW (150 kW + ~32 kW
-# compressor power at the revised COP). This is a LARGER unit than the
-# original vendor selection (Kelvion ULF-PA104Y4V, 46/40 C, 48.26 kPa,
-# 10.74 kW fans) -- the vendor re-selection at the new 3 K approach is an
-# open item; the original unit's dT_air and fan power are carried as
-# placeholders pending it.
+# Shared dry cooler instance -- RE-SELECTED for the revised design point.
+#
+# The original Kelvion ULF-PA104Y4V-096Z100 (727.56 MBH at 46/40 C glycol,
+# 35 C air) cannot serve the revised 42/38 C glycol condition: its rating
+# is at an 11 K glycol-to-air driving dT, while 42/38 C gives only 7 K, so
+# the same coil delivers ~146 kW against the ~182 kW required (it needed
+# ~150% fan speed -- the source of the 17 fan-ceiling hours flagged in the
+# annual run). Capacity is a number AT A CONDITION, not a property of the box.
+#
+# Re-selected via Kelvion Select RT at the revised duty:
+#   KELVION ULF-PA106K4V-091F095
+#     670.36 MBH = 196.5 kW  @ glycol 42 -> 38 C, air 35 C  (8% margin on the
+#                                                            ~182 kW required)
+#     surface 20,977 ft2 = 1,949 m2  (2.1x the original's 938 m2 -- physically
+#          a much larger coil, despite the LOWER headline MBH, which is quoted
+#          at the harder 3 K-approach condition)
+#     air 93,782 cfm, outlet 101.7 F  -> dT_air = 3.72 K
+#     6 x 0.910 m EC fans @ 950/1050 rpm (10% speed headroom, unlike the
+#          "Z110" variants which run 1100/1100 flat out with no reserve)
+#     60 dB(A) at 33 ft -- matches the original unit's sound level, the
+#          criterion the original selection was made on (see Ch. Dry Cooler)
+#     glycol-side dP 8 psi = 55.16 kPa (up from 7 psi; drives the glycol pump
+#          frame re-check, already an open item)
 DRY_COOLER = DryCooler(
-    Q_design=182.1e3, T_glycol_hot_in=42 + 273.15, T_glycol_cold_out=38 + 273.15,
-    T_air_in_design=T_AIR_DESIGN_C + 273.15, dT_air_design=5.56,
+    Q_design=196.5e3, T_glycol_hot_in=42 + 273.15, T_glycol_cold_out=38 + 273.15,
+    T_air_in_design=T_AIR_DESIGN_C + 273.15, dT_air_design=3.72,
 )
 
 # ---------------------------------------------------------------------
@@ -285,7 +301,7 @@ glycol_pump = GlycolLoopPump(
     m_dot_mech=condenser.m_dot_glycol, T_glycol_hot_mech=condenser.T_glycol_out,
     T_glycol_cold_mech=condenser.T_glycol_in,
     m_dot_free=6.52, T_glycol_hot_free=15 + 273.15, T_glycol_cold_free=9 + 273.15,
-    dP_drycooler_mech_ref=48.26e3, dP_econ_free_ref=10.43e3,
+    dP_drycooler_mech_ref=55.16e3, dP_econ_free_ref=10.43e3,   # 8 psi, re-selected unit
     D_h=D_h, L=L, beta=beta, b=b, L_w=L_w, N_cp_glycol=N_cp_glycol,
     D_pipe=0.0779, pipe_roughness=0.045e-3, L_eq_total=65.0,
 )
@@ -296,8 +312,17 @@ chw_pump = CHWPump(
 )
 chw_pump.select_trim()
 
-P_FAN_DESIGN = 10.74e3   # W, vendor-confirmed dry cooler fan power at the mechanical-mode
-                          # design point (Kelvion ULF-PA104Y4V-096Z100, dry_cooler.py)
+# Dry cooler fan power at the mechanical-mode design point, for the RE-SELECTED
+# Kelvion ULF-PA106K4V-091F095 (6 x 0.910 m EC fans @ 950 rpm).
+# ESTIMATE, not vendor-confirmed: the Select RT results table does not report fan
+# power, so this is scaled from the original unit's confirmed 2.685 kW/fan
+# (0.960 m @ 1000 rpm) by the fan laws, P ~ N^3 * D^5:
+#     6 x 2.685 * (950/1000)^3 * (0.910/0.960)^5 = 10.6 kW
+# Nearly unchanged from the original 10.74 kW despite 50% more fans, because the
+# 2.1x coil surface lowers face velocity and hence air-side dP per unit flow
+# (specific fan power 0.113 vs 0.150 kW/kcfm). CONFIRM from the datasheet -- this
+# is the single largest uncertainty in the revised PUE.
+P_FAN_DESIGN = 10.6e3
 
 P_compressor = bank_result["P_total_w"]
 P_glycol_pump = glycol_pump.P_elec_mech
@@ -357,7 +382,7 @@ print("=== DESIGN-DAY PUE ===")
 print(f"IT load (proxy)      : {Q_TARGET/1e3:.1f} kW")
 print(f"Compressor bank      : {P_compressor/1e3:.2f} kW")
 print(f"Glycol loop pump     : {P_glycol_pump/1e3:.2f} kW")
-print(f"Dry cooler fans      : {P_FAN_DESIGN/1e3:.2f} kW  (vendor-confirmed, design point)")
+print(f"Dry cooler fans      : {P_FAN_DESIGN/1e3:.2f} kW  (fan-law estimate, re-selected unit)")
 print(f"CHW/CRAH pump        : {P_chw_pump/1e3:.2f} kW")
 print(f"Other facility loads : {P_other/1e3:.2f} kW")
 print(f"PUE = (IT + other)/IT = {PUE:.3f}")
@@ -413,7 +438,7 @@ def run_annual_simulation():
     wx = ChampaignWeather()
     bank_obj = CompressorBank(n_units=N_UNITS, superheat_K=DT_SH, subcooling_K=SUBCOOLING,
                                to_bounds_C=(-10.0, 15.0))
-    P_FAN_RATED = 10.74e3  # W, vendor-confirmed (Kelvion ULF-PA104Y4V-096Z100)
+    P_FAN_RATED = P_FAN_DESIGN  # re-selected Kelvion ULF-PA106K4V-091F095 (see above)
 
     results = []
     t0 = time.time()
