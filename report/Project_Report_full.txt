@@ -144,7 +144,11 @@ Oil separator   & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:oilsep
 Piping          & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:piping} \\
 Liquid receiver & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:receiver} \\
 System performance (COP / IPLV / PUE) & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:performance} \\
+Cycle representation (p-h chart) & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:cyclerep} \\
 Bill of materials & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:bom} \\
+Piping \& instrumentation diagram & Pending \\
+Safety measures / charge analysis & Pending \\
+Commissioning procedure & Pending \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -4592,6 +4596,14 @@ electrical loads at the 35\,\textdegree C / full-load design point.
 
 \input{tables/performance/design_day_pue.tex}
 
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{figures/performance/design_point/pue_breakdown.png}
+\caption{Design-day facility power breakdown. The compressor bank dominates at
+69\,\% of the non-IT load.}
+\label{fig:pue_breakdown}
+\end{figure}
+
 The design-day PUE is \textbf{1.31} (improved from the original design's 1.40),
 dominated by the compressor bank (31.7\,kW of the 46.0\,kW total --- itself down from
 47.1\,kW, the revision's lift reduction at work). The glycol pump load roughly doubles
@@ -4623,6 +4635,27 @@ frame the more likely selection.
 % ── §12.5 ─────────────────────────────────────────────────────────────────────
 \section{Seasonal Performance (Champaign TMY3)}
 \label{perf:sec:seasonal}
+
+Before the performance results, Figure~\ref{fig:duration} shows the climate the plant
+actually sees: the Champaign TMY3 ambient duration curve against the ASHRAE~90.1
+economizer thresholds. It is the origin of every free-cooling hour claimed in this
+report, and it independently reproduces the regime hour counts of
+Chapter~\ref{ch:dry}, \S\ref{dry:sec:annualregime}.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{figures/performance/annual/ambient_duration_curve.png}
+\caption{Champaign TMY3 ambient temperature duration curve with the economizer
+thresholds and the dry cooler's 35\,\textdegree C design ambient.}
+\label{fig:duration}
+\end{figure}
+
+\noindent Two things are worth reading off it. First, the 35\,\textdegree C dry-cooler
+design ambient is reached for only a handful of hours a year --- the design-day
+condition that sizes the whole plant is genuinely a worst case, not a typical one, which
+is exactly why the design-day PUE of 1.31 overstates the annual average. Second, the
+curve falls below 4\,\textdegree C for 2{,}542\,h and reaches $-27.4$\,\textdegree C at
+its extreme, which is what makes the free-cooling architecture pay in this climate.
 
 The full detailed cycle was re-run at every month's and every season's average outdoor
 dry-bulb temperature from the real 8{,}760-hour Champaign TMY3 file (WMO~725315),
@@ -4684,6 +4717,14 @@ Design-day PUE & (report) & 1.40 & \textbf{1.31} & --- \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{figures/performance/design_point/original_vs_revised.png}
+\caption{The revision's headline result: both required metrics move from failing to
+compliant, and the design-day PUE improves as a by-product.}
+\label{fig:orig_vs_rev}
+\end{figure}
 
 All required efficiency metrics are met by the revised design. The AHRI full-load COP
 margin is thin ($\approx$1\,\%) and is contingent on the revised approaches surviving
@@ -4822,6 +4863,145 @@ below the floor of even the single-wall published bands --- before the 120-plate
 frame becomes binding. The plate-exchanger sizing is therefore robust to a
 substantially worse-than-expected vendor answer, which is the opposite of the
 knife-edge the earlier optimistic-$U$ treatment implied.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Cycle Representation: p-h Chart and Temperature Cascade}
+\label{ch:cyclerep}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\section{Pressure-Enthalpy Chart of the Designed Cycle}
+\label{cyc:sec:ph}
+
+Figure~\ref{fig:phchart} is the project's p-h chart deliverable (subtask~1h): the
+designed cycle plotted on the R-290 saturation dome at the \textbf{project design
+point} --- 150\,kW at the 35\,\textdegree C design ambient. Every state point is
+evaluated from the same Bitzer AHRI-540 map and CoolProp properties the rest of the
+report uses (\texttt{cycle\_figures.py}), so the chart cannot drift from the model.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/cycle_diagram/ph_chart.png}
+\caption{R-290 p-h chart of the designed cycle at the 150\,kW / 35\,\textdegree C
+design point. The superseded original design is overlaid (dashed) for comparison.}
+\label{fig:phchart}
+\end{figure}
+
+\begin{table}[h!]
+\caption{Cycle state points at the design point ($t_o = 10$, $t_c = 45$\,\textdegree C,
+8\,K superheat, 5\,K subcooling).}
+\label{tab:cycle_states}
+\begin{tabularx}{\linewidth}{lLLLL}
+\toprule
+\textbf{State} & \textbf{Description} & \textbf{$T$ [\textdegree C]} & \textbf{$p$ [bar]} & \textbf{$h$ [kJ/kg]} \\
+\midrule
+1 & Compressor suction (evaporator out, 8\,K superheat) & 18.0 & 6.37 & 600.4 \\
+2 & Compressor discharge & 64.8 & 15.34 & 663.2 \\
+3 & Condenser out (subcooled liquid, 5\,K) & 40.0 & 15.34 & 307.1 \\
+4 & EEV out / evaporator in (isenthalpic, $x=0.227$) & 10.0 & 6.37 & 307.1 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent The chart makes the efficiency revision visible rather than merely asserted.
+The revised cycle (solid) sits in a \emph{shorter} vertical band than the original
+(dashed): the condensing pressure drops from 17.9 to 15.3\,bar and the evaporating
+pressure rises from 5.8 to 6.4\,bar, so the pressure ratio falls from 3.06 to 2.41.
+The COP is the ratio of the horizontal 4\,$\to$\,1 leg (refrigerating effect) to the
+1\,$\to$\,2 leg (compressor work), and the revision improves \emph{both}:
+
+\begin{table}[h!]
+\caption{Where the COP gain comes from, read off the two cycles.}
+\begin{tabularx}{\linewidth}{lLLL}
+\toprule
+& \textbf{Original} & \textbf{Revised} & \textbf{Change} \\
+\midrule
+Compressor work $h_2-h_1$        & 78.7\,kJ/kg  & 62.8\,kJ/kg  & $-20$\,\% (smaller lift) \\
+Refrigerating effect $h_1-h_4$   & 269.4\,kJ/kg & 293.3\,kJ/kg & $+9$\,\% (less flash gas) \\
+Flash gas at EEV outlet $x_4$     & 0.301        & 0.227        & $-25$\,\% \\
+\midrule
+\textbf{COP} $=(h_1-h_4)/(h_2-h_1)$ & \textbf{3.42} & \textbf{4.67} & $\mathbf{+36}$\,\% \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent The work reduction is the expected consequence of the smaller lift. The
+\emph{second} gain is less obvious and is visible only on the chart: lowering $t_c$
+moves state~3 left (the liquid leaves the condenser at 40 rather than
+47\,\textdegree C), and since expansion is isenthalpic, state~4 moves left with it.
+Less of the refrigerant flashes to vapour across the valve (22.7\,\% against
+30.1\,\%), so more of it remains liquid and available to absorb heat in the
+evaporator. A lower condensing temperature therefore pays twice --- once in
+compressor work, once in refrigerating effect --- which is why the COP gain
+($+36$\,\%) exceeds the work saving ($-20$\,\%) alone.
+
+\noindent State~2 lies well right of the saturated-vapour line, confirming the
+discharge is genuinely superheated (64.8\,\textdegree C against a 45\,\textdegree C
+saturation temperature) --- the desuperheating zone the condenser's three-zone model
+accounts for (\S\ref{cyc:sec:hx}).
+
+\noindent Free cooling is not plotted: the compressor is off in that mode and the
+economizer carries the load on the waterside, so no refrigerant cycle exists to draw.
+
+\section{Temperature Cascade}
+\label{cyc:sec:cascade}
+
+Figure~\ref{fig:cascade} shows why the condensing temperature --- and therefore the
+full-load COP --- is what it is. It is the single most load-bearing diagram in the
+report.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{figures/cycle_diagram/temperature_cascade.png}
+\caption{Temperature cascade from ambient air to chilled water, original vs.\ revised
+design. The condensing temperature is set by three approaches stacked in series.}
+\label{fig:cascade}
+\end{figure}
+
+\noindent The intermediate glycol loop --- the architecture the project brief
+prescribes --- places \textbf{three approaches in series} between ambient air and the
+condensing refrigerant: the dry cooler's approach, the glycol temperature rise, and
+the condenser's own approach. A direct air-cooled condenser would pay only one. This
+is the structural reason the full-load COP is harder to reach here than the ASHRAE
+90.1 \emph{air-cooled chiller} table (from which the $\geq$3.5 target is drawn)
+implicitly assumes, and it is the cost side of the trade that buys the free-cooling
+economizer and the winter PUE of 1.01.
+
+The revision attacks each of the three: 5\,$\to$\,3\,K at the dry cooler,
+6\,$\to$\,4\,K glycol rise, 6\,$\to$\,3\,K at the condenser. Their sum --- the
+air-to-refrigerant approach --- falls from 17\,K to 10\,K, dropping $t_c$ from 52 to
+45\,\textdegree C. On the cold side the evaporator approach tightens 8\,$\to$\,5\,K,
+lifting $t_o$ from 7 to 10\,\textdegree C. Both squeeze the lift from the two ends.
+
+\section{Heat-Exchanger Temperature Profiles}
+\label{cyc:sec:hx}
+
+Figure~\ref{fig:hxprofiles} plots temperature against duty through both refrigerant-side
+exchangers at the revised design point --- the picture behind the LMTD sizing of
+Chapters~\ref{ch:evap} and~\ref{ch:cond}, and where each exchanger actually pinches.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{figures/cycle_diagram/hx_profiles.png}
+\caption{Counter-flow temperature profiles at the revised design point: condenser
+(three-zone) and evaporator (two-zone).}
+\label{fig:hxprofiles}
+\end{figure}
+
+\noindent The \textbf{condenser} shows the three zones its model decomposes: a steep
+desuperheating leg (64.8\,$\to$\,45\,\textdegree C) over the first $\approx$13\,\% of
+duty, the dominant isothermal condensing plateau at 45\,\textdegree C, and a short
+subcooling tail to 40\,\textdegree C. Its tightest point is the \textbf{cold end}, where
+the 40\,\textdegree C subcooled liquid leaves against 38\,\textdegree C entering glycol
+--- a 2\,K pinch. This is precisely the constraint that forces the dry cooler's 3\,K
+approach (\S\ref{dry:sec:reselection}): warmer glycol would close this gap to zero and
+the exchanger would stop working, regardless of how much area it had.
+
+The \textbf{evaporator} boils isothermally at 10\,\textdegree C over $\approx$95\,\% of
+its duty, then superheats to 18\,\textdegree C in a short tail. Its approach is set at
+the cold end, where the 15\,\textdegree C leaving chilled water meets the
+10\,\textdegree C evaporating refrigerant --- the 5\,K approach the revision tightened
+from 8\,K, bought with the extra plates of \S\ref{perf:sec:hardware}.
 
 
 % ══════════════════════════════════════════════════════════════════════════════
