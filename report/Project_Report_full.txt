@@ -147,9 +147,11 @@ System performance (COP / IPLV / PUE) & \textcolor{navy}{\textbf{Complete}} --- 
 Cycle representation (p-h chart) & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:cyclerep} \\
 Charge analysis \& safety measures & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:safety} \\
 Bill of materials & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:bom} \\
+Compressor--EEV control interaction & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:controls} \\
+System assessment (pros \& cons) & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:proscons} \\
+Suggestions for improvement & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:improve} \\
 Piping \& instrumentation diagram & Pending \\
 Commissioning procedure & Pending \\
-Compressor--EEV control interaction & Pending \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -5104,6 +5106,532 @@ Chapter~\ref{ch:eev}). All pressure-vessel and rotating-equipment selections
 (compressor, both BPHEs, dry cooler, economizer, oil separator, receiver, both pumps)
 rest on real vendor data. Isolation valves (items~8--9) are specified by function for the
 P\&ID rather than by catalog model at this stage.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Automatic Control of the Compressor--Expansion Device Interaction}
+\label{ch:controls}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\section{Scope: Why This Is a Discussion, Not a Simulation}
+\label{ctrl:sec:scope}
+
+The brief asks for the ``\textbf{consideration of} automatic control of compressor
+--- expansion device interaction'' (subtask~3b). The verb is deliberate: section~3
+asks for consideration, where section~1 asks for ``calculation and/or selection''.
+
+That framing matches the physics. Control interaction is inherently
+\textbf{transient} --- it lives in the mass and energy storage of the evaporator, the
+valve's actuator dynamics, and the tuning of two feedback loops. Every model in this
+report is \textbf{steady-state}. A credible dynamic study would need a different
+model entirely, and inventing one would produce numbers with no more authority than
+the discussion below. It is therefore not attempted, and that boundary is stated
+rather than blurred.
+
+What the steady-state model \emph{can} settle, it does: the valve's control
+authority across the real operating envelope (\S\ref{ctrl:sec:authority}), which is a
+genuine sizing question with a genuine finding.
+
+\section{Control Architecture}
+\label{ctrl:sec:architecture}
+
+Two loops act on the same evaporator, and the entire subject of this chapter is that
+they are not independent.
+
+\begin{table}[h!]
+\caption{The two interacting refrigerant-side control loops.}
+\label{tab:loops}
+\begin{tabularx}{\linewidth}{lLLL}
+\toprule
+& \textbf{Compressor (VFD $+$ staging)} & \textbf{EEV} \\
+\midrule
+\textbf{Role} & \textbf{Master} --- sets capacity & \textbf{Slave} --- sets superheat \\
+Controlled variable & Leaving chilled-water temperature (15\,\textdegree C setpoint) & Evaporator outlet superheat (8\,K setpoint) \\
+Manipulated variable & Shaft speed; number of units running & Valve orifice opening \\
+Physical effect & Refrigerant mass flow, hence duty & Split of the evaporator between boiling and superheat \\
+Timescale & Slow (thermal mass of the CHW loop) & Fast (evaporator refrigerant-side dynamics) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent The plant-level supervisory logic sits above both: it selects
+\textbf{mechanical} or \textbf{free-cooling} mode on outdoor air temperature
+(Chapter~\ref{ch:dry}, \S\ref{dry:sec:annualregime}), and in free cooling the
+compressors and the EEV are simply off --- the refrigerant loop is idle and this
+chapter's subject does not arise for $\approx$29\,\% of the year.
+
+\section{The Interaction}
+\label{ctrl:sec:interaction}
+
+The loops are coupled because \textbf{both act on the evaporator's refrigerant
+inventory}, from opposite ends. The compressor withdraws vapour from it; the EEV
+admits liquid into it. Superheat is the observable that reports the balance between
+the two.
+
+A capacity change propagates as follows:
+
+\begin{enumerate}
+  \item Cooling demand rises; the master loop raises compressor speed.
+  \item Higher swept volume withdraws vapour faster than the EEV is feeding liquid,
+        so \textbf{suction pressure falls} and the evaporator's liquid inventory
+        starts to deplete.
+  \item The boiling zone shortens, the superheat zone lengthens, and the measured
+        \textbf{superheat rises}.
+  \item The slave loop sees the superheat error and \textbf{opens the EEV}, restoring
+        liquid feed until superheat returns to setpoint.
+\end{enumerate}
+
+\noindent The compressor therefore acts as a \textbf{disturbance} to the superheat
+loop, and the EEV as a disturbance to the evaporating pressure the compressor is
+working against. Neither loop can be tuned in isolation.
+
+\subsection{The Two Failure Modes}
+
+\begin{itemize}
+  \item \textbf{Hunting.} If the EEV loop is tuned too aggressively --- or too close
+        in bandwidth to the compressor loop --- the two oscillate against each other:
+        the valve overshoots, superheat undershoots, the valve closes, superheat
+        spikes, and the cycle repeats. Symptoms are oscillating suction pressure and
+        capacity, and it is the more common of the two faults.
+  \item \textbf{Floodback.} If the EEV loop is too slow, or the superheat setpoint is
+        too low, a fast capacity reduction leaves the evaporator over-fed and
+        \textbf{liquid refrigerant reaches the compressor suction}. For a
+        semi-hermetic reciprocating machine this is the destructive failure ---
+        liquid is incompressible, and slugging damages valves and bearings.
+\end{itemize}
+
+\subsection{Why This Design Is More Exposed Than Most}
+\label{ctrl:sec:exposure}
+
+Two decisions taken elsewhere in this report make the interaction harder here, and
+both are consequences worth owning explicitly:
+
+\begin{enumerate}
+  \item \textbf{The VFD makes the disturbance continuous.} A fixed-speed bank
+        disturbs the superheat loop only at discrete stage changes, which are
+        infrequent and predictable. The VFD adopted for efficiency compliance
+        (\S\ref{perf:sec:revision}) modulates continuously, so the superheat loop is
+        \emph{always} tracking a moving target. The efficiency gain is real, but it
+        buys a continuously-coupled control problem.
+  \item \textbf{There is no liquid receiver to absorb an excursion.} The receiver was
+        omitted (Chapter~\ref{ch:receiver}) because it would have broken AHRI
+        compliance and added $\approx$25\,\% charge --- decisions this report stands
+        behind. But a receiver is also a buffer: it damps inventory swings between
+        the condenser and evaporator. Without one the system is \textbf{critically
+        charged}, and a superheat excursion has nothing to absorb it.
+        \textbf{Floodback protection therefore rests entirely on the control system},
+        not on hardware forgiveness.
+\end{enumerate}
+
+\section{EEV Control Authority Across the Envelope}
+\label{ctrl:sec:authority}
+
+This is the part the steady-state model settles. The valve must modulate across the
+project's full \textbf{5:1 turndown} (150\,kW design to the 30\,kW minimum IT load),
+and at each load the condenser-entering-air temperature is lower, which lowers $t_c$
+and therefore the pressure drop across the valve. Both effects shrink the required
+opening, and they compound.
+
+\input{tables/controls/eev_authority.tex}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{figures/controls/eev_authority.png}
+\caption{EEV opening required across the 5:1 load turndown, for both candidate
+circuit architectures.}
+\label{fig:eev_authority}
+\end{figure}
+
+\subsection{Finding: the Answer Depends on an Unresolved Architecture Question}
+
+\textbf{The report is not self-consistent about how many refrigerant circuits exist},
+and this analysis is where that finally bites:
+
+\begin{itemize}
+  \item \textbf{Chapter~\ref{ch:comp}} states the duty is split across ``two identical
+        75\,kW parallel refrigerant circuits, \emph{each with its own compressor,
+        evaporator/condenser \dots\ and EEV}'', and the BOM follows it with a quantity
+        of two.
+  \item \textbf{\texttt{main.py}} models \emph{one} shared condenser, \emph{one}
+        shared evaporator and \emph{one} EEV, sized for the combined flow. The
+        compressors are parallel on a common manifold (\S\ref{comp:sec:staging}), but
+        they feed a single set of exchangers.
+\end{itemize}
+
+\noindent The two readings give materially different answers:
+
+\begin{itemize}
+  \item \textbf{One EEV on the full flow}: 82.6\,\% open at design, falling to
+        \textbf{24.3\,\%} at minimum load. Comfortable authority throughout, and the
+        valve is well matched to the duty.
+  \item \textbf{Two EEVs on split flow}: only 41.3\,\% open at design --- the E3V65 is
+        \textbf{oversized} for half the flow --- falling to \textbf{12.2\,\%} at
+        minimum load, \emph{below} the $\approx$15\,\% floor at which an EEV's
+        characteristic goes non-linear and stepper resolution and stiction begin to
+        dominate. Superheat control would degrade exactly where floodback protection
+        matters most, and where there is no receiver to forgive it.
+\end{itemize}
+
+\noindent \textbf{The EEV selection cannot be finalised until the circuit
+architecture is settled.} If the two-circuit reading is correct, the E3V65 must be
+replaced with a smaller valve (an E3V45-class device) so that half-flow lands nearer
+the middle of its range. This is the single most actionable outcome of this chapter.
+
+\section{The Superheat Setpoint --- and a Trap}
+\label{ctrl:sec:superheat}
+
+It is tempting to select the superheat setpoint from the compressor map. That is a
+mistake, and the mistake is instructive.
+
+\input{tables/controls/superheat_sensitivity.tex}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/controls/superheat_sensitivity.png}
+\caption{What the compressor map says about the superheat setpoint at fixed $t_o$ ---
+and why the trend is an artifact rather than a design lever.}
+\label{fig:superheat_sens}
+\end{figure}
+
+Read naively, the map says \textbf{more superheat is better}: COP rises from 4.55 at
+4\,K to 4.88 at 15\,K, a 6.8\,\% span that is far from negligible. \textbf{This is an
+artifact.} The AHRI-540/EN12900 convention credits \emph{all} superheat as
+\emph{useful} --- it assumes the superheat is picked up inside the evaporator, so it
+adds to the refrigerating effect $h_1 - h_3$. Holding $t_o$ fixed and raising the
+setpoint therefore raises $h_1$, and COP follows.
+
+Physically the evaporator's area is finite and the trend reverses. From the
+evaporator's T--Q profile (Figure~\ref{fig:hxprofiles}), boiling occupies
+$\approx$95\,\% of the duty and the superheat tail only $\approx$5\,\% --- but the
+superheat zone transfers heat to \emph{gas}, with a far poorer film coefficient, so
+it consumes area disproportionately. Demanding more superheat at fixed area
+\textbf{steals area from boiling}, which forces $t_o$ down, and a lower $t_o$ costs
+more COP than the higher $h_1$ gains. Capturing this properly requires an
+area-constrained evaporator solve, which this report does not perform
+(\S\ref{ctrl:sec:openitems}).
+
+\noindent \textbf{The correct conclusion is the opposite of the chart:} superheat
+should be set \emph{as low as is safely controllable}, not high. It is a
+\textbf{compressor-protection setpoint}, not an efficiency knob. The 8\,K design
+value (Chapter~\ref{ch:comp}) is retained: it matches the compressor vendor's own
+selection basis, and it leaves margin above the floodback boundary for a system with
+no receiver to forgive an excursion.
+
+\section{Recommended Control Measures}
+\label{ctrl:sec:measures}
+
+\begin{table}[h!]
+\caption{Recommended measures for stable compressor--EEV interaction.}
+\begin{tabularx}{\linewidth}{lLL}
+\toprule
+\textbf{Measure} & \textbf{Purpose} & \textbf{Why here} \\
+\midrule
+\textbf{Timescale separation} --- EEV loop tuned 5--10$\times$ faster than the
+compressor capacity loop & Lets the slave reject the master's disturbance before it
+propagates & The standard defence against hunting; the VFD makes it essential
+(\S\ref{ctrl:sec:exposure}) \\
+\textbf{Compressor ramp-rate limit} & Bounds how fast the disturbance can arrive &
+Keeps the superheat loop inside its tracking capability \\
+\textbf{Minimum-superheat clamp} & Hard floor below which the EEV closes regardless
+of the loop & Last-line floodback protection --- load-bearing here, as there is no
+receiver \\
+\textbf{MOP (maximum operating pressure) limit} & Caps evaporating pressure during
+pull-down & Protects the compressor motor from overload on a warm start \\
+\textbf{Suction superheat sensing near the evaporator outlet} & Minimises transport
+lag in the feedback path & Lag is what turns an aggressive loop into an oscillating one \\
+\textbf{Staging hysteresis / minimum run time} & Prevents short-cycling at stage
+boundaries & The bank stages at $\approx$50\,\% load (\S\ref{comp:sec:staging}) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Open Items}
+\label{ctrl:sec:openitems}
+
+\begin{enumerate}
+  \item \textbf{Circuit architecture unresolved} (\S\ref{ctrl:sec:authority}). One
+        shared refrigerant circuit or two independent ones? The EEV size, quantity,
+        and its authority at minimum load all depend on the answer. \textbf{This is
+        the blocking decision} and should be closed before any valve is ordered.
+  \item \textbf{No dynamic model, therefore no tuning constants.} This chapter gives
+        the architecture, the failure modes and the measures, but not PID gains or a
+        stability proof. Those need a transient model and, ultimately, commissioning
+        on the real plant (subtask~2).
+  \item \textbf{The superheat/evaporator-area coupling is argued, not computed}
+        (\S\ref{ctrl:sec:superheat}). The claim that the real trend opposes the map's
+        rests on the T--Q profile and the poor gas-side coefficient, which is sound
+        but qualitative. An area-constrained evaporator solve would settle it.
+  \item \textbf{Critical-charge sensitivity is unquantified}
+        (\S\ref{receiver:sec:limitations}), and it interacts directly with this
+        chapter: with no receiver, a charge error shows up as a superheat control
+        problem.
+  \item \textbf{Free-cooling transitions are not analysed.} Mode switches at the
+        4\,\textdegree C threshold start and stop the compressors; the associated
+        refrigerant migration and restart superheat behaviour are not modelled.
+\end{enumerate}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{System Assessment: Pros and Cons}
+\label{ch:proscons}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\section{What Was Chosen, and What Was Prescribed}
+\label{pc:sec:framing}
+
+An honest assessment has to separate the decisions this design \emph{made} from the
+ones the brief \emph{imposed}. The brief prescribes water to the CRAH units, and
+\textbf{heat rejection via a dry cooler with an intermediate water/propylene-glycol
+loop}. That single prescription determines most of what follows --- including the
+design's central weakness --- so it is not fair to score it as a free choice. What
+was genuinely chosen: the refrigerant, the compressor arrangement and staging, the
+approach temperatures, the VFD, and the omission of the liquid receiver.
+
+\section{Pros}
+\label{pc:sec:pros}
+
+\begin{table}[h!]
+\caption{Strengths of the selected system.}
+\begin{tabularx}{\linewidth}{lLL}
+\toprule
+\textbf{Strength} & \textbf{Evidence} & \textbf{Why it matters} \\
+\midrule
+\textbf{Free cooling dominates the annual picture} & 2{,}542\,h (29\,\%) full free
+cooling, 1{,}358\,h (15.5\,\%) partial --- \textbf{44.5\,\% of the year}
+(Fig.~\ref{fig:duration}). Winter PUE $\approx$1.01, total-system COP in the high
+tens & The strongest feature of the design, and the payoff that justifies the glycol
+loop's efficiency cost. In Champaign's climate zone 5A this is worth far more than
+the design-day penalty \\
+\textbf{Very low GWP with a mature ecosystem} & R-290, GWP\,3 against a $<$150 limit
+--- a $50\times$ margin (Ch.~\ref{ch:refrigerant}) & Not merely compliant but
+future-proof against tightening regulation, and every pressure vessel and the
+compressor were available A3-rated from a single vendor \\
+\textbf{Warm chilled water exploited} & 15\,\textdegree C LCHW (ASHRAE W17) gives
+design COP 4.67 against 3.53 at the AHRI 6.7\,\textdegree C rating point
+(\S\ref{perf:sec:fullload}) & The design is tuned for the condition it actually runs
+at, not the rating condition. Data-center CHW envelopes reward this \\
+\textbf{N$+$1-shaped redundancy} & Two 75\,kW compressors on a common manifold; losing
+one leaves 50\,\% capacity (\S9.1) & For 24/7/365 IT load, partial failure beats total
+failure. An unequal split would leave 25\,\% \\
+\textbf{Genuine 5:1 turndown} & VFD $+$ staging covers 150\,kW to the 30\,kW minimum
+without hot-gas bypass (\S\ref{perf:sec:iplv}) & Resolves the turndown floor the
+fixed-speed design could not, and lifts IPLV.IP from 4.43 to 5.23 \\
+\textbf{Low refrigerant charge} & 10.9--14.1\,kg, no receiver
+(Ch.~\ref{ch:receiver}) & For an A3 fluid, charge is the safety currency. Omitting the
+receiver cut $\approx$25\,\% of it \emph{and} improved the COP \\
+\textbf{Refrigerant never leaves the plant room} & Double-wall BPHEs plus the glycol
+loop (\S\ref{safe:sec:minimisation}) & The occupied data hall sees only water. This is
+the design's most important safety property, and it is a \emph{consequence} of the
+prescribed architecture \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Cons}
+\label{pc:sec:cons}
+
+\begin{table}[h!]
+\caption{Weaknesses of the selected system.}
+\begin{tabularx}{\linewidth}{lLL}
+\toprule
+\textbf{Weakness} & \textbf{Evidence} & \textbf{Assessment} \\
+\midrule
+\textbf{The glycol loop costs three stacked approaches} & Dry cooler $+$ glycol rise
+$+$ condenser $=$ 10\,K air-to-refrigerant even after the revision, against
+$\approx$1 approach for a direct air-cooled condenser (Fig.~\ref{fig:cascade}) &
+\textbf{The design's central weakness --- and it is inherited, not chosen.} It is why
+the original design missed both COP targets, and why the target (drawn from an
+\emph{air-cooled chiller} table) is structurally harder to hit here \\
+\textbf{Thin AHRI compliance margin} & 3.53 against $\geq$3.5 --- $\approx$1\,\%
+(\S\ref{perf:sec:openitems}) & Contingent on the revised approaches surviving vendor
+re-selection, and on assumed $U$ values (\S\ref{perf:sec:uvalues}). \textbf{The most
+fragile claim in the report} \\
+\textbf{A3 flammability drives real obligations} & No plausible plant room dilutes the
+charge below LFL; compliance rests on detection at 7.6\,g/m$^3$ $+$ 294\,m$^3$/h
+ventilation (\S\ref{safe:sec:en378}) & A genuine cost of R-290 --- the price paid for
+GWP\,3. Manageable and well-precedented, but not free \\
+\textbf{Critical charge, no buffer} & No receiver, so charge must be correct rather
+than sufficient (\S\ref{receiver:sec:consequences}) & Accepted deliberately: the
+receiver's cost (COP and charge) exceeded its benefit. But it removes hardware
+forgiveness and pushes floodback protection entirely onto controls
+(\S\ref{ctrl:sec:exposure}) \\
+\textbf{Continuously-coupled control problem} & VFD modulates continuously, so the
+superheat loop always tracks a moving target (\S\ref{ctrl:sec:interaction}) & The
+price of the efficiency revision. Standard measures exist, but tuning is now on the
+critical path \\
+\textbf{Dry cooler is the capital burden} & $UA$ $\approx$2.5$\times$ the original;
+re-selected to a 1{,}949\,m$^2$ unit (\S\ref{dry:sec:reselection}) & The revision's
+dominant cost, concentrated in one component. Larger footprint, more fans \\
+\textbf{Two exchangers where one would do} & Every kW crosses refrigerant$\to$glycol
+$\to$air, each with its own $\Delta T$, pumping power and cost & Inherent to the
+prescribed architecture. The glycol pump alone is 2.57\,kW of parasitic load \\
+\textbf{Higher parasitic pumping} & Two pumped loops (glycol $+$ CHW) $=$ 3.68\,kW,
+8\,\% of the non-IT load (Fig.~\ref{fig:pue_breakdown}) & Modest against the
+compressor's 69\,\%, but a direct-DX architecture would not have the glycol loop at all \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{The Central Trade, Stated Plainly}
+\label{pc:sec:verdict}
+
+The glycol loop is simultaneously the design's greatest weakness and the enabler of
+its greatest strength, and the two cannot be separated:
+
+\begin{itemize}
+  \item It \textbf{costs} $\approx$7\,K of extra condensing approach against a direct
+        air-cooled condenser --- worth roughly 20\,\% of the full-load COP, and the
+        entire reason the efficiency revision (larger dry cooler, more plates, VFDs)
+        was necessary at all.
+  \item It \textbf{buys} the waterside economizer, and with it 44.5\,\% of the year at
+        or near PUE\,1.01, plus the ability to keep an A3 refrigerant entirely out of
+        the data hall.
+\end{itemize}
+
+\noindent \textbf{In Champaign's climate this trade is clearly worth making.} The
+design-day penalty is paid on a handful of hours a year (Fig.~\ref{fig:duration});
+the free-cooling benefit is collected on thousands. A direct air-cooled DX chiller
+would post a better AHRI number and a worse annual one --- which is a fair summary of
+why standardized full-load ratings flatter architectures that this application does
+not want.
+
+The honest caveat: \textbf{the compliance metrics are met, but not comfortably.} The
+1\,\% AHRI margin rests on vendor confirmations that have not yet come back
+(\S\ref{perf:sec:uvalues}, \S\ref{dry:sec:fanpower_open}). The design is sound; the
+numbers are not yet safe.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\chapter{Suggestions for Improvement}
+\label{ch:improve}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\section{Priority 1 --- Close the Open Vendor Confirmations}
+\label{imp:sec:vendor}
+
+These are not improvements so much as \textbf{debts}: the compliance case currently
+rests on them, and none is expensive to close.
+
+\begin{table}[h!]
+\caption{Outstanding vendor confirmations, in order of how much rests on them.}
+\begin{tabularx}{\linewidth}{lLL}
+\toprule
+\textbf{Item} & \textbf{What is assumed} & \textbf{What rests on it} \\
+\midrule
+\textbf{BPHE double-wall $U$ derate} & $U = 2{,}400$ (evap) / 2{,}000 (cond), a 20\,\%
+DW derate estimated from a 10--30\,\% literature range
+(\S\ref{perf:sec:uvalues}) & Plate counts, and hence whether both exchangers stay in
+the 120-plate frame. Ask Kelvion Select PHE for the DW derate \emph{relative to the
+equivalent single-wall plate} \\
+\textbf{Dry cooler fan power} & 10.6\,kW, fan-law scaled --- Select RT does not report
+it (\S\ref{dry:sec:fanpower_open}) & The design-day PUE. \textbf{The single largest
+uncertainty in that figure} \\
+\textbf{Glycol pump duty point} & Ch.~\ref{ch:pump}'s system curve predates the
+revised flow and the re-selected dry cooler's 8\,psi
+(\S\ref{perf:sec:pue}) & Pump frame selection; 2AD was already near its envelope top,
+2.5AC now likely \\
+\textbf{CRAH coil $\Delta P$} & 50\,kPa placeholder --- no unit ever selected
+(\S\ref{chwpump:sec:crah}) & CHW pump selection. The only major component with no
+vendor basis at all \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Priority 2 --- Resolve the Circuit Architecture}
+\label{imp:sec:architecture}
+
+\textbf{The report is not self-consistent about how many refrigerant circuits exist}
+(\S\ref{ctrl:sec:authority}): Chapter~\ref{ch:comp} and the BOM say two independent
+circuits; \texttt{main.py} models one shared set of exchangers fed by parallel
+compressors. This is not cosmetic --- it decides:
+
+\begin{itemize}
+  \item \textbf{EEV size and quantity}, and whether the valve keeps control authority
+        at the 30\,kW minimum load (12.2\,\% open on the two-circuit reading, below
+        the workable floor).
+  \item \textbf{Redundancy}, which the design claims as a strength
+        (\S\ref{pc:sec:pros}). Two truly independent circuits fail gracefully; parallel
+        compressors on shared exchangers do not protect against an exchanger fault.
+  \item \textbf{Exchanger count and cost.}
+\end{itemize}
+
+\noindent Recommendation: adopt the \textbf{single-circuit} reading that
+\texttt{main.py} already models --- it gives the better EEV authority, fewer
+components and less charge --- and correct Chapter~\ref{ch:comp}'s wording and the
+BOM to match. The redundancy claim should then be restated honestly as
+\emph{compressor} redundancy, not full-circuit redundancy.
+
+\section{Priority 3 --- Shorten the Liquid Line}
+\label{imp:sec:liquidline}
+
+The liquid line holds 6.33\,kg on an assumed 15\,m --- \textbf{the largest single item
+in the charge inventory} and the most effective remaining lever
+(\S\ref{safe:sec:linelength}). A 5\,m run would take the whole system under 10\,kg,
+easing every EN~378 obligation. For an A3 refrigerant, \textbf{plant-room layout is a
+safety decision}: co-locate the compressor pack and condenser as tightly as the
+building permits.
+
+\section{Priority 4 --- Efficiency Headroom}
+\label{imp:sec:efficiency}
+
+The revision met the targets; it did not make them comfortable. In descending order
+of effect:
+
+\begin{table}[h!]
+\caption{Further efficiency measures, with their costs.}
+\begin{tabularx}{\linewidth}{lLL}
+\toprule
+\textbf{Measure} & \textbf{Effect} & \textbf{Cost} \\
+\midrule
+Reduce the condensing approach further (10\,K $\to$ 7\,K) & AHRI full-load COP
+$\approx$3.48 $\to$ 3.7$+$; lifts every IPLV point
+(\S\ref{perf:sec:sensitivity}) & A larger dry cooler again --- already the revision's
+dominant capital item \\
+Model the partial free-cooling band (4--10\,\textdegree C) & 1{,}358\,h/yr currently
+counted as \emph{full mechanical} in the annual simulation, so reported annual energy
+is \textbf{pessimistic} & Modelling effort only --- no hardware. \textbf{The cheapest
+improvement available}, and it makes the design look better than currently claimed \\
+Increase subcooling beyond 5\,K & $+$6\,\% COP at 10\,K, $+$11\,\% at 15\,K & More
+condenser area; diminishing returns; interacts with the charge inventory \\
+Economised / vapour-injection cycle & Improves COP at high lift & Rejected: adds
+complexity and charge for a benefit that the modest 2.41 pressure ratio does not
+justify. Noted here for completeness, as subtask~1d asks \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Priority 5 --- Modelling Fidelity}
+\label{imp:sec:modelling}
+
+Ranked by how much the current simplification could mislead:
+
+\begin{enumerate}
+  \item \textbf{Partial free-cooling band} (as above) --- the one simplification that
+        makes the design look \emph{worse} than it is.
+  \item \textbf{Fixed approach temperatures across all ambients.} $t_c = T_{air} + 10$
+        and the glycol approaches are held constant rather than re-solving the dry
+        cooler's $\varepsilon$-NTU model at each hour. Cheap and defensible, but it
+        does not capture the fan-speed/approach trade at part load.
+  \item \textbf{Area-constrained evaporator solve}, which would settle the superheat
+        argument of \S\ref{ctrl:sec:superheat} rather than leaving it qualitative.
+  \item \textbf{Han correlation applied to R-290.} Regressed on R-410A and R-22;
+        transfer to propane is accepted practice but unvalidated
+        (\S2.9), and it underpins every refrigerant-side pressure drop.
+  \item \textbf{Dynamic model} for the control interaction (\S\ref{ctrl:sec:openitems}).
+\end{enumerate}
+
+\section{Priority 6 --- Deliverables Still Outstanding}
+\label{imp:sec:deliverables}
+
+\begin{itemize}
+  \item \textbf{Piping \& instrumentation diagram} (subtask~1h) --- the last unresolved
+        cross-reference in this report.
+  \item \textbf{Commissioning procedure} (subtask~2) --- now carrying real weight:
+        with a critically-charged, receiver-less system, \textbf{charge weighing and
+        the 5\,K subcooling check are acceptance criteria}, not routine steps
+        (\S\ref{receiver:sec:consequences}).
+  \item \textbf{Specification sheet extracts}, which the brief requires be attached.
+\end{itemize}
 
 
 \end{document}
