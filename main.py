@@ -20,7 +20,7 @@ from compressor import CompressorBank
 from condenser import Condenser
 from dry_cooler import DryCooler
 from dry_cooler_pump import GlycolLoopPump
-from economizer import Economizer
+from economizer import Economizer, rate_economizer
 from eev import EEV
 from evaporator import Evaporator
 from water_side_pump import CHWPump, TRIM_CURVES_1_5AD_1750RPM
@@ -39,10 +39,11 @@ FIG_PERF_DESIGN = os.path.join(REPORT_DIR, "figures", "performance", "design_poi
 FIG_PERF_MONTHLY = os.path.join(REPORT_DIR, "figures", "performance", "monthly")
 FIG_PERF_SEASONAL = os.path.join(REPORT_DIR, "figures", "performance", "seasonal")
 FIG_PERF_ANNUAL = os.path.join(REPORT_DIR, "figures", "performance", "annual")
+FIG_ECON = os.path.join(REPORT_DIR, "figures", "economizer")
 TABLE_PERF_MONTHLY = os.path.join(REPORT_DIR, "tables", "performance", "monthly")
 TABLE_PERF_SEASONAL = os.path.join(REPORT_DIR, "tables", "performance", "seasonal")
 for _d in (FIG_PERF_DESIGN, FIG_PERF_MONTHLY, FIG_PERF_SEASONAL, FIG_PERF_ANNUAL,
-           TABLE_PERF_MONTHLY, TABLE_PERF_SEASONAL):
+           FIG_ECON, TABLE_PERF_MONTHLY, TABLE_PERF_SEASONAL):
     os.makedirs(_d, exist_ok=True)
 
 R = "R290"
@@ -89,6 +90,31 @@ GLYCOL_RANGE_K = 4.0       # condenser glycol supply/return range (38->42 C at d
                            # matches DRY_COOLER's revised 38/42 C design point below)
 FREE_COOLING_THRESHOLD_C = 4.0  # ASHRAE 90.1 full free-cooling threshold (economizer.py)
 ECON_L, ECON_L_W = 0.70, 0.25    # economizer's own larger frame (economizer.py's design point)
+
+# ASHRAE 90.1 s6.5.1 economizer ACTIVATION threshold. Between this and the full
+# free-cooling threshold above lies the INTEGRATED (partial) free-cooling band:
+# the economizer pre-cools the CHW return by whatever the ambient allows and the
+# chiller trims the remainder (Ch. Economizer, "Full vs. Partial Economizer
+# Operation"). 1,358 hrs/yr in Champaign -- 15.5% of the year.
+PARTIAL_FC_THRESHOLD_C = 10.0
+# Dry-cooler approach on the free-cooling glycol circuit: OAT + 5 K is the
+# economizer chapter's own stated basis (4 C OAT -> 9 C glycol at the sizing
+# point, "the dry cooler delivers glycol between ~9 and 15 C" across the band).
+DRY_COOLER_APPROACH_FC_K = 5.0
+
+# Lowest speed the drive can actually hold. Below it the compressor CYCLES
+# on/off against the min-speed operating point rather than modulating.
+#
+# This matters at the cold end of the partial band: with the economizer
+# already carrying ~96% of the load at 4.5 C, the chiller is asked for ~6 kW,
+# which is ~4% speed -- no drive does that. The power reported there is still
+# right, though: ideal cycling runs at min speed for a duty fraction
+# Q_req/Q_at_min, so average power = Q_req/COP -- algebraically identical to
+# what the modulation model returns. What is NOT modelled is real cycling
+# LOSS (start-up transients, off-cycle migration). That is bounded by the
+# few kW of compressor duty involved in this band, so it cannot move PUE
+# materially, but the mechanism should be reported as cycling, not modulation.
+VFD_MIN_SPEED_FRAC = 0.30
 
 p_c = PropsSI("P", "T", T_c, "Q", 1, R)
 
@@ -443,6 +469,7 @@ def mechanical_hour(bank_obj, T_air_C, Q_target=Q_TARGET):
     return {
         "mode": "mechanical", "T_air_C": T_air_C, "tc_C": tc_C,
         "P_compressor_w": result["P_total_w"], "Q_delivered_w": result["Q_total_w"],
+        "Q_econ_w": 0.0, "Q_mech_w": result["Q_total_w"],
         "status": result["status"],
     }
 
@@ -457,6 +484,77 @@ def free_cooling_hour(T_air_C, Q_target=Q_TARGET):
     return {
         "mode": "free_cooling", "T_air_C": T_air_C, "tc_C": None,
         "P_compressor_w": 0.0, "Q_delivered_w": Q_target, "status": "ok",
+        "Q_econ_w": Q_target, "Q_mech_w": 0.0,
+    }
+
+
+# The economizer AS INSTALLED, built once at its sizing point. Only its fixed
+# hardware UA and the two stream heat-capacity rates are reused below -- the
+# partial-band solve rates this same exchanger off-design, it does not re-size
+# it. Balanced by design (6 K glycol rise mirrors the 6 K CHW span), so
+# C_water ~= C_glycol and Cr ~= 1.
+ECON_DESIGN = Economizer(
+    Q=Q_TARGET, T_water_in=21 + 273.15, T_water_out=15 + 273.15,
+    T_glycol_in=9 + 273.15, T_glycol_out=15 + 273.15,
+    D_h=D_h, L=ECON_L, beta=beta, Lambda=Lambda, b=b, L_w=ECON_L_W,
+    N_cp_water=24, N_cp_glycol=24, U=3500.0,
+)
+
+
+def econ_duty_at(T_air_C):
+    """Duty the INSTALLED economizer delivers against ambient, by rating its
+    fixed UA off-design (epsilon-NTU). Glycol arrives at OAT + 5 K, the
+    economizer chapter's own basis; the CHW return is the fixed 21 C.
+
+    Sanity anchor: at OAT = 4 C this returns exactly the 150 kW the LMTD
+    sizing model was built for, so the rating and sizing models agree at
+    their shared point and the partial band joins the full-free-cooling
+    band continuously -- no discontinuity at the 4 C threshold.
+    """
+    T_glycol_in = (T_air_C + DRY_COOLER_APPROACH_FC_K) + 273.15
+    Q, eps, NTU, Cr = rate_economizer(
+        ECON_DESIGN.UA, ECON_DESIGN.m_dot_water, ECON_DESIGN.cp_water, 21 + 273.15,
+        ECON_DESIGN.m_dot_glycol, ECON_DESIGN.cp_glycol, T_glycol_in,
+    )
+    return min(Q, Q_TARGET), T_glycol_in - 273.15
+
+
+def partial_free_cooling_hour(bank_obj, T_air_C, Q_target=Q_TARGET):
+    """Per-hour solve for an INTEGRATED (partial) free-cooling hour,
+    4 < OAT <= 10 C -- the ASHRAE 90.1 s6.5.1 activation band.
+
+    Water-side series, exactly as Ch. Economizer specifies: the CHW return
+    (21 C) passes through the economizer, which pre-cools it as far as the
+    ambient allows, and the chiller trims what's left down to the 15 C
+    supply. So the compressor sees only Q_mech = 150 kW - Q_econ, at the
+    same to = 10 C setpoint and the same tc = OAT + 10 K basis as a
+    mechanical hour.
+
+    The chiller's lift is genuinely low here (OAT <= 10 C -> tc <= 20 C) and
+    its duty is small, so these hours are cheap -- which is the entire point
+    of the 90.1 activation requirement.
+    """
+    Q_econ, T_glycol_C = econ_duty_at(T_air_C)
+    Q_mech = Q_target - Q_econ
+
+    if Q_mech <= 0.0:      # economizer alone covers it -> compressor off
+        r = free_cooling_hour(T_air_C, Q_target)
+        r["mode"] = "partial_free_cooling"
+        r["T_glycol_C"] = T_glycol_C
+        return r
+
+    tc_C = T_air_C + APPROACH_K
+    result = bank_obj.solve_with_vfd(Q_mech, tc_C, to_setpoint_C=TO_SETPOINT_C)
+    speed_frac = result.get("speed_frac")
+    return {
+        "mode": "partial_free_cooling", "T_air_C": T_air_C, "tc_C": tc_C,
+        "P_compressor_w": result["P_total_w"],
+        "Q_delivered_w": Q_target,          # the hall still gets its full 150 kW
+        "Q_econ_w": Q_econ, "Q_mech_w": Q_mech,
+        "T_glycol_C": T_glycol_C,
+        "speed_frac": speed_frac,
+        "cycling": speed_frac is not None and speed_frac < VFD_MIN_SPEED_FRAC,
+        "status": result["status"],
     }
 
 
@@ -472,15 +570,29 @@ def run_annual_simulation():
 
     results = []
     t0 = time.time()
+    C_glycol_free = ECON_DESIGN.m_dot_glycol * ECON_DESIGN.cp_glycol   # [W/K]
+
     for hr in wx:
         T_air_C = hr.T_db
         if T_air_C <= FREE_COOLING_THRESHOLD_C:
             r = free_cooling_hour(T_air_C)
             T_glycol_hot_in_hour = 15 + 273.15
+        elif T_air_C <= PARTIAL_FC_THRESHOLD_C:
+            r = partial_free_cooling_hour(bank_obj, T_air_C)
+            # Common glycol loop at its free-cooling flow: it leaves the dry
+            # cooler cold at OAT + 5 K, picks up BOTH the economizer's duty and
+            # the (small) condenser rejection, and returns mixed. Closing the
+            # loop on energy gives the dry cooler's hot inlet directly.
+            Q_reject_hour = r["Q_delivered_w"] + r["P_compressor_w"]
+            T_glycol_hot_in_hour = ((r["T_glycol_C"] + Q_reject_hour / C_glycol_free)
+                                    + 273.15)
         else:
             r = mechanical_hour(bank_obj, T_air_C)
             T_glycol_hot_in_hour = (r["tc_C"] - GLYCOL_APPROACH_K) + 273.15
 
+        # The dry cooler rejects everything the plant absorbs -- the full IT load
+        # plus whatever compressor work was needed. True in all three regimes,
+        # since Q_delivered is the 150 kW hall duty however it was produced.
         Q_cond_hour = r["Q_delivered_w"] + r["P_compressor_w"]
         fan_result = DRY_COOLER.predict_off_design(
             Q_target=Q_cond_hour, T_glycol_hot_in=T_glycol_hot_in_hour, T_air_in=T_air_C + 273.15,
@@ -491,13 +603,27 @@ def run_annual_simulation():
         results.append(r)
 
     elapsed = time.time() - t0
+    n = len(results)
     n_mech = sum(1 for r in results if r["mode"] == "mechanical")
-    n_free = len(results) - n_mech
-    print(f"\nAnnual simulation: {len(results)} hours processed in {elapsed:.1f} s")
-    print(f"  Mechanical-mode hours (incl. unmodeled partial-free-cooling band) : "
-          f"{n_mech} ({n_mech/len(results)*100:.1f}%)")
-    print(f"  Full free-cooling hours (OAT <= {FREE_COOLING_THRESHOLD_C:.0f} C)             : "
-          f"{n_free} ({n_free/len(results)*100:.1f}%)")
+    n_part = sum(1 for r in results if r["mode"] == "partial_free_cooling")
+    n_free = sum(1 for r in results if r["mode"] == "free_cooling")
+    econ_kwh = sum(r.get("Q_econ_w", 0.0) for r in results) / 1e3
+    load_kwh = sum(r["Q_delivered_w"] for r in results) / 1e3
+    print(f"\nAnnual simulation: {n} hours processed in {elapsed:.1f} s")
+    print(f"  Mechanical only (OAT > {PARTIAL_FC_THRESHOLD_C:.0f} C)                 : "
+          f"{n_mech} ({n_mech/n*100:.1f}%)")
+    print(f"  Integrated/partial free cooling ({FREE_COOLING_THRESHOLD_C:.0f} < OAT <= "
+          f"{PARTIAL_FC_THRESHOLD_C:.0f} C) : {n_part} ({n_part/n*100:.1f}%)")
+    print(f"  Full free cooling (OAT <= {FREE_COOLING_THRESHOLD_C:.0f} C)               : "
+          f"{n_free} ({n_free/n*100:.1f}%)")
+    print(f"  Cooling energy delivered by the economizer : {econ_kwh/1e3:.0f} MWh/yr of "
+          f"{load_kwh/1e3:.0f} MWh/yr ({econ_kwh/load_kwh*100:.1f}%)")
+    n_cyc = sum(1 for r in results if r.get("cycling"))
+    if n_cyc:
+        print(f"  NOTE: {n_cyc} partial-band hour(s) ({n_cyc/n*100:.1f}%) need less duty than "
+              f"{VFD_MIN_SPEED_FRAC*100:.0f}% drive speed -> chiller CYCLES rather than "
+              f"modulates.\n        Average power is unaffected (ideal cycling = modulation); "
+              f"cycling losses are not modelled.")
     n_over_speed = sum(1 for r in results if r["fan_speed_frac"] > 1.0)
     if n_over_speed:
         print(f"  WARNING: {n_over_speed} hour(s) require >100% fan speed to hit duty -- "
@@ -612,12 +738,11 @@ def plot_annual_cop_load(results, save_path=None):
 # P_elec_free/P_chw_pump are constants pulled from the SAME already-built
 # instances rather than re-selected per period.
 #
-# INHERITED SIMPLIFICATIONS (same ones already flagged elsewhere in this
-# file, not expanded here): the condenser's glycol temperatures stay fixed
-# at 30/35 C regardless of month (the known, still-unresolved mismatch
-# against the dry cooler's 40/46 C design point); the 4-10 C partial-
-# free-cooling band is folded into full mechanical mode (same threshold
-# as run_annual_simulation()).
+# All three ASHRAE 90.1 economizer regimes are modelled: mechanical
+# (OAT > 10 C), integrated/partial free cooling (4 < OAT <= 10 C, where the
+# economizer pre-cools the CHW return and the chiller trims the remainder),
+# and full free cooling (OAT <= 4 C, compressor off) -- same thresholds as
+# run_annual_simulation().
 # =======================================================================
 def run_full_cycle(T_air_C, label=""):
     """Runs the full detailed cycle at one ambient dry-bulb temperature.
@@ -636,6 +761,10 @@ def run_full_cycle(T_air_C, label=""):
         "evaporator_dP_water_kPa": None,
         "econ_dP_water_kPa": None, "econ_dP_glycol_kPa": None,
         "econ_UA_kWK": None, "econ_LMTD_K": None,
+        # Integrated/partial free-cooling split (4 < OAT <= 10 C); None in the
+        # other two regimes, where the load is carried entirely by one side.
+        "Q_econ_kW": None, "Q_mech_kW": None,
+        "econ_glycol_supply_C": None, "CHW_econ_outlet_C": None,
         "tube_suction": None, "v_suction_ms": None,
         "tube_discharge": None, "v_discharge_ms": None,
         "tube_liquid": None, "v_liquid_ms": None,
@@ -682,12 +811,37 @@ def run_full_cycle(T_air_C, label=""):
         })
         return row
 
-    # ---- MECHANICAL MODE ----
-    row["mode"] = "mechanical"
+    # ---- MECHANICAL / INTEGRATED-PARTIAL-FREE-COOLING MODE ----
+    # Both regimes run the same chiller chain below; the partial band differs
+    # only in that the economizer has already removed part of the load before
+    # the water reaches the evaporator, so the compressor is asked for less
+    # duty against a lower entering-water temperature. Set that up first.
+    Q_econ_row = 0.0
+    T_water_in_C = 21.0
+    if T_air_C <= PARTIAL_FC_THRESHOLD_C:
+        row["mode"] = "partial_free_cooling"
+        Q_econ_row, T_glycol_C_row = econ_duty_at(T_air_C)
+        # Water-side series: the economizer pre-cools the 21 C return, the
+        # chiller trims the rest to the 15 C supply (Ch. Economizer).
+        T_water_in_C = 21.0 - Q_econ_row / (ECON_DESIGN.m_dot_water * ECON_DESIGN.cp_water)
+        row.update({
+            "econ_UA_kWK": ECON_DESIGN.UA / 1e3,
+            "econ_dP_water_kPa": ECON_DESIGN.delta_p_water / 1e3,
+            "econ_dP_glycol_kPa": ECON_DESIGN.delta_p_glycol / 1e3,
+            "Q_econ_kW": Q_econ_row / 1e3,
+            "econ_glycol_supply_C": T_glycol_C_row,
+            "CHW_econ_outlet_C": T_water_in_C,
+        })
+    else:
+        row["mode"] = "mechanical"
+
+    Q_duty = Q_TARGET - Q_econ_row     # what the compressor is actually asked for
+    row["Q_mech_kW"] = Q_duty / 1e3
+
     tc_C_p = T_air_C + APPROACH_K
     p_c_p = PropsSI("P", "T", tc_C_p + 273.15, "Q", 1, R)
 
-    result = bank.solve_with_vfd(Q_TARGET, tc_C_p, to_setpoint_C=TO_SETPOINT_C)
+    result = bank.solve_with_vfd(Q_duty, tc_C_p, to_setpoint_C=TO_SETPOINT_C)
     T_o_p = result["to_C"] + 273.15
     p_o_p = PropsSI("P", "T", T_o_p, "Q", 1, R)
     m_dot_p = result["m_dot_total_kgh"] / 3600.0
@@ -716,7 +870,8 @@ def run_full_cycle(T_air_C, label=""):
     Q_actual_p = m_dot_p * (h_out_target_p - eev_p.h_out)
 
     evaporator_p = Evaporator(m_dot_refrigerant=m_dot_p, p_in=p_o_p, Q=Q_actual_p, refrigerant=R,
-                               T_water_in=21 + 273.15, T_water_out=15 + 273.15, h_in=eev_p.h_out,
+                               T_water_in=T_water_in_C + 273.15, T_water_out=15 + 273.15,
+                               h_in=eev_p.h_out,
                                D_h=D_h, A_flow=A_flow_evap, L=L, beta=beta, Lambda=Lambda,
                                N_cp=N_cp_evap, b=b, L_w=L_w, N_cp_water=N_cp_water)
 
@@ -727,15 +882,29 @@ def run_full_cycle(T_air_C, label=""):
     rho_liquid_p = PropsSI('D', 'T', condenser_p.T_out, 'P', condenser_p.p_out, R)
     tube_l, ID_l, IDreq_l, v_l = select_tube(m_dot_p, rho_liquid_p, v_min=0.0, v_max=1.5, v_target=1.2)
 
+    # The dry cooler rejects the condenser duty AND, in the partial band, the
+    # economizer's duty as well -- one loop, one coil, both heat sources. In
+    # that band the loop runs at its free-cooling flow and leaves the coil at
+    # OAT + 5 K, so closing the loop on energy gives the mixed return.
+    Q_reject_p = condenser_p.Q + Q_econ_row
+    if Q_econ_row > 0.0:
+        C_glycol_free = ECON_DESIGN.m_dot_glycol * ECON_DESIGN.cp_glycol
+        T_glycol_hot_p = (T_glycol_C_row + Q_reject_p / C_glycol_free) + 273.15
+        P_glycol_pump_p = glycol_pump.P_elec_free
+    else:
+        T_glycol_hot_p = T_glycol_out_p
+        P_glycol_pump_p = glycol_pump.P_elec_mech
+
     fan_result = DRY_COOLER.predict_off_design(
-        Q_target=condenser_p.Q, T_glycol_hot_in=T_glycol_out_p, T_air_in=T_air_C + 273.15,
+        Q_target=Q_reject_p, T_glycol_hot_in=T_glycol_hot_p, T_air_in=T_air_C + 273.15,
     )
     P_fan = DRY_COOLER.fan_power(fan_result["fan_speed_frac"], P_FAN_DESIGN)
 
     P_compressor_p = result["P_total_w"]
-    P_glycol_pump_p = glycol_pump.P_elec_mech
     P_other_p = P_compressor_p + P_glycol_pump_p + P_fan + P_chw_pump
-    Q_delivered_p = evaporator_p.Q
+    # What the data hall actually receives: the economizer's share plus the
+    # chiller's. In the mechanical band Q_econ_row is 0 and this is unchanged.
+    Q_delivered_p = evaporator_p.Q + Q_econ_row
     PUE_p = (Q_delivered_p + P_other_p) / Q_delivered_p
 
     row.update({
@@ -822,6 +991,85 @@ def _row_cop_total(row):
     return 1.0 / (row["PUE"] - 1.0)
 
 
+def plot_economizer_band(save_path=None):
+    """How the 150 kW load splits between the economizer and the chiller across
+    the whole economizer envelope, and what the compressor costs there.
+
+    This is the ASHRAE 90.1 s6.5.1 compliance evidence in one picture: the
+    economizer carries load continuously from the 10 C activation threshold
+    down to 100% at the 4 C full-free-cooling threshold, with no step at
+    either boundary.
+    """
+    import matplotlib.pyplot as plt
+
+    if save_path is None:
+        save_path = os.path.join(FIG_ECON, "economizer_band.png")
+
+    BLUE, AQUA, YELLOW, RED = "#2a78d6", "#1baf7a", "#eda100", "#e34948"
+    SURFACE, PRIMARY_INK, SECONDARY_INK = "#fcfcfb", "#0b0b0b", "#52514e"
+    MUTED, GRID, BASELINE = "#898781", "#e1e0d9", "#c3c2b7"
+
+    bank_obj = CompressorBank(n_units=N_UNITS, superheat_K=DT_SH, subcooling_K=SUBCOOLING,
+                               to_bounds_C=(-10.0, 15.0))
+    oat = np.linspace(0.0, 14.0, 141)
+    q_econ, q_mech, p_comp = [], [], []
+    for t in oat:
+        if t <= FREE_COOLING_THRESHOLD_C:
+            qe, qm, pc = Q_TARGET, 0.0, 0.0
+        elif t <= PARTIAL_FC_THRESHOLD_C:
+            r = partial_free_cooling_hour(bank_obj, float(t))
+            qe, qm, pc = r["Q_econ_w"], r["Q_mech_w"], r["P_compressor_w"]
+        else:
+            r = mechanical_hour(bank_obj, float(t))
+            qe, qm, pc = 0.0, r["Q_delivered_w"], r["P_compressor_w"]
+        q_econ.append(qe / 1e3); q_mech.append(qm / 1e3); p_comp.append(pc / 1e3)
+
+    fig, (ax_q, ax_p) = plt.subplots(2, 1, figsize=(9, 6.4), facecolor=SURFACE,
+                                     sharex=True, gridspec_kw={"height_ratios": [2, 1]})
+    for ax in (ax_q, ax_p):
+        ax.set_facecolor(SURFACE)
+        ax.grid(True, axis="y", color=GRID, linewidth=0.8, zorder=0)
+        for s in ("top", "right"):
+            ax.spines[s].set_visible(False)
+        for s in ("left", "bottom"):
+            ax.spines[s].set_color(BASELINE)
+        ax.tick_params(colors=MUTED, labelsize=8)
+        for thr in (FREE_COOLING_THRESHOLD_C, PARTIAL_FC_THRESHOLD_C):
+            ax.axvline(thr, color=RED, linestyle="--", linewidth=1.2, zorder=1)
+
+    ax_q.stackplot(oat, q_econ, q_mech, colors=[AQUA, BLUE], zorder=2,
+                   labels=["Economizer (free)", "Chiller (compressor)"])
+    ax_q.set_ylabel("Cooling delivered [kW]", color=SECONDARY_INK, fontsize=9)
+    ax_q.set_title("How the 150 kW load splits across the ASHRAE 90.1 economizer envelope",
+                   color=PRIMARY_INK, fontsize=11, loc="left")
+    ax_q.legend(fontsize=8.5, edgecolor=BASELINE, loc="center left")
+    ax_q.set_ylim(0, 165)
+    ax_q.text(2.0, 157, "Full free cooling\ncompressor off", fontsize=7.5, color=MUTED, ha="center")
+    ax_q.text(7.0, 157, "Integrated / partial\neconomizer + chiller", fontsize=7.5, color=MUTED, ha="center")
+    ax_q.text(12.2, 157, "Mechanical only", fontsize=7.5, color=MUTED, ha="center")
+
+    ax_p.fill_between(oat, p_comp, color=YELLOW, zorder=2, alpha=0.9)
+    ax_p.set_ylabel("Compressor power [kW]", color=SECONDARY_INK, fontsize=9)
+    ax_p.set_xlabel("Outdoor air dry-bulb temperature [°C]", color=SECONDARY_INK, fontsize=9)
+    ax_p.text(10.15, max(p_comp) * 0.55, f"{PARTIAL_FC_THRESHOLD_C:.0f} °C\nactivation",
+              fontsize=7.5, color=RED)
+    ax_p.text(3.85, max(p_comp) * 0.55, f"{FREE_COOLING_THRESHOLD_C:.0f} °C\nfull free cooling",
+              fontsize=7.5, color=RED, ha="right")
+    ax_p.text(0.0, -0.46, "At 4 °C the curves are continuous -- the economizer's rated duty there is "
+                          "exactly the 150 kW it was sized for,\nso the partial band joins full free "
+                          "cooling with no step. At 10 °C there IS a step: the economizer is still "
+                          "delivering\n75 kW (half the load) when the fixed 90.1 changeover switches "
+                          "it off, so compressor power jumps 6.4 -> 13.0 kW.\nThat step is left money "
+                          "on the table, not physics -- see the floating-changeover item in "
+                          "Suggestions for Improvement.",
+              transform=ax_p.transAxes, fontsize=7.5, color=MUTED)
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, facecolor=SURFACE)
+    plt.close(fig)
+    print(f"Saved {save_path}")
+
+
 def plot_period_performance(rows, save_path, title):
     """Saves a two-panel bar chart (COP, PUE) across the given rows (12
     months or 4 seasons), bars colored by mode -- mechanical vs free-
@@ -836,6 +1084,7 @@ def plot_period_performance(rows, save_path, title):
 
     BLUE = "#2a78d6"
     AQUA = "#1baf7a"
+    YELLOW = "#eda100"
     SURFACE = "#fcfcfb"
     PRIMARY_INK = "#0b0b0b"
     SECONDARY_INK = "#52514e"
@@ -844,8 +1093,11 @@ def plot_period_performance(rows, save_path, title):
     BASELINE = "#c3c2b7"
 
     labels = [r["label"] for r in rows]
-    is_free = [r["mode"] == "free_cooling" for r in rows]
-    colors = [AQUA if f else BLUE for f in is_free]
+    # Three regimes, three colors -- the partial band is neither free nor fully
+    # mechanical and shouldn't be colored as either.
+    MODE_COLOR = {"free_cooling": AQUA, "partial_free_cooling": YELLOW,
+                  "mechanical": BLUE}
+    colors = [MODE_COLOR[r["mode"]] for r in rows]
     cop = [_row_cop_total(r) for r in rows]
     pue = [r["PUE"] for r in rows]
     tue = [r["TUE"] for r in rows]
@@ -884,8 +1136,8 @@ def plot_period_performance(rows, save_path, title):
             ax_pue.text(b.get_x() + b.get_width() / 2, v, fmt.format(v), ha="center",
                         va="bottom", fontsize=6.5, color=SECONDARY_INK)
 
-    ax_pue.text(0.0, -0.34, "Aqua = free-cooling (compressor off)   Blue = mechanical      "
-                            "Solid = PUE   Hatched = TUE\n"
+    ax_pue.text(0.0, -0.34, "Aqua = full free cooling (compressor off)   Yellow = integrated/partial "
+                            "free cooling   Blue = mechanical      Solid = PUE   Hatched = TUE\n"
                             f"TUE = ITUE x PUE with ITUE = {ITUE:.2f} ASSUMED (no server power "
                             f"model in this project); band {ITUE_BAND[0]:.2f}-{ITUE_BAND[1]:.2f}.",
                 transform=ax_pue.transAxes, fontsize=7.5, color=MUTED)
@@ -952,6 +1204,7 @@ print("ANNUAL SIMULATION -- first pass (raw per-hour results, no aggregation yet
 print("=" * 72)
 annual_results = run_annual_simulation()
 plot_annual_cop_load(annual_results)
+plot_economizer_band()
 
 print()
 print("=" * 72)

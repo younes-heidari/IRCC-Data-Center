@@ -1537,6 +1537,72 @@ For the Champaign, IL (TMY3, ASHRAE climate zone 5A) location, a large fraction 
 economizer contributes a substantial share of annual cooling and materially improves the
 facility PUE (evaluated in the seasonal-performance section of the main report).
 
+\subsection{Modelling the Partial Band: Rating, Not Sizing}
+\label{econ:sec:partialmodel}
+
+The partial band cannot be evaluated with the LMTD method used to size this exchanger.
+Sizing is handed a duty and all four terminal temperatures and back-solves the $UA$
+required --- it answers \emph{``how big must it be?''} at one condition. In the partial
+band the hardware is already fixed and \emph{both} outlet temperatures are unknown, so
+LMTD has nothing to stand on. The question is inverted: \emph{``what does the exchanger
+we already bought deliver at 7\,\textdegree C ambient?''} That is a rating problem, and
+it is solved with $\varepsilon$--NTU (\texttt{economizer.rate\_economizer}):
+
+\[
+  \mathrm{NTU} = \frac{UA}{C_{\min}}, \qquad
+  C_r = \frac{C_{\min}}{C_{\max}}, \qquad
+  \dot{Q} = \varepsilon \, C_{\min} \, (T_{w,\mathrm{in}} - T_{g,\mathrm{in}})
+\]
+
+\noindent This exchanger is deliberately \emph{balanced} --- the 6\,K glycol rise mirrors
+the 6\,K chilled-water span --- so $C_{\mathrm{water}} \approx C_{\mathrm{glycol}}$ and
+$C_r \rightarrow 1$, where the general counter-flow effectiveness expression goes $0/0$
+and the correct limit form is required:
+
+\[
+  \varepsilon\big|_{C_r = 1} = \frac{\mathrm{NTU}}{1 + \mathrm{NTU}}
+\]
+
+With the installed $UA = 25.0$\,kW/K and $C_{\min} = 25.0$\,kW/K, $\mathrm{NTU} = 1.0$ and
+$\varepsilon = 0.50$ across the whole band (both are fixed hardware properties --- only
+the inlet temperatures move).
+
+\begin{quote}
+\textbf{Cross-check.} At OAT $=4$\,\textdegree C the glycol arrives at 9\,\textdegree C
+and the rating model returns
+$\dot{Q} = 0.50 \times 25.0 \times (21-9) = \mathbf{150.0}$\,kW --- \emph{exactly} the
+duty the LMTD model was sized for. The two independent methods agree at their shared
+point, which both validates the rating model and guarantees the partial band joins full
+free cooling with no discontinuity at the 4\,\textdegree C threshold.
+\end{quote}
+
+\noindent The glycol supply is taken as OAT $+\,5$\,K throughout the band, this chapter's
+own dry-cooler approach basis. The economizer's share then falls linearly from 100\,\% of
+the load at 4\,\textdegree C to \textbf{50\,\% at the 10\,\textdegree C activation
+threshold}, with the chiller trimming the remainder against a very low lift
+($t_c \leq 20$\,\textdegree C).
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{figures/economizer/economizer_band.png}
+\caption{Load split and compressor power across the full ASHRAE~90.1 economizer envelope.
+The 4\,\textdegree C boundary is continuous by construction; the step at
+10\,\textdegree C is the fixed changeover switching off an economizer that is still
+delivering half the load (\S\ref{imp:sec:floating}).}
+\label{fig:econ_band}
+\end{figure}
+
+\noindent\textbf{Simplifications, stated.} Two are worth naming. First, the glycol loop is
+treated as running at its free-cooling flow through the band, carrying both the
+economizer duty and the (small) condenser rejection to a single dry cooler; the loop's
+hot return follows from an energy balance rather than a resolved two-branch hydraulic
+model. Second, at the cold end of the band the chiller is asked for very little --- about
+6\,kW at 4.5\,\textdegree C, roughly 4\,\% of drive speed --- which no VFD holds; the
+machine \textbf{cycles} there rather than modulating. Ideal cycling and ideal modulation
+give the same average power ($\dot{Q}/\mathrm{COP}$), so the reported energy stands, but
+real cycling losses are not modelled. They are bounded by the few kW of compressor duty
+involved (679\,h/yr, 7.8\,\% of the year), so they cannot move the PUE materially.
+
 % ── Part B divider ────────────────────────────────────────────────────────────
 \zonedivider{Part B \quad---\quad Single-Phase Pressure-Drop Model}
 
@@ -2084,10 +2150,13 @@ Mechanical only        & OAT $> 10$\,\textdegree C            & 4{,}860\,hrs (55
 
 Roughly 44.5\,\% of the year (full $+$ partial free cooling) sees some contribution from
 the economizer loop, a direct consequence of Champaign's ASHRAE climate zone 5A winters
-and a materially favourable input to the annual facility PUE calculation. \textbf{The
-mechanical-mode 55.5\,\% of hours are counted here but not yet thermally simulated}: that
-duty depends on the compressor's coefficient of performance at each hour's actual
-condensing temperature, which requires the (pending) compressor chapter to close out.
+and a materially favourable input to the annual facility PUE calculation. All three
+regimes are now thermally simulated across all 8{,}760 hours --- including the partial
+band, whose duty split is rated off-design rather than assumed
+(\S\ref{econ:sec:partialmodel}) --- and the resulting energy is reported in
+Chapter~\ref{ch:performance}, \S\ref{perf:sec:seasonal}. Over the year the economizer
+delivers \textbf{526\,MWh of the 1{,}314\,MWh} of cooling the hall needs
+(\textbf{40.1\,\%}) without any compressor work at all.
 
 \emph{Methodological note:} an earlier pass at this same calculation used a
 \emph{monthly-average diurnal profile} (24 representative hours $\times$ 12 months) rather
@@ -4588,8 +4657,9 @@ its extreme, which is what makes the free-cooling architecture pay in this clima
 
 The full detailed cycle was re-run at every month's and every season's average outdoor
 dry-bulb temperature from the real 8{,}760-hour Champaign TMY3 file (WMO~725315),
-automatically switching between mechanical and free-cooling mode at the ASHRAE~90.1
-4\,\textdegree C full-free-cooling threshold (\texttt{main.py}). The total-system COP
+automatically selecting among all three ASHRAE~90.1 economizer regimes --- mechanical
+above 10\,\textdegree C, integrated/partial free cooling between 4 and 10\,\textdegree C,
+and full free cooling at or below 4\,\textdegree C (\texttt{main.py}). The total-system COP
 below is $Q_{\mathrm{cool}}/P_{\mathrm{total}}$ (all facility power: compressor, both
 pumps, and fans), equivalently $1/(\mathrm{PUE}-1)$. Each period carries both PUE and
 TUE (Eq.~\ref{eq:tue}); the TUE columns are PUE $\times$ 1.20 throughout, on the assumed
@@ -4602,10 +4672,16 @@ independent result.
 \label{perf:sec:monthly}
 
 Table~\ref{tab:monthly_summary} resolves the seasonal averages into the 12 monthly runs
-they are grouped from, which is where the free-cooling transition is actually visible:
-March flips to mechanical mode at a 6.0\,\textdegree C monthly average, and November
-flips back at 7.1\,\textdegree C, bracketing a nine-month mechanical season whose
-compressor power tracks ambient almost linearly (10.7\,kW in March to 23.2\,kW in July).
+they are grouped from, which is where the regime transitions are actually visible. Three
+months (Dec--Feb) run fully free. \textbf{March and November land inside the
+integrated/partial band} at 6.0 and 7.1\,\textdegree C monthly averages: the economizer
+carries 124\,kW and 111\,kW of the 150\,kW respectively, leaving the chiller to trim only
+26\,kW and 39\,kW. Their compressor power collapses to \textbf{1.8\,kW and 2.9\,kW} ---
+against the 10.7 and 11.3\,kW those same months cost when the partial band was folded
+into full mechanical operation --- and their PUE falls from 1.12 to \textbf{1.03}, within
+a rounding error of a fully free month. The remaining seven months run mechanical, their
+compressor power tracking ambient almost linearly (13.7\,kW in October to 23.2\,kW in
+July).
 
 \input{tables/performance/monthly/monthly_summary.tex}
 
@@ -4637,13 +4713,16 @@ The seasonal picture is strongly favourable and stands in deliberate contrast to
 worst-case design-day metrics of Part~A. Winter runs entirely in free cooling
 (compressor off, PUE 1.01, TUE 1.21, total-system COP near 88), while even the hottest
 monthly average (July) holds PUE 1.21 / TUE 1.46, against the worst-case design day's
-1.31 / 1.57. Roughly 29\,\% of the year is full free cooling and a further 15.5\,\% is
-partial free cooling (Chapter~\ref{ch:dry}, \S\ref{dry:sec:annualregime}), so the
-\emph{annual-average} efficiency is far better than any single design-point number ---
-the central benefit of the glycol-loop free-cooling architecture. With the re-selected
-dry cooler (\S\ref{dry:sec:reselection}) the annual run is \textbf{clean across all
-8{,}760 hours}; the 17 fan-ceiling hours seen while the original unit was still carried
-are resolved.
+1.31 / 1.57. Spring and Fall now sit at PUE 1.11 and 1.12 --- markedly better than the
+1.14/1.15 they showed before the partial band was modelled --- because each contains one
+month that runs integrated rather than mechanical. Across the year the economizer
+delivers \textbf{526\,MWh of the 1{,}314\,MWh} of cooling the hall needs
+(\textbf{40.1\,\%}) with the compressor off or barely loaded, which is the central
+benefit of the glycol-loop free-cooling architecture and the reason the
+\emph{annual-average} efficiency beats any single design-point number. With the
+re-selected dry cooler (\S\ref{dry:sec:reselection}) the annual run is \textbf{clean
+across all 8{,}760 hours}; the 17 fan-ceiling hours seen while the original unit was
+still carried are resolved.
 
 Read through the TUE column, the same result carries a blunter message. In winter the
 plant's own overhead nearly vanishes (PUE 1.01), yet TUE still sits at 1.21 --- because
@@ -5608,9 +5687,11 @@ its greatest strength, and the two cannot be separated:
         air-cooled condenser --- worth roughly 20\,\% of the full-load COP, and the
         entire reason the efficiency revision (larger dry cooler, more plates, VFDs)
         was necessary at all.
-  \item It \textbf{buys} the waterside economizer, and with it 44.5\,\% of the year at
-        or near PUE\,1.01, plus the ability to keep an A3 refrigerant entirely out of
-        the data hall.
+  \item It \textbf{buys} the waterside economizer, and with it \textbf{40.1\,\% of the
+        year's cooling energy delivered without meaningful compressor work} --- 29\,\% of
+        hours fully free at PUE\,1.01 and a further 15.5\,\% integrated at PUE\,$\approx$1.03
+        (\S\ref{perf:sec:seasonal}) --- plus the ability to keep an A3 refrigerant entirely
+        out of the data hall.
 \end{itemize}
 
 \noindent \textbf{In Champaign's climate this trade is clearly worth making.} The
@@ -5705,7 +5786,60 @@ easing every EN~378 obligation. For an A3 refrigerant, \textbf{plant-room layout
 safety decision}: co-locate the compressor pack and condenser as tightly as the
 building permits.
 
-\section{Priority 4 --- Efficiency Headroom}
+\section{Priority 4 --- Float the Economizer Changeover}
+\label{imp:sec:floating}
+
+\textbf{This is the best return per dollar in the whole report: it is a control-logic
+change with no hardware attached.}
+
+The design follows the project's stated rule --- activate the economizer at
+OAT $\leq 10$\,\textdegree C --- and Figure~\ref{fig:econ_band} shows what that rule
+costs. At 10\,\textdegree C the economizer is delivering \textbf{75\,kW, half the design
+load}, and then the changeover switches it off. Compressor power jumps from 6.4 to
+13.0\,kW across a threshold the ambient does not notice. That step is not physics; it is
+an artefact of a fixed changeover temperature.
+
+The economizer stops being useful only when the glycol it is fed is no longer colder
+than the chilled water returning from the hall. With glycol at OAT $+\,5$\,K and a
+21\,\textdegree C return, that crossover is at \textbf{OAT $= 16$\,\textdegree C}, not
+10\,\textdegree C:
+
+\begin{table}[h!]
+\caption{Economizer duty above the fixed 10\,\textdegree C changeover, rated with the same
+$\varepsilon$--NTU model (\S\ref{econ:sec:partialmodel}). This capacity exists and is
+currently discarded.}
+\label{tab:econ_above10}
+\begin{tabularx}{\linewidth}{lLL}
+\toprule
+\textbf{OAT [\textdegree C]} & \textbf{Glycol supply [\textdegree C]} & \textbf{Economizer duty} \\
+\midrule
+10 & 15 & 75.0\,kW (50\,\% of load) --- \emph{switched off here} \\
+11 & 16 & 62.5\,kW (41.7\,\%) \\
+12 & 17 & 50.0\,kW (33.3\,\%) \\
+13 & 18 & 37.5\,kW (25.0\,\%) \\
+14 & 19 & 25.0\,kW (16.7\,\%) \\
+15 & 20 & 12.5\,kW (8.3\,\%) \\
+16 & 21 & 0\,kW --- true crossover \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent Champaign spends \textbf{1{,}568\,h/yr (17.9\,\% of the year)} between 10 and
+16\,\textdegree C. Every one of those hours currently runs the chiller at full 150\,kW
+duty while an already-purchased exchanger sits idle with 0--50\,kW of free cooling
+available.
+
+\textbf{Recommendation:} replace the fixed 10\,\textdegree C rule with a floating
+changeover --- enable the economizer whenever the available glycol supply is below the
+CHW return by some useful margin (say 2\,K), and let the chiller trim whatever is left.
+This \emph{exceeds} the ASHRAE~90.1~\S6.5.1 requirement rather than conflicting with it:
+90.1 mandates activation \emph{by} 10\,\textdegree C, and a floating changeover activates
+earlier. The economizer, the valves and the piping are all already in the BOM; only the
+control sequence changes. The one real cost is more hours of low-load chiller operation,
+where the machine cycles rather than modulates (\S\ref{econ:sec:partialmodel}) --- so the
+sequence should carry a minimum-runtime guard.
+
+\section{Priority 5 --- Efficiency Headroom}
 \label{imp:sec:efficiency}
 
 The revision met the targets; it did not make them comfortable. In descending order
@@ -5721,10 +5855,11 @@ Reduce the condensing approach further (10\,K $\to$ 7\,K) & AHRI full-load COP
 $\approx$3.48 $\to$ 3.7$+$; lifts every IPLV point
 (\S\ref{perf:sec:sensitivity}) & A larger dry cooler again --- already the revision's
 dominant capital item \\
-Model the partial free-cooling band (4--10\,\textdegree C) & 1{,}358\,h/yr currently
-counted as \emph{full mechanical} in the annual simulation, so reported annual energy
-is \textbf{pessimistic} & Modelling effort only --- no hardware. \textbf{The cheapest
-improvement available}, and it makes the design look better than currently claimed \\
+\textbf{Float the economizer changeover} instead of fixing it at
+10\,\textdegree C (\S\ref{imp:sec:floating}) & A further 1{,}568\,h/yr
+(17.9\,\% of the year) in which the economizer can still carry 50\,kW down to
+0\,kW of the load but is switched off & \textbf{Controls only --- no hardware.}
+The cheapest improvement now available \\
 Increase subcooling beyond 5\,K & $+$6\,\% COP at 10\,K, $+$11\,\% at 15\,K & More
 condenser area; diminishing returns; interacts with the charge inventory \\
 Economised / vapour-injection cycle & Improves COP at high lift & Rejected: adds
@@ -5734,14 +5869,18 @@ justify. Noted here for completeness, as subtask~1d asks \\
 \end{tabularx}
 \end{table}
 
-\section{Priority 5 --- Modelling Fidelity}
+\section{Priority 6 --- Modelling Fidelity}
 \label{imp:sec:modelling}
 
 Ranked by how much the current simplification could mislead:
 
 \begin{enumerate}
-  \item \textbf{Partial free-cooling band} (as above) --- the one simplification that
-        makes the design look \emph{worse} than it is.
+  \item \textbf{Glycol-loop hydraulics in the partial band}, where the economizer and the
+        condenser are both served by one loop and one dry cooler. The loop's hot return is
+        closed on an energy balance at the free-cooling flow rather than resolved as two
+        branches; and cycling losses below the drive's minimum speed (679\,h/yr) are not
+        modelled (\S\ref{econ:sec:partialmodel}). Both are bounded by the few kW of
+        compressor duty in that band.
   \item \textbf{Fixed approach temperatures across all ambients.} $t_c = T_{air} + 10$
         and the glycol approaches are held constant rather than re-solving the dry
         cooler's $\varepsilon$-NTU model at each hour. Cheap and defensible, but it
@@ -5754,7 +5893,7 @@ Ranked by how much the current simplification could mislead:
   \item \textbf{Dynamic model} for the control interaction (\S\ref{ctrl:sec:openitems}).
 \end{enumerate}
 
-\section{Priority 6 --- Deliverables Still Outstanding}
+\section{Priority 7 --- Deliverables Still Outstanding}
 \label{imp:sec:deliverables}
 
 \begin{itemize}

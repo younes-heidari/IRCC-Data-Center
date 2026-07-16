@@ -2,6 +2,45 @@ import numpy as np
 from CoolProp.CoolProp import PropsSI
 
 
+def rate_economizer(UA, m_dot_water, cp_water, T_water_in,
+                    m_dot_glycol, cp_glycol, T_glycol_in):
+    """RATING model (epsilon-NTU, counter-flow): given INSTALLED hardware (a
+    fixed UA) and the two inlet conditions, return the duty the exchanger
+    actually delivers.
+
+    This is the inverse of the Economizer class above/below it, which is a
+    SIZING model: that one is handed a duty and all four temperatures and
+    back-solves the UA needed. Sizing answers "how big must it be?" at the one
+    design condition; it cannot answer "what does the exchanger I already
+    bought do at 7 C ambient?" -- both outlet temperatures are unknown there,
+    so LMTD has nothing to stand on. Hence epsilon-NTU.
+
+    Used for the INTEGRATED (PARTIAL) free-cooling band, 4 < OAT <= 10 C
+    (ASHRAE 90.1 s6.5.1 activation threshold): the economizer pre-cools the
+    returning chilled water by whatever the ambient allows, and the chiller
+    trims the remainder.
+
+    Returns (Q_w, eps, NTU, Cr).
+    """
+    C_water = m_dot_water * cp_water          # [W/K]
+    C_glycol = m_dot_glycol * cp_glycol
+    C_min, C_max = min(C_water, C_glycol), max(C_water, C_glycol)
+    Cr = C_min / C_max
+    NTU = UA / C_min
+
+    # Counter-flow effectiveness. The Cr -> 1 branch is not a corner case here:
+    # this exchanger is deliberately balanced (6 K glycol rise mirrors the 6 K
+    # CHW span), so C_water ~= C_glycol and the general formula goes 0/0.
+    if abs(1.0 - Cr) < 1e-6:
+        eps = NTU / (1.0 + NTU)
+    else:
+        x = np.exp(-NTU * (1.0 - Cr))
+        eps = (1.0 - x) / (1.0 - Cr * x)
+
+    Q = eps * C_min * (T_water_in - T_glycol_in)
+    return max(Q, 0.0), eps, NTU, Cr
+
+
 class Economizer:
     """Models the waterside free-cooling economizer: a glycol-to-chilled-water
     plate heat exchanger placed in PARALLEL with the chiller. When the outdoor

@@ -162,13 +162,18 @@ def read_seasonal_from_monthly():
         s = season_of[i + 1]
         pue = float(row["PUE"])
         cop_total = 1.0 / (pue - 1.0)
-        seasons.setdefault(s, {"pue": [], "tue": [], "cop": [], "mech": 0, "free": 0, "T": []})
+        seasons.setdefault(s, {"pue": [], "tue": [], "cop": [], "mech": 0,
+                               "partial": 0, "free": 0, "T": []})
         seasons[s]["pue"].append(pue)
         seasons[s]["tue"].append(float(row["TUE"]))
         seasons[s]["cop"].append(cop_total)
         seasons[s]["T"].append(float(row["T_air_C"]))
+        # Three regimes, not two: lumping the integrated/partial band in with
+        # full free cooling would overclaim (the compressor still runs there).
         if row["mode"] == "mechanical":
             seasons[s]["mech"] += 1
+        elif row["mode"] == "partial_free_cooling":
+            seasons[s]["partial"] += 1
         else:
             seasons[s]["free"] += 1
 
@@ -181,7 +186,8 @@ def read_seasonal_from_monthly():
             "cop_total": sum(d["cop"]) / len(d["cop"]),
             "pue": sum(d["pue"]) / len(d["pue"]),
             "tue": sum(d["tue"]) / len(d["tue"]),
-            "mech_months": d["mech"], "free_months": d["free"],
+            "mech_months": d["mech"], "partial_months": d["partial"],
+            "free_months": d["free"],
         })
     return out
 
@@ -385,13 +391,13 @@ def write_seasonal_summary_table(seasons, out_path):
         r"\label{tab:seasonal_perf_summary}",
         r"\begin{tabularx}{\linewidth}{lLLLLL}",
         r"\toprule",
-        r"\textbf{Season} & \textbf{Avg. $T_{air}$ [\textdegree C]} & \textbf{Total-system COP [-]} & \textbf{PUE [-]} & \textbf{TUE [-]} $^{\dagger}$ & \textbf{Mechanical / free-cooling months} \\",
+        r"\textbf{Season} & \textbf{Avg. $T_{air}$ [\textdegree C]} & \textbf{Total-system COP [-]} & \textbf{PUE [-]} & \textbf{TUE [-]} $^{\dagger}$ & \textbf{Months mech. / partial FC / full FC} \\",
         r"\midrule",
     ]
     for s in seasons:
         lines.append(f"{s['season']} & {s['T_air_C']:.1f} & {s['cop_total']:.1f} & "
                      f"{s['pue']:.2f} & {s['tue']:.2f} & "
-                     f"{s['mech_months']} / {s['free_months']} \\\\")
+                     f"{s['mech_months']} / {s['partial_months']} / {s['free_months']} \\\\")
     lines += [
         r"\bottomrule",
         r"\end{tabularx}",
