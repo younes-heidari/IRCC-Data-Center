@@ -4558,26 +4558,71 @@ value is deliberately conservative (\S\ref{perf:sec:iplv}).
 \label{perf:sec:hardware}
 
 The compliance gains are bought with heat-transfer area and a drive --- quantified
-here so the revision's cost is as explicit as its benefit:
+here so the revision's cost is as explicit as its benefit.
+
+\subsection{Revised Overall Heat-Transfer Coefficients}
+\label{perf:sec:uvalues}
+
+The tighter approaches raise the required $UA$ of both plate exchangers
+(evaporator 14.0\,$\to$\,19.7\,kW/K; condenser 13.1\,$\to$\,20.2\,kW/K). That extra
+$UA$ can be bought either as \emph{area} (more plates) or as \emph{coefficient} (a
+higher $U$). The original chapters deliberately assumed values at the conservative
+end of their published bands ($U_{\mathrm{evap}} = 3{,}000$,
+$U_{\mathrm{cond}} = 2{,}500$\,W\,m$^{-2}$K$^{-1}$); the revision re-assumes them
+near the top of those bands, which keeps both exchangers inside the same
+GBH-DW\,500H frame:
+
+\begin{table}[h!]
+\caption{Revised overall heat-transfer coefficient assumptions.}
+\label{tab:revision_u}
+\begin{tabularx}{\linewidth}{lLLLL}
+\toprule
+\textbf{Exchanger} & \textbf{Published band} & \textbf{Original} & \textbf{Revised} & \textbf{Justification} \\
+\midrule
+Evaporator (water\,/\,R-290) & 2{,}500--4{,}500 & 3{,}000 & \textbf{4{,}000} &
+Near the top of the band, consistent with propane's favourable transport properties
+already noted in \S2.2.1 \\
+Condenser (R-290\,/\,30\,\% PG) & 2{,}000--3{,}500 & 2{,}500 & \textbf{3{,}650} &
+Marginally \emph{above} the band; the small excess is attributed to the revision's
+$+28$\,\% glycol flow (\S\ref{perf:sec:hardware}) raising the glycol-side film
+coefficient, the very term \S3.2.4 identifies as the limiting one \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent \textbf{These are assumptions, not results}, and they are the least
+certain input in the revision. $U$ is an \emph{outcome} of real plate geometry and
+channel velocity, not a free parameter, and the condenser value sits just outside
+its published band. Both must be confirmed in \textbf{Kelvion Select PHE} before
+procurement; if the vendor returns materially lower coefficients, the plate counts
+below rise and the 500H frame limit returns as a binding constraint. The same
+selection run should also report the resulting channel pressure drops, since a
+higher $U$ is bought with higher channel velocity and therefore feeds back into
+pump sizing (Chapters~\ref{ch:pump}, \ref{ch:chwpump}).
+
+\subsection{Component-by-Component Consequences}
 
 \begin{table}[h!]
 \caption{Hardware consequences of the efficiency revision (LMTD re-sizing at the
-component chapters' own $U$ values and plate area; dry cooler via the
-$\varepsilon$-NTU model of Chapter~\ref{ch:dry}).}
+revised $U$ values of Table~\ref{tab:revision_u} and the 500H's
+0.0665\,m$^2$/plate; dry cooler via the $\varepsilon$-NTU model of
+Chapter~\ref{ch:dry}). Plate counts include the report's standard 20\,\% margin.}
 \label{tab:revision_hardware}
 \begin{tabularx}{\linewidth}{lLLL}
 \toprule
 \textbf{Component} & \textbf{Original} & \textbf{Revised} & \textbf{Consequence} \\
 \midrule
-Evaporator BPHE & LMTD 10.7\,K, 4.66\,m$^2$, $\approx$84 plates (margined) & LMTD 7.6\,K,
-6.57\,m$^2$, $\approx$119 plates (margined) & Exceeds the GBH-DW\,500H's 100-plate
-limit --- next frame size or two units in parallel \\
-Condenser BPHE & LMTD 14.5\,K, 5.25\,m$^2$, $\approx$95 plates (margined) & LMTD 9.0\,K,
-8.09\,m$^2$, $\approx$146 plates (margined) & Exceeds the 500H frame --- larger frame
-or two units in parallel \\
+Evaporator BPHE & LMTD 10.7\,K, $UA$ 14.0\,kW/K, 4.66\,m$^2$, $\approx$84 plates &
+LMTD 7.6\,K, $UA$ 19.7\,kW/K, 4.93\,m$^2$, $\approx$\textbf{89 plates} & $+5$ plates;
+\textbf{stays in the GBH-DW\,500H frame} (100-plate limit) at the revised $U$ \\
+Condenser BPHE & LMTD 14.5\,K, $UA$ 13.1\,kW/K, 5.25\,m$^2$, $\approx$95 plates &
+LMTD 9.0\,K, $UA$ 20.2\,kW/K, 5.54\,m$^2$, $\approx$\textbf{100 plates} & $+5$ plates;
+\textbf{exactly at the 500H's 100-plate limit} --- no frame change, but no headroom
+either \\
 Dry cooler & $UA = 47.3$\,kW/K (Kelvion ULF-PA104Y4V) & $UA \approx 118$\,kW/K
 ($\approx$2.5$\times$) & Substantially larger unit; vendor re-selection at the 3\,K
-approach required (17 fan-ceiling hours in the annual run until then) \\
+approach required (17 fan-ceiling hours in the annual run until then). \textbf{The
+revision's dominant hardware cost} \\
 Glycol loop & 9.07\,kg/s (6\,K range) & 11.6\,kg/s (4\,K range, $+28$\,\%) & Pump
 duty rises (electrical 1.18\,$\to$\,2.30\,kW); the 2AD frame was already near its
 envelope top --- re-check against the 2.5AC (Ch.~\ref{ch:pump},
@@ -4589,9 +4634,14 @@ addition; also resolves the turndown-floor and 30\,kW minimum-load open items \\
 \end{table}
 
 \noindent None of these changes the architecture, the refrigerant, or the component
-families --- they scale existing selections and add a standard drive. The re-selections
-(larger BPHE frames, larger dry cooler, pump frame re-check) are the revision's open
-items and should be closed with the same vendor tools used for the original selections.
+families --- they scale existing selections and add a standard drive. With the
+revised $U$ values \textbf{both plate exchangers remain in the originally selected
+GBH-DW\,500H frame}, each gaining only $\approx$5 plates, so the revision's real
+capital impact concentrates in the dry cooler ($\approx$2.5$\times$ $UA$) and the
+glycol pump re-check. The condenser sitting exactly on the 100-plate limit is the
+tightest point in the revised design: it depends on both the assumed
+$U = 3{,}650$ and the 20\,\% margin, and any adverse movement in either pushes it
+to the next frame size or to two units in parallel.
 
 
 % ══════════════════════════════════════════════════════════════════════════════
