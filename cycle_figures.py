@@ -2,10 +2,9 @@
 
 Covers the project's p-h chart deliverable (subtask 1h) plus the supporting
 diagrams that carry the design's key arguments visually: the temperature
-cascade that drives the whole efficiency revision, the heat-exchanger T-Q
-profiles behind the LMTD sizing, the PUE breakdown, the original-vs-revised
-metric comparison, and the annual ambient duration curve behind the
-free-cooling hours.
+cascade that sets the condensing temperature, the heat-exchanger T-Q profiles
+behind the LMTD sizing, the PUE breakdown, the efficiency-target compliance
+summary, and the annual ambient duration curve behind the free-cooling hours.
 
 Every state point is taken from the SAME Bitzer AHRI-540 map and CoolProp
 properties used by main.py, so these figures cannot drift from the model.
@@ -17,6 +16,7 @@ import numpy as np
 from CoolProp.CoolProp import PropsSI
 
 from compressor import CompressorBank
+from figsave import save_figure
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPORT = os.path.join(_HERE, "report")
@@ -28,22 +28,14 @@ for d in (FIG_CYCLE, FIG_PERF, FIG_ANNUAL):
 
 R = "R290"
 
-# ---- Design points -------------------------------------------------
-# REVISED (current design): tc=45 (10 K air approach), to=10 (5 K evap approach)
-# ORIGINAL (superseded):    tc=52 (17 K air approach), to=7  (8 K evap approach)
-#
-# Superheat is taken as 8 K -- the compressor vendor's own selection basis
-# (Ch. Compressor: "useful superheat 8 K, 15 C return gas") and the value
-# performance.py uses for the reported COP/IPLV. NOTE: main.py's integrated
-# cycle uses DT_SH = 10 K instead, an undocumented deviation that makes its
-# design-point COP read 4.73 against the performance chapter's 4.67 (a 1.3%
-# split). Flagged as an open item; 8 K is used here so this chart agrees with
-# the compliance numbers rather than adding a third value.
+# ---- Design point --------------------------------------------------
+# tc = 45 C (10 K air-to-refrigerant approach), to = 10 C (5 K evaporator
+# approach). Superheat 8 K, matching the compressor vendor's own selection
+# basis (Ch. Compressor: "useful superheat 8 K, 15 C return gas"), main.py's
+# DT_SH, and performance.py's reported COP/IPLV -- one value everywhere.
 SUPERHEAT_K = 8.0
-REVISED = dict(to=10.0, tc=45.0, sh=SUPERHEAT_K, sc=5.0,
-               label="Revised design ($t_c$=45 C, $t_o$=10 C)")
-ORIGINAL = dict(to=7.0, tc=52.0, sh=SUPERHEAT_K, sc=5.0,
-                label="Original design ($t_c$=52 C, $t_o$=7 C)")
+DESIGN = dict(to=10.0, tc=45.0, sh=SUPERHEAT_K, sc=5.0,
+              label="Design cycle ($t_c$=45 C, $t_o$=10 C)")
 
 # ---- dataviz palette (validated reference instance) -----------------
 BLUE, AQUA, YELLOW, GREEN = "#2a78d6", "#1baf7a", "#eda100", "#008300"
@@ -79,9 +71,7 @@ def cycle_states(to, tc, sh, sc, **_):
 
 
 def plot_ph_chart(out_path):
-    """p-h chart of the designed cycle (subtask 1h), with the superseded
-    original overlaid so the revision's smaller lift -- and hence its shorter
-    compression work leg -- is visible rather than only asserted."""
+    """p-h chart of the designed cycle (subtask 1h)."""
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(10, 7), facecolor=SURFACE)
@@ -104,21 +94,17 @@ def plot_ph_chart(out_path):
             "saturated\nvapour", fontsize=8, color=MUTED, ha="left", va="center")
     ax.text(430, 30, "two-phase", fontsize=8.5, color=MUTED, ha="center", style="italic")
 
-    for spec, color, ls, lw, z in ((ORIGINAL, MUTED, "--", 1.6, 3), (REVISED, BLUE, "-", 2.4, 4)):
-        s = cycle_states(**spec)
-        h = [s["h1"]/1e3, s["h2"]/1e3, s["h3"]/1e3, s["h4"]/1e3, s["h1"]/1e3]
-        p = [s["po"]/1e5, s["pc"]/1e5, s["pc"]/1e5, s["po"]/1e5, s["po"]/1e5]
-        ax.plot(h, p, color=color, linewidth=lw, linestyle=ls, zorder=z,
-                label=f"{spec['label']} --- COP {s['COP']:.2f}")
-        if color == BLUE:
-            ax.plot(h[:4], p[:4], "o", color=color, markersize=8, zorder=z + 1)
-            for i, (hh, pp) in enumerate(zip(h[:4], p[:4]), start=1):
-                ax.annotate(str(i), (hh, pp), textcoords="offset points",
-                            xytext=(9, 9), fontsize=11, fontweight="bold", color=PRIMARY)
-            ax.annotate("", xy=(h[1], p[1]), xytext=(h[0], p[0]),
-                        arrowprops=dict(arrowstyle="->", color=color, lw=2))
-
-    s = cycle_states(**REVISED)
+    s = cycle_states(**DESIGN)
+    h = [s["h1"]/1e3, s["h2"]/1e3, s["h3"]/1e3, s["h4"]/1e3, s["h1"]/1e3]
+    p = [s["po"]/1e5, s["pc"]/1e5, s["pc"]/1e5, s["po"]/1e5, s["po"]/1e5]
+    ax.plot(h, p, color=BLUE, linewidth=2.4, zorder=4,
+            label=f"{DESIGN['label']} --- COP {s['COP']:.2f}")
+    ax.plot(h[:4], p[:4], "o", color=BLUE, markersize=8, zorder=5)
+    for i, (hh, pp) in enumerate(zip(h[:4], p[:4]), start=1):
+        ax.annotate(str(i), (hh, pp), textcoords="offset points",
+                    xytext=(9, 9), fontsize=11, fontweight="bold", color=PRIMARY)
+    ax.annotate("", xy=(h[1], p[1]), xytext=(h[0], p[0]),
+                arrowprops=dict(arrowstyle="->", color=BLUE, lw=2))
     ax.set_yscale("log")
     ax.set_xlim(150, 780)
     ax.set_ylim(1.5, 45)
@@ -142,7 +128,7 @@ def plot_ph_chart(out_path):
             transform=ax.transAxes, fontsize=8, color=MUTED)
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -154,63 +140,60 @@ def plot_temperature_cascade(out_path):
     series, which is the price of the intermediate glycol loop."""
     import matplotlib.pyplot as plt
 
-    fig, (axo, axr) = plt.subplots(1, 2, figsize=(12, 6.5), facecolor=SURFACE, sharey=True)
+    fig, ax = plt.subplots(figsize=(9, 6.5), facecolor=SURFACE)
 
-    for ax, (name, t_air, gly_c, gly_h, tc, to, chw_s, chw_r, cop) in zip(
-        (axo, axr),
-        (("Original design", 35, 40, 46, 52, 7, 15, 21, 3.42),
-         ("Revised design", 35, 38, 42, 45, 10, 15, 21, 4.67))):
-        _style(ax, grid_axis="y")
-        segs = [("Ambient air", t_air, t_air, ORANGE, 0),
-                ("Glycol loop", gly_c, gly_h, AQUA, 1),
-                ("Refrigerant\n(condensing)", tc, tc, RED, 2),
-                ("Refrigerant\n(evaporating)", to, to, BLUE, 3),
-                ("Chilled water", chw_s, chw_r, GREEN, 4)]
-        for label, lo, hi, c, x in segs:
-            if lo == hi:
-                ax.plot([x - 0.32, x + 0.32], [lo, lo], color=c, linewidth=5, solid_capstyle="butt", zorder=3)
-                ax.text(x, lo + 1.0, f"{lo:.0f} C", ha="center", fontsize=9, color=SECONDARY, fontweight="bold")
-            else:
-                ax.add_patch(plt.Rectangle((x - 0.32, lo), 0.64, hi - lo, facecolor=c, alpha=0.85, zorder=3))
-                ax.text(x, hi + 1.0, f"{hi:.0f} C", ha="center", fontsize=9, color=SECONDARY)
-                ax.text(x, lo - 2.4, f"{lo:.0f} C", ha="center", fontsize=9, color=SECONDARY)
-        ax.set_xticks(range(5))
-        ax.set_xticklabels([s[0] for s in segs], fontsize=8.5)
-        ax.set_xlim(-0.7, 4.7)
-        ax.set_ylim(0, 60)
+    t_air, gly_c, gly_h, tc, to, chw_s, chw_r, cop = 35, 38, 42, 45, 10, 15, 21, 4.67
+    _style(ax, grid_axis="y")
+    segs = [("Ambient air", t_air, t_air, ORANGE, 0),
+            ("Glycol loop", gly_c, gly_h, AQUA, 1),
+            ("Refrigerant\n(condensing)", tc, tc, RED, 2),
+            ("Refrigerant\n(evaporating)", to, to, BLUE, 3),
+            ("Chilled water", chw_s, chw_r, GREEN, 4)]
+    for label, lo, hi, c, x in segs:
+        if lo == hi:
+            ax.plot([x - 0.32, x + 0.32], [lo, lo], color=c, linewidth=5, solid_capstyle="butt", zorder=3)
+            ax.text(x, lo + 1.0, f"{lo:.0f} C", ha="center", fontsize=9, color=SECONDARY, fontweight="bold")
+        else:
+            ax.add_patch(plt.Rectangle((x - 0.32, lo), 0.64, hi - lo, facecolor=c, alpha=0.85, zorder=3))
+            ax.text(x, hi + 1.0, f"{hi:.0f} C", ha="center", fontsize=9, color=SECONDARY)
+            ax.text(x, lo - 2.4, f"{lo:.0f} C", ha="center", fontsize=9, color=SECONDARY)
+    ax.set_xticks(range(5))
+    ax.set_xticklabels([s[0] for s in segs], fontsize=8.5)
+    ax.set_xlim(-0.7, 4.7)
+    ax.set_ylim(0, 60)
 
-        # the stacked approaches on the hot side
-        ax.annotate("", xy=(0.32, t_air), xytext=(0.68, gly_c),
-                    arrowprops=dict(arrowstyle="<->", color=SECONDARY, lw=1.2))
-        ax.text(0.5, (t_air + gly_c)/2 - 2.2, f"{gly_c-t_air:.0f} K\ndry cooler", fontsize=7.5,
-                ha="center", color=SECONDARY)
-        ax.text(1.0, (gly_c + gly_h)/2, f"{gly_h-gly_c:.0f} K\nrise", fontsize=7.5,
-                ha="center", va="center", color="white", fontweight="bold")
-        ax.annotate("", xy=(1.32, gly_h), xytext=(1.68, tc),
-                    arrowprops=dict(arrowstyle="<->", color=SECONDARY, lw=1.2))
-        ax.text(1.5, (gly_h + tc)/2 - 2.2, f"{tc-gly_h:.0f} K\ncondenser", fontsize=7.5,
-                ha="center", color=SECONDARY)
-        ax.annotate("", xy=(3.32, to), xytext=(3.68, chw_s),
-                    arrowprops=dict(arrowstyle="<->", color=SECONDARY, lw=1.2))
-        ax.text(3.5, (to + chw_s)/2, f"  {chw_s-to:.0f} K evaporator", fontsize=7.5,
-                ha="left", va="center", color=SECONDARY)
+    # the stacked approaches on the hot side
+    ax.annotate("", xy=(0.32, t_air), xytext=(0.68, gly_c),
+                arrowprops=dict(arrowstyle="<->", color=SECONDARY, lw=1.2))
+    ax.text(0.5, t_air - 4.5, f"{gly_c-t_air:.0f} K\ndry cooler", fontsize=7.5,
+            ha="center", va="top", color=SECONDARY)
+    ax.text(1.0, (gly_c + gly_h)/2, f"{gly_h-gly_c:.0f} K\nrise", fontsize=7.5,
+            ha="center", va="center", color="white", fontweight="bold")
+    ax.annotate("", xy=(1.32, gly_h), xytext=(1.68, tc),
+                arrowprops=dict(arrowstyle="<->", color=SECONDARY, lw=1.2))
+    ax.text(1.5, (gly_h + tc)/2 - 2.2, f"{tc-gly_h:.0f} K\ncondenser", fontsize=7.5,
+            ha="center", color=SECONDARY)
+    ax.annotate("", xy=(3.32, to), xytext=(3.68, chw_s),
+                arrowprops=dict(arrowstyle="<->", color=SECONDARY, lw=1.2))
+    ax.text(3.5, to - 2.6, f"{chw_s-to:.0f} K\nevaporator", fontsize=7.5,
+            ha="center", va="top", color=SECONDARY)
 
-        ax.axhline(t_air, color=ORANGE, linestyle=":", linewidth=1.1, zorder=1)
-        ax.annotate("", xy=(2.0, t_air), xytext=(2.0, tc),
-                    arrowprops=dict(arrowstyle="<->", color=RED, lw=2))
-        ax.text(2.18, (t_air + tc)/2, f"{tc-t_air:.0f} K\nTOTAL\nair-to-refrigerant",
-                fontsize=8.5, color=RED, fontweight="bold", va="center")
-        ax.set_title(f"{name}  ---  design COP {cop:.2f}", color=PRIMARY, fontsize=11, loc="left")
+    ax.axhline(t_air, color=ORANGE, linestyle=":", linewidth=1.1, zorder=1)
+    ax.annotate("", xy=(2.0, t_air), xytext=(2.0, tc),
+                arrowprops=dict(arrowstyle="<->", color=RED, lw=2))
+    ax.text(2.18, (t_air + tc)/2, f"{tc-t_air:.0f} K\nTOTAL\nair-to-refrigerant",
+            fontsize=8.5, color=RED, fontweight="bold", va="center")
 
-    axo.set_ylabel("Temperature [C]", color=SECONDARY, fontsize=10)
-    fig.suptitle("Temperature cascade: why the condensing temperature (and the COP) is set by "
-                 "three stacked approaches",
-                 color=PRIMARY, fontsize=12.5, x=0.01, ha="left", y=0.99)
-    fig.text(0.01, 0.005, "The intermediate glycol loop puts three approaches in series between ambient air and the "
-                          "refrigerant. Cutting them 5/6/6 K -> 3/4/3 K\nlowers $t_c$ by 7 K, which is what lifts the "
-                          "full-load COP onto target.", fontsize=8.5, color=MUTED)
-    fig.tight_layout(rect=[0, 0.05, 1, 0.96])
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    ax.set_ylabel("Temperature [C]", color=SECONDARY, fontsize=10)
+    ax.set_title(f"Temperature cascade at the design point  ---  design COP {cop:.2f}",
+                 color=PRIMARY, fontsize=12.5, loc="left")
+    fig.text(0.01, 0.005, "The intermediate glycol loop stacks three approaches in series between ambient air and the "
+                          "refrigerant --- 3 K across the dry\ncooler, a 4 K glycol rise, 3 K across the condenser. "
+                          "Their sum is the 10 K that sets $t_c$, and $t_c$ sets the COP. This is the\nprice of keeping "
+                          "an A3 refrigerant out of the data hall, and the reason the dry cooler is sized as generously "
+                          "as it is.", fontsize=8.5, color=MUTED)
+    fig.tight_layout(rect=[0, 0.07, 1, 1])
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -221,7 +204,7 @@ def plot_hx_profiles(out_path):
     sizing, showing where each exchanger's approach actually pinches."""
     import matplotlib.pyplot as plt
 
-    s = cycle_states(**REVISED)
+    s = cycle_states(**DESIGN)
     fig, (axc, axe) = plt.subplots(1, 2, figsize=(12, 5), facecolor=SURFACE)
 
     # ---- Condenser: refrigerant 66.5 -> 45 (desuperheat), 45 (condense), 45 -> 40 (subcool)
@@ -269,7 +252,7 @@ def plot_hx_profiles(out_path):
     axe.legend(fontsize=8.5, edgecolor=BASELINE, loc="lower right")
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -300,42 +283,47 @@ def plot_pue_breakdown(out_path):
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.42), ncol=4, fontsize=8.5,
               frameon=False)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
 
-def plot_original_vs_revised(out_path):
-    """The revision's headline result. Three panels rather than one dual-axis
-    plot, since COP, IPLV and PUE are different scales."""
+def plot_compliance(out_path):
+    """The design against the two mandatory efficiency targets, plus the PUE it
+    achieves. Three panels rather than one dual-axis plot, since COP, IPLV and
+    PUE are different scales."""
     import matplotlib.pyplot as plt
 
-    panels = [("Full-load COP\n(AHRI 6.7 C LCHW)", 2.64, 3.53, 3.5, "$\\geq$3.5", True),
-              ("IPLV.IP", 4.43, 5.23, 5.0, "$\\geq$5.0", True),
-              ("Design-day PUE\n(lower is better)", 1.40, 1.31, None, None, False)]
+    # (title, achieved, target, target label, margin note)
+    panels = [("Full-load COP\n(AHRI 6.7 C LCHW)", 3.53, 3.5, "$\\geq$3.5", "+0.8%"),
+              ("IPLV.IP", 5.23, 5.0, "$\\geq$5.0", "+4.6%"),
+              ("Design-day PUE\n(lower is better)", 1.31, None, None, "no target set")]
     fig, axes = plt.subplots(1, 3, figsize=(11, 4.2), facecolor=SURFACE)
-    for ax, (title, orig, rev, target, tlabel, higher_better) in zip(axes, panels):
+    for ax, (title, val, target, tlabel, note) in zip(axes, panels):
         _style(ax, grid_axis="y")
-        good = (rev >= target) if (target and higher_better) else True
-        bars = ax.bar([0, 1], [orig, rev], color=[MUTED, GREEN if good else RED],
-                      width=0.55, zorder=3)
-        for b, v in zip(bars, [orig, rev]):
-            ax.text(b.get_x()+b.get_width()/2, v, f"{v:.2f}", ha="center", va="bottom",
-                    fontsize=11, fontweight="bold", color=SECONDARY)
+        good = (val >= target) if target else True
+        bars = ax.bar([0], [val], color=(GREEN if good else RED), width=0.5, zorder=3)
+        for b in bars:
+            ax.text(b.get_x() + b.get_width()/2, val, f"{val:.2f}", ha="center",
+                    va="bottom", fontsize=13, fontweight="bold", color=SECONDARY)
         if target:
             ax.axhline(target, color=RED, linestyle="--", linewidth=1.4, zorder=4)
-            ax.text(-0.48, target, f"target {tlabel}", ha="left", va="bottom",
+            ax.text(0.52, target, f"target {tlabel}", ha="right", va="bottom",
                     fontsize=8.5, color=RED)
-        ax.set_xticks([0, 1]); ax.set_xticklabels(["Original", "Revised"], fontsize=9.5)
+        ax.set_xticks([0])
+        ax.set_xticklabels([f"Design\n({note})"], fontsize=9)
+        ax.set_xlim(-0.55, 0.55)
         ax.set_title(title, color=PRIMARY, fontsize=10, loc="left")
-        ax.set_ylim(0, max(orig, rev, target or 0) * 1.30)
-    fig.suptitle("Efficiency revision: both required metrics moved from failing to compliant",
+        ax.set_ylim(0, max(val, target or 0) * 1.30)
+    fig.suptitle("Both mandatory efficiency targets are met",
                  color=PRIMARY, fontsize=12.5, x=0.01, ha="left")
-    fig.text(0.01, 0.005, "Revision = condensing approach 17->10 K, evaporator approach 8->5 K, and VFDs "
-                          "on the compressors. Architecture, refrigerant and compressor model unchanged.",
+    fig.text(0.01, 0.005, "Full-load COP is computed at the strict AHRI 550/590-2023 rating point "
+                          "(6.7 C LCHW, 35 C entering air); at the project's own 15 C design point "
+                          "the COP is 4.67.\nThe COP margin is thin -- 0.8% -- and rests on the "
+                          "vendor confirmations listed in Suggestions for Improvement.",
              fontsize=8.5, color=MUTED)
-    fig.tight_layout(rect=[0, 0.04, 1, 0.94])
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    fig.tight_layout(rect=[0, 0.06, 1, 0.94])
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -374,7 +362,7 @@ def plot_duration_curve(out_path):
             ha="right", va="top", family="monospace",
             bbox=dict(boxstyle="round,pad=0.5", facecolor=SURFACE, edgecolor=BASELINE))
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -384,5 +372,5 @@ if __name__ == "__main__":
     plot_temperature_cascade(os.path.join(FIG_CYCLE, "temperature_cascade.png"))
     plot_hx_profiles(os.path.join(FIG_CYCLE, "hx_profiles.png"))
     plot_pue_breakdown(os.path.join(FIG_PERF, "pue_breakdown.png"))
-    plot_original_vs_revised(os.path.join(FIG_PERF, "original_vs_revised.png"))
+    plot_compliance(os.path.join(FIG_PERF, "compliance.png"))
     plot_duration_curve(os.path.join(FIG_ANNUAL, "ambient_duration_curve.png"))

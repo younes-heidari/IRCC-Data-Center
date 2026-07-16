@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python weather.py)",
+      "Bash(python dry_cooler.py)",
+      "Bash(cat /tmp/out_main.py.log)",
+      "Read(//tmp/**)",
+      "Bash(python evaporator.py)",
+      "Bash(python3 -)",
+      "Bash(python -)",
+      "Bash(python pump_review.py)",
+      "Bash(python pump.py)",
+      "Bash(python water_side_pump.py)",
+      "Bash(python compressor_review.py)",
+      "Bash(python -m pyflakes .)",
+      "Bash(pip install *)",
+      "Bash(python -m pyflakes compressor.py condenser.py dry_cooler.py dry_cooler_pump.py economizer.py eev.py evaporator.py main.py water_side_pump.py weather.py)",
+      "Skill(dataviz)",
+      "Skill(dataviz:*)",
+      "Bash(python -c \"import matplotlib; print\\(matplotlib.__version__\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python main.py)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(python3 -c ' *)",
+      "Read(//c/Users/myoun/AppData/Local/Temp/claude/c--Users-myoun-OneDrive---University-of-Illinois---Urbana-UIUC-ETRL-Course-2026-Summer-2026-IRCC-Mine-4-Code-IRCC-Data-Center/36ec8d0b-2579-4b23-b956-866426169e4c/scratchpad/**)",
+      "Bash(grep -n '^\\\\\\\\chapter{' Project_Report_full.txt)",
+      "Bash(rm -rf figures tables)",
+      "Bash(mkdir -p figures/performance/design_point figures/performance/monthly figures/performance/seasonal figures/performance/annual figures/cycle_diagram figures/pid tables/bom tables/performance/monthly tables/performance/seasonal)",
+      "Bash(python refrigerant_comparison.py)",
+      "Bash(grep -o '\\\\\\\\label{[^}]*}' Project_Report_full.txt)"
+    ]
+  }
+}

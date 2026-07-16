@@ -23,6 +23,7 @@ from CoolProp.CoolProp import PropsSI
 
 from compressor import Compressor, CompressorBank
 from eev import EEV
+from figsave import save_figure
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPORT = os.path.join(_HERE, "report")
@@ -156,7 +157,7 @@ def plot_authority(one, two, out_path):
                         "controllable across the full 5:1 turndown.",
             transform=ax.transAxes, fontsize=8, color=MUTED)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -192,7 +193,7 @@ def plot_superheat(rows, out_path):
             f"The real trend is the opposite.",
             transform=ax.transAxes, fontsize=8, color=MUTED)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 

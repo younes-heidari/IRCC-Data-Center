@@ -16,6 +16,7 @@ import csv
 import os
 
 from compressor import Compressor, CompressorBank
+from figsave import save_figure
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPORT_DIR = os.path.join(_HERE, "report")
@@ -26,16 +27,14 @@ os.makedirs(FIG_DIR, exist_ok=True)
 os.makedirs(TABLE_DIR, exist_ok=True)
 
 # ---------------------------------------------------------------------
-# Design-basis approaches -- REVISED DESIGN (efficiency compliance, see
-# the report's Performance chapter and main.py's revision header):
-#   * Evaporator cold-end approach LCHW - to = 5 K (was 8 K) -- more
-#     evaporator plates.
-#   * Condenser air-to-refrigerant approach tc - T_air = 10 K (was 17 K):
-#     dry cooler 3 K + glycol rise 4 K + condenser 3 K -- larger dry
-#     cooler and condenser area, same hardware families.
-#   * A VFD on the compressors replaces hot-gas bypass below the turndown
-#     floor (compressor.solve_with_vfd()).
-# Original-design values (8 K / 17 K, no VFD) gave COP 2.64 / IPLV 4.43.
+# Design-basis approaches. These are the values the whole design is built
+# on, and they are what the efficiency targets rest on:
+#   * Evaporator cold-end approach LCHW - to = 5 K.
+#   * Condenser air-to-refrigerant approach tc - T_air = 10 K, itself the
+#     sum of three stacked approaches: dry cooler 3 K + glycol rise 4 K +
+#     condenser 3 K (Ch. Cycle Representation, temperature cascade).
+#   * VFDs on the compressors give capacity control down to the 30 kW
+#     minimum load without hot-gas bypass (compressor.solve_with_vfd()).
 # ---------------------------------------------------------------------
 APPROACH_EVAP_K = 5.0
 APPROACH_COND_K = 10.0
@@ -123,14 +122,16 @@ def iplv():
 
 def tc_sensitivity():
     """Full-load COP at the AHRI chilled-water condition (6.7 C LCHW) as the
-    condensing temperature varies -- shows why the original design's 17 K
-    air-to-refrigerant approach (tc = 52 C) missed the 3.5 target and how the
-    revised 10 K approach (tc = 45 C) reaches it. Evaluated at the ORIGINAL
-    8 K evaporator approach so the curve isolates the condensing-side effect;
-    the revised design's extra margin comes from the 5 K evaporator approach
-    on top of this curve."""
+    condensing temperature varies. This is the argument for the 10 K
+    air-to-refrigerant approach: it shows how steeply the COP target depends on
+    tc, and therefore how much of the design's compliance is bought by the
+    (expensive) dry cooler and condenser area that hold tc down to 45 C.
+
+    Evaluated at the design's own 5 K evaporator approach, so the curve passes
+    through the reported AHRI full-load COP at tc = 45 C rather than describing
+    a hypothetical machine."""
     comp = Compressor()
-    to_ahri = 6.7 - 8.0   # original evaporator approach, isolating the tc effect
+    to_ahri = 6.7 - APPROACH_EVAP_K
     rows = []
     for tc in [42, 45, 48, 50, 52]:
         p = comp.performance(to_ahri, tc, SUPERHEAT_K, SUBCOOLING_K)
@@ -232,7 +233,7 @@ def plot_full_load_cop(fl, out_path):
         ax.text(b.get_x() + b.get_width() / 2, v, f"{v:.2f}", ha="center",
                 va="bottom", fontsize=10, color=_SECONDARY)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=_SURFACE)
+    save_figure(fig, out_path, facecolor=_SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -263,7 +264,7 @@ def plot_iplv(ip, out_path):
                         "(conservative floor-point COP)",
             transform=ax.transAxes, fontsize=8, color=_MUTED)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=_SURFACE)
+    save_figure(fig, out_path, facecolor=_SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -281,12 +282,9 @@ def plot_tc_sensitivity(rows, out_path):
     ax.axhline(COP_TARGET, color=_RED, linewidth=1.4, linestyle="--", zorder=2)
     ax.text(46.5, COP_TARGET - 0.045, f"Target COP $\\geq$ {COP_TARGET}",
             ha="left", va="top", fontsize=9, color=_RED)
-    ax.axvline(52, color=_MUTED, linewidth=1.0, linestyle=":", zorder=2)
-    ax.text(51.85, min(cop) + 0.02, "original design (52 C)", ha="right", va="bottom",
-            rotation=90, fontsize=8, color=_MUTED)
     ax.axvline(45, color=_GREEN, linewidth=1.2, linestyle=":", zorder=2)
-    ax.text(44.85, min(cop) + 0.02, "revised design (45 C)", ha="right", va="bottom",
-            rotation=90, fontsize=8, color=_GREEN)
+    ax.text(44.85, min(cop) + 0.02, "design point (45 C, 10 K approach)", ha="right",
+            va="bottom", rotation=90, fontsize=8, color=_GREEN)
     ax.set_xlabel("Condensing temperature $t_c$ [C]  (air-to-refrigerant approach = $t_c$ - 35)",
                   color=_SECONDARY, fontsize=10)
     ax.set_ylabel("Full-load COP at AHRI LCHW [-]", color=_SECONDARY, fontsize=10)
@@ -295,7 +293,7 @@ def plot_tc_sensitivity(rows, out_path):
     for x, y in zip(tc, cop):
         ax.text(x, y + 0.04, f"{y:.2f}", ha="center", va="bottom", fontsize=8, color=_SECONDARY)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=_SURFACE)
+    save_figure(fig, out_path, facecolor=_SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 

@@ -329,7 +329,7 @@ chosen) does not yet inform. Implemented in \texttt{refrigerant\_comparison.py}.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.85\linewidth]{figures/refrigerant_comparison/refrigerant_comparison_cop.png}
+\includegraphics[width=0.85\linewidth]{figures/refrigerant_comparison/refrigerant_comparison_cop.pdf}
 \caption{Idealized-cycle COP by candidate refrigerant, identical cycle conditions.}
 \end{figure}
 
@@ -1331,11 +1331,10 @@ The glycol-side drop is larger than the evaporator's water-side drop (7.73\,kPa,
 glycol mass flow (9.07\,kg/s) is over 50\,\% higher than the evaporator's water flow
 (5.973\,kg/s) and glycol is both denser and more viscous than water at these
 temperatures --- both raise $G$ and, through $G^2$ in Eq.~(Martin\,3), the resulting
-$\Delta P$. This value replaces an earlier placeholder that had used an internally
-inconsistent glycol temperature range (30/35\,\textdegree C) left over from the module's
-original standalone demo block, before the condenser's glycol loop was cross-checked
-against the dry cooler's actual 40/46\,\textdegree C design point (\S\ref{cond:sec:lmtd}).
-It now feeds directly into the glycol pump's duty point (Chapter~\ref{ch:pump}) alongside
+$\Delta P$. The glycol temperature range used here is the one the condenser actually runs
+at, cross-checked against the dry cooler's design point (\S\ref{cond:sec:lmtd}) rather
+than assumed independently --- the two must agree, since they are the same loop.
+It feeds directly into the glycol pump's duty point (Chapter~\ref{ch:pump}) alongside
 the dry-cooler glycol-side loss (Chapter~\ref{ch:dry}) and the economizer's free-cooling-mode
 glycol loss (\S\ref{econ:sec:martin}).
 
@@ -1584,7 +1583,7 @@ threshold}, with the chiller trimming the remainder against a very low lift
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\linewidth]{figures/economizer/economizer_band.png}
+\includegraphics[width=\linewidth]{figures/economizer/economizer_band.pdf}
 \caption{Load split and compressor power across the full ASHRAE~90.1 economizer envelope.
 The 4\,\textdegree C boundary is continuous by construction; the step at
 10\,\textdegree C is the fixed changeover switching off an economizer that is still
@@ -1950,14 +1949,21 @@ single manufacturer for procurement and spares commonality.
 \textbf{Field} & \textbf{Value entered} \\
 \midrule
 Fluid                & Propylene Glycol, 30.0\,\%\,vol \\
-Capacity (active input) & 648.3\,MBH ($=190$\,kW) \\
-Fluid inlet\,/\,outlet & 114.8\,\textdegree F\,/\,104.0\,\textdegree F ($=46.0/40.0$\,\textdegree C) \\
+Capacity (active input) & 620\,MBH ($\approx$182\,kW condenser duty) \\
+Fluid inlet\,/\,outlet & 107.6\,\textdegree F\,/\,100.4\,\textdegree F ($=42.0/38.0$\,\textdegree C) \\
 Calculation mode     & Fixed fluid temperatures \\
 Ambient              & 95.0\,\textdegree F ($=35.0$\,\textdegree C) \\
 Altitude             & 699\,ft ($\approx$213\,m, Champaign, IL elevation) \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\noindent The glycol temperatures are the binding constraint, and they are not free: the
+10\,K air-to-refrigerant approach that the COP target requires
+(\S\ref{perf:sec:revision}) allots only 3\,K to the dry cooler and 4\,K to the glycol
+rise, which fixes 42/38\,\textdegree C against 35\,\textdegree C air. \textbf{A 3\,K
+approach on an air-cooled coil is demanding}, and it — not the headline duty — is what
+drives the size of the machine selected below.
 
 \subsection{Selection Notes}
 
@@ -1969,104 +1975,126 @@ Capacity radio and re-running corrected this. Second, the tool defaults to Ethyl
 this was corrected to Propylene Glycol (30\,\%\,vol) to match the project's secondary
 fluid.
 
-\subsection{Candidate Comparison}
+\subsection{Why Headline Capacity Is the Wrong Screening Criterion}
+\label{dry:sec:capacity_trap}
 
-The corrected selection returned a results table of qualifying units (\texttt{ULF} flatbed
-series), sorted here by fan count and sound level:
+Before the candidate table, one point governs how it must be read. \textbf{A dry
+cooler's catalog capacity is meaningless without the condition it is quoted at}, and the
+condition here is unusually hard.
+
+Consider a representative \texttt{ULF} unit rated \textbf{213.2\,kW} at a comfortable
+46/40\,\textdegree C glycol duty --- an 11\,K mean air-to-glycol difference against
+35\,\textdegree C air. Re-rate that same coil at this project's 42/38\,\textdegree C
+requirement and the driving difference collapses to 7\,K, a 36\,\% reduction. Since duty
+scales with it, the same physical machine delivers only $\approx$146\,kW --- \emph{well
+short} of the $\approx$182\,kW required, despite a headline rating 17\,\% above it:
 
 \begin{table}[h!]
-\caption{Selected candidates meeting the 190\,kW target (partial list; European decimal
-notation converted).}
-\begin{tabularx}{\linewidth}{lLLLlL}
+\caption{The same coil, two conditions. Capacity is not a property of the machine alone.}
+\begin{tabularx}{\linewidth}{lLLL}
 \toprule
-\textbf{Type} & \textbf{Capacity} & \textbf{$\Delta P$} & \textbf{Air flow} & \textbf{Fans} & \textbf{$L_{pA}$ (33ft)} \\
+\textbf{Condition} & \textbf{Glycol} & \textbf{Mean $\Delta T$ to 35\,\textdegree C air} & \textbf{Duty} \\
 \midrule
-\textbf{ULF-PA104Y4V-096Z100} & 213.2\,kW & 48.3\,kPa & 122{,}071\,m$^3$/h & \textbf{4} & \textbf{60\,dB(A)} \\
-ULF-PB203K3H-091Z105          & 211.2\,kW & 41.4\,kPa & 152{,}750\,m$^3$/h & 6         & 70\,dB(A) \\
-ULF-MC105Y3H-096Z110          & 212.1\,kW & 62.1\,kPa & 162{,}700\,m$^3$/h & 5         & 63\,dB(A) \\
+Comfortable rating & 46\,$\to$\,40\,\textdegree C & 11\,K & 213.2\,kW \\
+This project       & 42\,$\to$\,38\,\textdegree C & 7\,K ($-36$\,\%) & $\approx$145.7\,kW \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\textbf{Selected: ULF-PA104Y4V-096Z100.} With only 4 fans (simplest, fewest maintenance
-points) and the lowest sound pressure level (60\,dB(A) at 33\,ft --- a full 10\,dB quieter
-than the 6-fan alternative), it is the strongest candidate for a data-centre site where
-noise near occupied space may be a constraint. The 12.2\,\% capacity margin over the
-190\,kW target is an accepted consequence of the catalog's discrete speed-tap steps
-(``Z090''--``Z110'' variants of the same physical unit).
+\noindent There is no way to buy back the difference with air flow: pushing the glycol
+outlet to 40\,\textdegree C --- a 5\,K approach --- would pinch the condenser and undo
+the 10\,K cascade the COP target depends on. The approach is thermodynamically forced by
+\S\ref{perf:sec:revision}, so \textbf{the coil must simply be bigger}.
 
-\begin{quote}
-\noindent\textbf{SUPERSEDED --- see \S\ref{dry:sec:reselection}.} This unit was selected
-against the \emph{original} 46/40\,\textdegree C glycol design point. The efficiency
-revision (Chapter~\ref{ch:performance}, \S\ref{perf:sec:revision}) moves the glycol loop
-to 42/38\,\textdegree C, at which this unit \emph{cannot} meet duty. The sections that
-follow document the original selection and remain valid as the method and the
-$\varepsilon$-NTU model's validation; \S\ref{dry:sec:reselection} carries the
-re-selection that supersedes the unit itself.
-\end{quote}
+The condition-independent measure is \textbf{surface area}, and that is what the
+screening below is really about. Expect the selected unit to have a \emph{lower} headline
+MBH than units quoted at easier conditions while being a substantially larger machine.
+
+\subsection{Candidate Comparison}
+
+Select RT returned a results table of qualifying \texttt{ULF} flatbed units at the
+620\,MBH / 42/38\,\textdegree C duty. They were screened on the criteria that actually
+bind --- capacity margin at the \emph{real} condition, fan-speed headroom, and sound:
+
+\begin{table}[h!]
+\caption{Candidate screening at the 42/38\,\textdegree C duty (620\,MBH required;
+European decimal notation converted).}
+\begin{tabularx}{\linewidth}{lLLLLL}
+\toprule
+\textbf{Type} & \textbf{MBH (margin)} & \textbf{$\Delta P$} & \textbf{Fan speed} & \textbf{$L_{pA}$} & \textbf{Note} \\
+\midrule
+ULF-PA106Y4V-096Z110 & 639.5 (3\,\%) & 4\,psi & 1100/1100 & 64\,dB(A) & Low $\Delta P$, but \textbf{no fan headroom} \\
+ULF-PA107Y4V-091Z100 & 630.8 (2\,\%) & 4\,psi & 1000/1100 & 67\,dB(A) & Low $\Delta P$, thin margin, loud \\
+\textbf{ULF-PA106K4V-091F095} & \textbf{670.4 (8\,\%)} & 8\,psi & \textbf{950/1050} & \textbf{60\,dB(A)} & \textbf{Selected} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent\textbf{ULF-PA106K4V-091F095 is selected.} At \textbf{60\,dB(A)} it is the
+quietest candidate by 4\,dB, which matters for a data-centre site where the unit may sit
+near occupied space. It carries the best capacity margin (8\,\%) and, decisively,
+\textbf{10\,\% fan-speed headroom} (950 of 1050\,rpm). That headroom was preferred over
+the lower-$\Delta P$ ``Z110'' variants precisely \emph{because} those run 1100/1100 ---
+flat out at the design point, with no reserve for a hotter-than-design hour, coil
+fouling, or a failed fan. The penalty accepted in exchange is a higher glycol-side
+pressure drop (8\,psi vs.\ 4\,psi), paid by the glycol pump
+(\S\ref{perf:sec:pue}).
 
 % ── §5.6 ──────────────────────────────────────────────────────────────────────
-\section{Selected Unit Datasheet: Kelvion ULF-PA104Y4V-096Z100}
+\section{Selected Unit: Kelvion ULF-PA106K4V-091F095}
 \label{dry:sec:datasheet}
 
 \begin{table}[h!]
-\caption{Selected unit --- key specifications (Kelvion Select RT datasheet, Jul 2026).}
-\begin{tabularx}{\linewidth}{lLl}
+\caption{Selected unit --- key specifications as reported by Kelvion Select RT.}
+\label{tab:dry_reselected}
+\begin{tabularx}{\linewidth}{lL}
 \toprule
-\textbf{Category} & \textbf{Specification} & \textbf{Value} \\
+\textbf{Parameter} & \textbf{Value} \\
 \midrule
-\multirow{5}{*}{Basic data}
-  & Capacity                    & 213.23\,kW (727.56\,MBH) \\
-  & Glycol flow                 & 9.07\,kg/s (140.8\,gpm) \\
-  & Glycol inlet\,/\,outlet     & 46.0\,/\,40.0\,\textdegree C \\
-  & Glycol-side pressure drop   & \textbf{48.26\,kPa (7\,psi)} \\
-  & Coils $\times$ sections $\times$ circuits & $1\times2\times34$ (68 total circuits), 4 passes \\
-\midrule
-\multirow{4}{*}{Air data}
-  & Air volume flow             & 122{,}071\,m$^3$/h (71{,}849\,cfm) \\
-  & Air outlet temperature      & 40.56\,\textdegree C (105.0\,\textdegree F) \\
-  & Coil / air direction        & Vertical coil, horizontal air \\
-  & Altitude                    & 213\,m (699\,ft) \\
-\midrule
-\multirow{4}{*}{Heat exchanger}
-  & Surface area                & 938.5\,m$^2$ (10{,}102\,ft$^2$) \\
-  & Fin spacing                 & 2.3\,mm (11\,FPI) \\
-  & Internal fluid velocity     & 1.097\,m/s (3.6\,ft/s) \\
-  & Max.\ operating pressure    & 1.0\,MPa (145\,psi), PED Category ``0'' \\
-\midrule
-\multirow{5}{*}{Fans}
-  & Configuration               & 4$\times$ EC axial, 460V/3PH/50-60Hz, IP55 \\
-  & Fan diameter                & 0.960\,m (37.8\,in) \\
-  & Nameplate max (1100\,rpm)   & 4.40\,kW/fan $=$ \textbf{17.60\,kW total} \\
-  & Selected operating point (1000\,rpm) & 2.685\,kW/fan $=$ \textbf{10.74\,kW total} \\
-  & Sound power\,/\,pressure (33\,ft) & 92\,dB(A) $L_{wA}$ \,/\, 60\,dB(A) $L_{pA}$ \\
-\midrule
-\multirow{3}{*}{Materials \& construction}
-  & Tubes\,/\,fins\,/\,casing   & Copper\,/\,Aluminium\,/\,Galvanised steel \\
-  & Finish                      & Painted RAL~7032 (Pebble Grey) \\
-  & Regulatory                  & UL Listed \\
-\midrule
-\multirow{2}{*}{Physical}
-  & Dimensions (L$\times$W$\times$H) & 5.19\,m $\times$ 1.30\,m $\times$ 2.33\,m \\
-  & Weight (dry\,/\,incl.\ fluid)     & 917\,kg\,/\,1{,}077\,kg \\
+Model & ULF-PA106K4V-091F095 \\
+Capacity & 670.36\,MBH $=$ \textbf{196.5\,kW} at glycol 42\,/\,38\,\textdegree C, air 35\,\textdegree C \\
+Surface area & 20{,}977\,ft$^2$ $=$ \textbf{1{,}949\,m$^2$} \\
+Air volume flow & 93{,}782\,cfm ($=$159{,}337\,m$^3$/h); air outlet 101.7\,\textdegree F $\Rightarrow$ $\Delta T_{\mathrm{air}} = 3.72$\,K \\
+Fans & 6 $\times$ 0.910\,m EC axial, 950\,/\,1050\,rpm (10\,\% headroom) \\
+Sound pressure, $L_{pA}$ (33\,ft) & 60\,dB(A) \\
+Glycol-side pressure drop & 8\,psi $=$ \textbf{55.16\,kPa} \\
+Coils $\times$ sections $\times$ circuits & $1\times2\times29$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent Kelvion configuration code: \texttt{ULF-PA104Y4V-096Z100-11F44723-1054}
-(selection dated Jul~6,~2026).
+\noindent With this unit the annual simulation runs \textbf{clean across all 8{,}760
+hours} --- no hour requires more than 100\,\% fan speed to hold its duty.
+
+\begin{quote}
+\noindent\textbf{Open item --- full datasheet not yet pulled.} The values above are what
+the Select RT \emph{results table} reports. A full configured datasheet (dimensions,
+weight, fin spacing, materials, and above all \textbf{fan power}) has not been generated
+for this unit, which is why the fan power carried through the PUE is a fan-law estimate
+rather than a vendor figure (\S\ref{dry:sec:fanpower_open}). This is the largest
+remaining vendor gap in the design and should be closed before ordering.
+\end{quote}
 
 % ── §5.7 ──────────────────────────────────────────────────────────────────────
-\section{Model Validation Against the Vendor Datasheet}
+\section{Model Validation Against a Vendor Datasheet}
 \label{dry:sec:validation}
 
-Feeding the \emph{real} vendor design duty (213.23\,kW) and \emph{real} air-side rise
-(5.56\,K, replacing the earlier placeholder 10\,K) back into the
-$\varepsilon$-NTU model (\S\ref{dry:sec:mechdesign}) allows a direct check of the model
-against Kelvion's own thermodynamic calculation:
+The $\varepsilon$-NTU model of \S\ref{dry:sec:mechdesign} carries the entire annual
+simulation --- every fan-speed and fan-power figure in this report comes out of it --- so
+it is worth checking against Kelvion's own thermodynamic calculation rather than trusting
+it on faith.
+
+The check uses a \textbf{full configured datasheet for a different unit of the same
+\texttt{ULF} family} (ULF-PA104Y4V-096Z100, rated 213.23\,kW at 46/40\,\textdegree C
+glycol). That unit is not the one selected --- it cannot meet this project's 3\,K
+approach (\S\ref{dry:sec:capacity_trap}) --- but that is irrelevant here: validating a
+model needs a complete, self-consistent vendor calculation to compare against, and this
+is the datasheet for which all streams are reported. Feeding its duty and its real
+air-side rise (5.56\,K) into the model:
 
 \begin{table}[h!]
-\caption{Effectiveness-NTU model prediction vs.\ Kelvion Select RT datasheet.}
+\caption{Effectiveness-NTU model prediction vs.\ a full Kelvion Select RT datasheet
+(ULF-PA104Y4V-096Z100, 46/40\,\textdegree C glycol, 35\,\textdegree C air).}
 \begin{tabularx}{\linewidth}{lLLl}
 \toprule
 \textbf{Quantity} & \textbf{Model} & \textbf{Vendor} & \textbf{Difference} \\
@@ -2077,10 +2105,20 @@ Glycol volume flow & 8.81\,L/s          & 8.884\,L/s         & $-0.9\,\%$ \\
 \end{tabularx}
 \end{table}
 
-Agreement within $\pm 2\,\%$ on both streams is a strong validation of the cross-flow
-$\varepsilon$-NTU approach for this application, given that the model uses no fitted
-constants beyond the standard Incropera correlation --- everything else (duty,
+Agreement within $\pm 2\,\%$ on \emph{both} streams is a strong validation of the
+cross-flow $\varepsilon$-NTU approach for this application, given that the model uses no
+fitted constants beyond the standard Incropera correlation --- everything else (duty,
 temperatures, fluid properties) is a direct input.
+
+\noindent\textbf{Cross-check on the selected unit.} Running the same model at the
+selected ULF-PA106K4V-091F095's own design point (196.5\,kW, 42/38\,\textdegree C glycol,
+$\Delta T_{\mathrm{air}} = 3.72$\,K) predicts an air volume flow of
+$\approx$164{,}800\,m$^3$/h against the vendor's 159{,}337\,m$^3$/h --- \textbf{$+3.5\,\%$}.
+Looser than the $\pm2\,\%$ above, and honestly so: only the air side can be checked,
+because the Select RT results table does not report the selected unit's glycol volume
+flow. The direction is conservative (the model asks for slightly \emph{more} air than the
+vendor says is needed, so it over-estimates fan duty rather than under-estimating it), and
+both checks should be repeated once the full datasheet is pulled.
 
 % ── §5.8 ──────────────────────────────────────────────────────────────────────
 \section{Fan Operation, Variable-Speed Control, and Annual Energy}
@@ -2301,116 +2339,22 @@ Data source                  & Kelvion Select RT                    & \texttt{dr
 \end{table}
 
 % ── §5.12b ────────────────────────────────────────────────────────────────────
-\section{Re-Selection for the Revised Design Point}
-\label{dry:sec:reselection}
-
-The efficiency revision (Chapter~\ref{ch:performance}, \S\ref{perf:sec:revision}) moves
-the glycol loop from 46/40\,\textdegree C to \textbf{42/38\,\textdegree C} --- a 3\,K
-approach to the 35\,\textdegree C design air instead of 5\,K --- which forces a
-re-selection of this unit.
-
-\subsection{Why the Original Unit Cannot Serve the Revised Duty}
-
-The revised duty (181.7\,kW) is \emph{lower} than the original unit's 213.23\,kW rating,
-which invites the intuition that the existing unit must therefore suffice. It does not,
-because \textbf{a dry-cooler capacity is a number at a condition, not a property of the
-box}. The rating and the duty are quoted at different conditions:
-
-\begin{table}[h!]
-\caption{The same coil at two conditions --- why the 213\,kW rating does not carry over.}
-\begin{tabularx}{\linewidth}{lLLL}
-\toprule
-\textbf{Condition} & \textbf{Glycol} & \textbf{Driving $\Delta T$ (glycol-in $-$ air-in)} & \textbf{ULF-PA104Y4V delivers} \\
-\midrule
-Original rating & 46\,$\to$\,40\,\textdegree C & 11\,K & 213.2\,kW \\
-Revised duty    & 42\,$\to$\,38\,\textdegree C & 7\,K ($-36$\,\%) & $\approx$145.7\,kW \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\noindent At the revised condition the original coil reaches only $\approx$146\,kW at
-100\,\% fan speed against the $\approx$182\,kW required --- it would need $\approx$150\,\%
-fan speed, which does not exist. This is precisely the \textbf{17 fan-ceiling hours} the
-annual simulation flagged.
-
-The 3\,K approach is moreover \emph{forced}, not chosen: $t_c = 45$\,\textdegree C with
-5\,K subcooling puts the refrigerant leaving the condenser at 40.0\,\textdegree C, so the
-glycol must enter the condenser \emph{below} 40\,\textdegree C. Glycol at
-40\,\textdegree C --- exactly the original unit's 5\,K approach --- would pinch the
-condenser's cold end to zero driving force. Redistributing the burden onto glycol flow
-instead (a 2\,K range) was checked and rejected: pump power scales roughly with
-$\mdot^3$, taking the glycol pump to $\approx$19\,kW and PUE to $\approx$1.42, worse than
-the original design.
-
-\subsection{Re-Selected Unit: Kelvion ULF-PA106K4V-091F095}
-
-Select RT was re-run at the revised duty (620\,MBH, glycol 107.6/100.4\,\textdegree F,
-ambient 95\,\textdegree F). The returned candidates were screened on the criteria that
-actually bind:
-
-\begin{table}[h!]
-\caption{Re-selection screening at the revised 42/38\,\textdegree C duty (620\,MBH required).}
-\begin{tabularx}{\linewidth}{lLLLLL}
-\toprule
-\textbf{Type} & \textbf{MBH (margin)} & \textbf{$\Delta P$} & \textbf{Fan speed} & \textbf{$L_{pA}$} & \textbf{Note} \\
-\midrule
-ULF-PA106Y4V-096Z110 & 639.5 (3\,\%) & 4\,psi & 1100/1100 & 64\,dB(A) & Low $\Delta P$, but \textbf{no fan headroom} \\
-ULF-PA107Y4V-091Z100 & 630.8 (2\,\%) & 4\,psi & 1000/1100 & 67\,dB(A) & Low $\Delta P$, thin margin, loud \\
-\textbf{ULF-PA106K4V-091F095} & \textbf{670.4 (8\,\%)} & 8\,psi & \textbf{950/1050} & \textbf{60\,dB(A)} & \textbf{Selected} \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\noindent\textbf{ULF-PA106K4V-091F095 is selected}, on the same criterion the original
-selection was made on: at \textbf{60\,dB(A)} it holds the original unit's sound level,
-which \S\ref{dry:sec:vendor} identified as decisive for a data-centre site. It also carries
-the best capacity margin (8\,\%) and \textbf{10\,\% fan-speed headroom} (950 of 1050\,rpm)
---- the latter deliberately preferred over the lower-$\Delta P$ ``Z110'' variants, which
-run 1100/1100, i.e.\ flat out at design with no reserve for a hotter-than-design day, coil
-fouling, or a failed fan. Buying a unit with no fan headroom is what produced the
-fan-ceiling problem in the first place.
-
-\begin{table}[h!]
-\caption{Re-selected unit --- key specifications (Kelvion Select RT, revised duty).}
-\label{tab:dry_reselected}
-\begin{tabularx}{\linewidth}{lL}
-\toprule
-\textbf{Parameter} & \textbf{Value} \\
-\midrule
-Model & ULF-PA106K4V-091F095 \\
-Capacity & 670.36\,MBH $=$ \textbf{196.5\,kW} at glycol 42\,/\,38\,\textdegree C, air 35\,\textdegree C \\
-Surface area & 20{,}977\,ft$^2$ $=$ \textbf{1{,}949\,m$^2$} ($2.1\times$ the original's 938\,m$^2$) \\
-Air volume flow & 93{,}782\,cfm; air outlet 101.7\,\textdegree F $\Rightarrow$ $\Delta T_{\mathrm{air}} = 3.72$\,K \\
-Fans & 6 $\times$ 0.910\,m EC axial, 950\,/\,1050\,rpm (10\,\% headroom) \\
-Sound pressure, $L_{pA}$ (33\,ft) & 60\,dB(A) \\
-Glycol-side pressure drop & 8\,psi $=$ \textbf{55.16\,kPa} (was 7\,psi) \\
-Coils $\times$ sections $\times$ circuits & $1\times2\times29$ \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\noindent Note the re-selected unit's \emph{lower} headline capacity (670 vs.\ 727\,MBH)
-despite being a physically far larger coil ($2.1\times$ the surface). The two numbers are
-quoted at different conditions --- 670\,MBH at the hard 3\,K approach versus 727\,MBH at
-the easy 5\,K approach. \textbf{Surface area is the condition-independent measure}, and by
-it the re-selected unit is unambiguously the larger machine.
-
-With this unit the annual simulation runs \textbf{clean across all 8{,}760 hours} --- the
-17 fan-ceiling hours are resolved.
-
-\subsection{Open Item: Fan Power Not Vendor-Reported}
+\section{Open Item: Fan Power Not Vendor-Reported}
 \label{dry:sec:fanpower_open}
 
 The Select RT results table does not report fan power. The value carried in the model
-(\textbf{10.6\,kW}) is therefore an \textbf{estimate}, scaled from the original unit's
-confirmed 2.685\,kW/fan (0.960\,m at 1000\,rpm) by the fan laws
-($P \sim N^3 D^5$): $6 \times 2.685 \times (950/1000)^3 \times (0.910/0.960)^5 =
-10.6$\,kW. It is nearly unchanged from the original 10.74\,kW despite 50\,\% more fans,
-because the $2.1\times$ coil surface lowers face velocity and hence air-side $\Delta P$
-per unit of flow (specific fan power 0.113 vs.\ 0.150\,kW/kcfm) --- physically consistent,
-but not confirmed. \textbf{This is the single largest remaining uncertainty in the revised
-PUE} (\S\ref{perf:sec:pue}) and must be read off the unit's datasheet. The free-cooling
-operating point should be re-run on this unit at the same time.
+(\textbf{10.6\,kW}) is therefore an \textbf{estimate}, scaled by the fan laws
+($P \sim N^3 D^5$) from a confirmed datasheet figure for the same \texttt{ULF} fan family
+(2.685\,kW/fan for a 0.960\,m fan at 1000\,rpm, \S\ref{dry:sec:validation}):
+$6 \times 2.685 \times (950/1000)^3 \times (0.910/0.960)^5 = 10.6$\,kW.
+
+That six 0.910\,m fans should draw about what four 0.960\,m fans draw is not as odd as it
+first looks: this coil's large surface means a low face velocity, and hence a lower
+air-side $\Delta P$ per unit of flow (specific fan power 0.113 vs.\ 0.150\,kW/kcfm). The
+scaling is physically consistent --- but it is not confirmed. \textbf{This is the single
+largest remaining uncertainty in the design-day PUE} (\S\ref{perf:sec:pue}) and must be
+read off the unit's own datasheet. The free-cooling operating point should be re-run at
+the same time.
 
 % ── §5.13 ──────────────────────────────────────────────────────────────────────
 \section{Air-Side Pressure Drop --- Scope Note}
@@ -3320,15 +3264,15 @@ chapter covers the compressor selection and performance modeling; the two units 
 assumed identical.
 
 \begin{quote}
-\noindent\textbf{Architecture note.} An earlier revision of this chapter described
-``two identical 75\,kW parallel refrigerant \emph{circuits}, each with its own
-compressor, evaporator/condenser \dots\ and EEV''. That was \textbf{incorrect}, and it
-contradicted this chapter's own staging analysis (\S\ref{comp:sec:staging}), which
-depends on both compressors sharing one $t_o$/$t_c$ --- only possible on a common
-manifold. It also contradicted the model (\texttt{main.py}), which has always built a
-single shared circuit. \textbf{The single-circuit reading is correct} and is adopted
-throughout; the consequences for the expansion valve are worked through in
-Chapter~\ref{ch:controls}, \S\ref{ctrl:sec:authority}.
+\noindent\textbf{Why one circuit, not two.} Two compressors could in principle each
+serve their own 75\,kW circuit with its own exchangers and valve. They do not here, for
+two reasons. First, the staging analysis below (\S\ref{comp:sec:staging}) depends on both
+compressors sharing one $t_o$/$t_c$ --- which is only possible on a common manifold.
+Second, and decisively, splitting the flow halves the duty each expansion valve sees and
+drops it to 12.2\,\% open at minimum load, below the range in which it can hold superheat
+(Chapter~\ref{ch:controls}, \S\ref{ctrl:sec:authority}). The single shared circuit keeps
+the valve controllable across the full 5:1 turndown. Its cost --- that the exchangers and
+the valve are unduplicated --- is stated plainly in \S\ref{imp:sec:architecture}.
 \end{quote}
 
 The staging rationale (developed alongside this selection):
@@ -4205,8 +4149,8 @@ Chapter~\ref{ch:oilsep}. \textbf{A liquid receiver is not}, and this chapter
 documents why --- an omission reached on evidence, and one that improves the design
 on two independent axes.
 
-An earlier revision of this report did select a receiver (Bitzer F252HP, 25\,L).
-That selection is withdrawn. Two findings, in order of severity, overturned it.
+A receiver is the default choice on many systems, and a plausible one here would have been
+the Bitzer F252HP (25\,L). Two findings, in order of severity, rule it out.
 
 \section{Finding 1: A Receiver Would Break AHRI Compliance}
 \label{receiver:sec:subcooling}
@@ -4397,41 +4341,39 @@ requires (subtask~1f): the \textbf{full-load COP}, the \textbf{Integrated Part L
 Value (IPLV.IP)}, and the \textbf{design-day facility PUE} --- followed by the
 weather-driven \textbf{seasonal performance} across the real Champaign TMY3 year.
 
-\subsection{Design Revision for Efficiency Compliance}
+\subsection{The Design Basis Behind These Numbers}
 \label{perf:sec:revision}
 
-The design as originally sized (component Chapters~\ref{ch:evap}--\ref{ch:receiver})
-\textbf{missed both COP-based targets}: full-load COP 2.64 at the AHRI rating point
-(target $\geq3.5$) and IPLV.IP 4.43 (target $\geq5.0$). An option study on the
-compressor map identified the minimal set of changes that reaches compliance without
-altering the architecture, the refrigerant, or the compressor model; this chapter's
-reported metrics are for the \textbf{revised design}:
+Three choices set every metric in this chapter, and each was made \emph{because} of the
+efficiency targets rather than independently of them. They are stated here up front
+because the reported COP and IPLV are meaningless without them:
 
 \begin{itemize}
-  \item \textbf{Condensing approach reduced from 17\,K to 10\,K}: dry cooler approach
-        5\,$\to$\,3\,K, glycol rise 6\,$\to$\,4\,K, condenser approach 6\,$\to$\,3\,K,
-        giving $t_c = 45$\,\textdegree C (was 52\,\textdegree C) at the
-        35\,\textdegree C design ambient. Cost: more heat-transfer area
-        (\S\ref{perf:sec:hardware}).
-  \item \textbf{Evaporator approach reduced from 8\,K to 5\,K}: $t_o = 10$\,\textdegree C
-        (was 7\,\textdegree C) at the 15\,\textdegree C design LCHW. Cost: more
-        evaporator plates.
-  \item \textbf{VFDs on the compressors}: at full load the two-unit bank over-delivers
+  \item \textbf{A 10\,K air-to-refrigerant condensing approach}, giving
+        $t_c = 45$\,\textdegree C at the 35\,\textdegree C design ambient. This is
+        \emph{not} one approach but three stacked in series --- 3\,K across the dry
+        cooler, a 4\,K glycol rise, 3\,K across the condenser --- an unavoidable
+        consequence of the intermediate glycol loop
+        (Chapter~\ref{ch:cyclerep}, Fig.~\ref{fig:cascade}). Each kelvin is bought with
+        heat-transfer area, and $t_c$ is the single most powerful lever on the full-load
+        COP (\S\ref{perf:sec:sensitivity}). It is why the dry cooler is as large as it is.
+  \item \textbf{A 5\,K evaporator approach}, giving $t_o = 10$\,\textdegree C at the
+        15\,\textdegree C design LCHW. Bought with evaporator plates.
+  \item \textbf{VFDs on both compressors.} At full load the two-unit bank over-delivers
         at the evaporator-dictated $t_o$ ($\approx$201\,kW available at
-        $t_o=10$/$t_c=45$\,\textdegree C), so the drive trims speed ($\approx$75\,\%) to
-        deliver exactly 150\,kW there --- instead of letting $t_o$ float down as a
-        fixed-speed bank must; and below the old turndown floor it \emph{modulates
-        capacity} instead of hot-gas bypassing, removing the Point-D COP collapse
-        (\S\ref{perf:sec:iplv}). COP is taken as speed-invariant (capacity and power
-        both scale $\approx$linearly with speed for a reciprocating compressor), a
-        neutral-to-conservative standard simplification.
+        $t_o=10$/$t_c=45$\,\textdegree C), so the drive trims speed to $\approx$75\,\% and
+        delivers exactly 150\,kW \emph{there}, instead of letting $t_o$ float down --- and
+        colder $t_o$ costs COP. Below the fixed-speed turndown floor the drive modulates
+        capacity rather than hot-gas bypassing, which is what makes the 25\,\% IPLV point
+        and the 30\,kW minimum load affordable (\S\ref{perf:sec:iplv}). COP is taken as
+        speed-invariant (capacity and power both scale $\approx$linearly with speed for a
+        reciprocating compressor), a neutral-to-conservative standard simplification.
 \end{itemize}
 
-The component chapters document the \emph{original} sizing basis; the hardware
-consequences of this revision (larger dry cooler, more HX plates, higher glycol flow)
-are quantified in \S\ref{perf:sec:hardware}. All compressor performance is drawn from
-the same Bitzer 4FEP-35Z AHRI-540 map used throughout the report
-(Chapter~\ref{ch:comp}); the VFD operating model is
+\noindent The hardware these choices demand --- the dry cooler frame, the plate counts,
+the glycol flow --- is quantified in \S\ref{perf:sec:hardware}. All compressor
+performance is drawn from the same Bitzer 4FEP-35Z AHRI-540 map used throughout the
+report (Chapter~\ref{ch:comp}); the VFD operating model is
 \texttt{compressor.solve\_with\_vfd()}, and the metrics are implemented in
 \texttt{performance.py}.
 
@@ -4444,43 +4386,52 @@ condition (6.7\,\textdegree C leaving chilled water, 35\,\textdegree C condenser
 entering air) \emph{and}, for this study, at the project's own design point
 (15\,\textdegree C leaving chilled water, per the ASHRAE~TC~9.9 W17 data-center
 envelope). Both share the same 35\,\textdegree C entering air --- hence the same
-$t_c = 45$\,\textdegree C via the revised 10\,K approach --- and differ only in
-chilled-water temperature, which sets $t_o$ via the revised 5\,K evaporator approach.
+$t_c = 45$\,\textdegree C via the 10\,K approach --- and differ only in
+chilled-water temperature, which sets $t_o$ via the 5\,K evaporator approach.
 
 \input{tables/performance/full_load_cop.tex}
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.72\linewidth]{figures/performance/design_point/full_load_cop.png}
+\includegraphics[width=0.72\linewidth]{figures/performance/design_point/full_load_cop.pdf}
 \caption{Full-load COP at the AHRI rating point and the project design point, against
-the 3.5 target (revised design).}
+the 3.5 target.}
 \end{figure}
 
 \textbf{Result: both points meet the 3.5 target.} At the AHRI rating condition the
-revised full-load COP is \textbf{3.53} ($\geq3.5$, met with a $\approx$1\,\% margin);
+full-load COP is \textbf{3.53} ($\geq3.5$, met with a $\approx$1\,\% margin);
 at the warmer project design point it is \textbf{4.67}. The two-unit bank's full-speed
 capacity at the AHRI condition is 150.9\,kW, so the 150\,kW duty is also still met
-there. The margin at the strict AHRI point is thin and rests on the revised approaches
+there. The margin at the strict AHRI point is thin and rests on the design approaches
 being achieved in the final vendor selections (\S\ref{perf:sec:hardware}); the project
 design point carries a comfortable margin.
 
-\subsection{Condensing-Temperature Sensitivity: Why the Revision Works}
+\subsection{Condensing-Temperature Sensitivity: How Much the 10\,K Approach Is Worth}
 \label{perf:sec:sensitivity}
 
-The condensing temperature dominates the full-load result. Figure~\ref{fig:cop_sens}
-sweeps it at the AHRI chilled-water condition (at the \emph{original} 8\,K evaporator
-approach, isolating the condensing-side effect): moving from the original 17\,K
-approach ($t_c=52$\,\textdegree C, COP 2.64) to the revised 10\,K approach
-($t_c=45$\,\textdegree C) recovers $\approx$21\,\% COP on this axis alone; the
-remaining gain to 3.53 comes from the evaporator approach reduction (8\,$\to$\,5\,K,
-worth $\approx$10\,\%).
+The condensing temperature dominates the full-load result, and Figure~\ref{fig:cop_sens}
+is the justification for every dollar spent on the dry cooler. Sweeping $t_c$ at the AHRI
+chilled-water condition, with everything else at its design value, the COP falls at
+\textbf{$\approx$0.09 per kelvin} of condensing temperature. Relaxing the approach from
+10\,K to a conventional air-cooled 17\,K ($t_c = 52$\,\textdegree C) would cost
+\textbf{21.7\,\%} of the full-load COP and drop the design to 2.90 --- far below target.
+
+\begin{quote}
+\textbf{Read the margin off this curve.} The design sits at $t_c = 45$\,\textdegree C and
+COP 3.529 against a 3.5 target. At 0.09\,COP/K, that is \textbf{about 0.3\,K of
+headroom}: a condensing temperature of $\approx$45.3\,\textdegree C fails the standard.
+The full-load target is not comfortably met --- it is met, and the whole margin lives in
+the dry cooler's 3\,K approach and the condenser's $U$. This is why those two vendor
+confirmations are the first priority in Chapter~\ref{ch:improve}.
+\end{quote}
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.80\linewidth]{figures/performance/design_point/cop_tc_sensitivity.png}
+\includegraphics[width=0.80\linewidth]{figures/performance/design_point/cop_tc_sensitivity.pdf}
 \caption{Full-load COP at the AHRI 6.7\,\textdegree C LCHW condition versus condensing
-temperature (original 8\,K evaporator approach), marking the original and revised
-design condensing temperatures.}
+temperature, at the design's own 5\,K evaporator approach --- so the curve passes through
+the reported 3.53 at the $t_c=45$\,\textdegree C design point rather than describing a
+hypothetical machine.}
 \label{fig:cop_sens}
 \end{figure}
 
@@ -4491,7 +4442,7 @@ design condensing temperatures.}
 IPLV.IP is the AHRI 550/590-2023~\S5.2 weighted part-load COP,
 $0.01A + 0.42B + 0.45C + 0.12D$, evaluated at 100/75/50/25\,\% load with each point at
 its own reduced condenser-entering-air temperature (35/26.7/18.3/12.8\,\textdegree C).
-Each air temperature is mapped to a condensing temperature via the revised 10\,K
+Each air temperature is mapped to a condensing temperature via the 10\,K
 approach, and the compressor bank is staged (Chapter~\ref{ch:comp}) to deliver the
 reduced load, with the VFD modulating capacity below the fixed-speed turndown floor.
 
@@ -4499,31 +4450,30 @@ reduced load, with the VFD modulating capacity below the fixed-speed turndown fl
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.85\linewidth]{figures/performance/design_point/iplv_points.png}
-\caption{IPLV.IP part-load points (revised design). Point~D (25\,\% load) runs on VFD
-speed modulation below the fixed-speed turndown floor.}
+\includegraphics[width=0.85\linewidth]{figures/performance/design_point/iplv_points.pdf}
+\caption{IPLV.IP part-load points. Point~D (25\,\% load) runs on VFD speed modulation
+below the fixed-speed turndown floor.}
 \end{figure}
 
-\textbf{Result: IPLV.IP $= 5.23$, above the $\geq5.0$ target.} Relative to the original
-design's 4.43, the gain comes from two revision elements acting together:
+\textbf{Result: IPLV.IP $= 5.23$, above the $\geq5.0$ target} --- and with a 4.6\,\%
+margin, far more comfortable than the full-load result. Two elements of the design basis
+carry it:
 
 \begin{itemize}
-  \item \textbf{The 10\,K condensing approach} lowers $t_c$ at every point (e.g.\
-        Point~C condenses at 28.3 instead of 35.3\,\textdegree C), lifting the two
-        heavily weighted mid-load points: B reaches COP 6.18 (weight 0.42) and C
-        reaches 4.62 (weight 0.45).
-  \item \textbf{VFD capacity modulation replaces hot-gas bypass at Point~D}: instead
-        of running at the floor and throwing away capacity as recirculated hot gas
-        (original COP 2.29), the drive slows the compressor so power scales down with
-        the delivered duty, holding COP at the floor operating point's map value ---
-        4.35. This is deliberately \emph{conservative}: in reality, reduced speed lets
-        the evaporating temperature float upward (the evaporator is 4$\times$
-        oversized at 25\,\% load), which would raise the point's COP further.
+  \item \textbf{The 10\,K condensing approach} lowers $t_c$ at every point (Point~C
+        condenses at just 28.3\,\textdegree C), lifting the two heavily weighted mid-load
+        points that dominate the weighting: B reaches COP 6.18 (weight 0.42) and C
+        reaches 4.62 (weight 0.45). Together those two points are 87\,\% of the metric.
+  \item \textbf{VFD capacity modulation at Point~D.} Rather than running at the
+        fixed-speed floor and throwing away the excess as recirculated hot gas --- which
+        would collapse this point to COP 2.29 --- the drive slows the compressor so power
+        scales down with the delivered duty, holding COP at the floor operating point's
+        map value of 4.35. This is deliberately \emph{conservative}: in reality reduced
+        speed lets the evaporating temperature float upward (the evaporator is
+        4$\times$ oversized at 25\,\% load), which would raise the point further.
 \end{itemize}
 
-The turndown-floor open item flagged in Chapter~\ref{ch:comp}
-(\S\ref{comp:sec:floor}) is thereby resolved by the VFD option that chapter itself
-listed as a candidate strategy --- and the same drive also covers the 30\,kW
+The drive is also what covers the 30\,kW
 minimum-IT-load condition without bypass.
 
 % ── §12.4 ─────────────────────────────────────────────────────────────────────
@@ -4539,37 +4489,39 @@ electrical loads at the 35\,\textdegree C / full-load design point.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\linewidth]{figures/performance/design_point/pue_breakdown.png}
+\includegraphics[width=\linewidth]{figures/performance/design_point/pue_breakdown.pdf}
 \caption{Design-day facility power breakdown. The compressor bank dominates at
 69\,\% of the non-IT load.}
 \label{fig:pue_breakdown}
 \end{figure}
 
-The design-day PUE is \textbf{1.31} (improved from the original design's 1.40),
-dominated by the compressor bank (31.7\,kW of the 46.0\,kW total --- itself down from
-47.1\,kW, the revision's lift reduction at work). The glycol pump load roughly doubles
-(1.18\,$\to$\,2.56\,kW): the tighter 4\,K glycol range demands $\approx$28\,\% more
-flow, the confirmed (longer) vendor plate raises the condenser's glycol-side pressure
-drop, and the re-selected dry cooler adds 1\,psi --- all real, counted costs of the
-revision, together far outweighed by the 15.4\,kW compressor saving. Fan power is
-essentially unchanged (10.74\,$\to$\,10.6\,kW) despite a $2.1\times$ larger coil, since
-the greater face area offsets the extra fans (\S\ref{dry:sec:fanpower_open} --- an
-estimate, and the largest remaining uncertainty in this figure). This is the
-\emph{worst-case} PUE --- it occurs only at the hottest design ambient; the seasonal
-analysis below shows the annual-average PUE is far more favourable because most of
+The design-day PUE is \textbf{1.31}, dominated by the compressor bank at 32.1\,kW of the
+46.4\,kW of non-IT load --- \textbf{69\,\% of everything the plant draws beyond the IT
+itself}. That single fact frames the whole design: the compressor is the only load worth
+attacking, which is precisely why the condensing approach was driven down to 10\,K at the
+cost of a very large dry cooler.
+
+The remaining loads are the price of the architecture rather than of the compressor. The
+glycol pump draws 2.57\,kW because the tight 4\,K glycol range demands high flow, and
+because the selected dry cooler's 8\,psi (\S\ref{dry:sec:datasheet}) and the condenser's
+$\approx$35.8\,kPa both sit on its system curve. Fan power is 10.6\,kW
+(\S\ref{dry:sec:fanpower_open} --- an \textbf{estimate}, and the largest remaining
+uncertainty in this figure).
+
+This is the \emph{worst-case} PUE: it occurs only at the hottest design ambient. The
+seasonal analysis below shows the annual-average is far more favourable, because most of
 the year runs at part load or in free cooling.
 
-\noindent \textbf{Open item --- glycol pump system curve.} The higher glycol flow and
-the confirmed plate geometry raise the condenser's glycol-side pressure drop from the
-17.50\,kPa carried in Chapter~\ref{ch:pump}'s system-curve table
-(\S\ref{pump:sec:syscurve}) to $\approx$35.8\,kPa as now computed by the model. The
+\noindent \textbf{Open item --- glycol pump system curve.} The design's glycol flow and
+the confirmed plate geometry put the condenser's glycol-side pressure drop at
+$\approx$35.8\,kPa as computed by the model, against the 17.50\,kPa carried in
+Chapter~\ref{ch:pump}'s system-curve table (\S\ref{pump:sec:syscurve}). The
 pump's electrical power reported above is derived live from the model's actual system
 curve and so already reflects this; \textbf{the tabulated duty point and trim
-selection in Chapter~\ref{ch:pump} are, however, now stale} and must be re-derived
-alongside the dry cooler re-selection (whose own vendor $\Delta P$ reference is
-likewise superseded). This reinforces that chapter's existing open item~3: the 2AD
-frame sat near the top of its envelope already, and the revised duty makes the 2.5AC
-frame the more likely selection.
+selection in Chapter~\ref{ch:pump} do not} --- they predate both this pressure drop and
+the selected dry cooler's 8\,psi, and must be re-derived against both. This reinforces
+that chapter's existing open item~3: the 2AD frame sat near the top of its envelope
+already, and the design duty makes the 2.5AC frame the more likely selection.
 
 % ── §12.4b ────────────────────────────────────────────────────────────────────
 \subsection{Beyond PUE: TUE and the Losses PUE Cannot See}
@@ -4612,8 +4564,8 @@ put on the TUE columns that follow:
 \begin{itemize}
   \item \textbf{With ITUE held constant, TUE is simply PUE $\times$ 1.20.} It re-ranks
         nothing in this report and introduces no new physics. Every conclusion drawn
-        from PUE --- the free-cooling benefit, the seasonal spread, the revision's gain
-        --- is unchanged.
+        from PUE --- the free-cooling benefit, the seasonal spread, the compressor's
+        dominance of the non-IT load --- is unchanged.
   \item \textbf{Its value is one of honesty about scope.} The design-day TUE of
         \textbf{1.57} (band 1.44--1.70) says that for every watt of real compute, the
         site draws about 1.57\,W --- and that the \emph{cooling plant is responsible for
@@ -4642,7 +4594,7 @@ Chapter~\ref{ch:dry}, \S\ref{dry:sec:annualregime}.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\linewidth]{figures/performance/annual/ambient_duration_curve.png}
+\includegraphics[width=\linewidth]{figures/performance/annual/ambient_duration_curve.pdf}
 \caption{Champaign TMY3 ambient temperature duration curve with the economizer
 thresholds and the dry cooler's 35\,\textdegree C design ambient.}
 \label{fig:duration}
@@ -4687,7 +4639,7 @@ July).
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.90\linewidth]{figures/performance/monthly/monthly_cop_pue.png}
+\includegraphics[width=0.90\linewidth]{figures/performance/monthly/monthly_cop_pue.pdf}
 \caption{Monthly-average total-system COP (top) with PUE and TUE (bottom). Aqua bars are
 free-cooling months (compressor off), blue are mechanical; solid bars are PUE, hatched
 bars TUE. The COP panel's scale is set by the free-cooling months, which is the point:
@@ -4697,14 +4649,14 @@ winter operation is an order of magnitude more efficient than summer.}
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.85\linewidth]{figures/performance/seasonal/seasonal_cop_pue.png}
+\includegraphics[width=0.85\linewidth]{figures/performance/seasonal/seasonal_cop_pue.pdf}
 \caption{Seasonal-average total-system COP, PUE and TUE (same encoding as
 Fig.~\ref{fig:monthly_cop_pue}).}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.95\linewidth]{figures/performance/annual/annual_cop_load.png}
+\includegraphics[width=0.95\linewidth]{figures/performance/annual/annual_cop_load.pdf}
 \caption{Delivered cooling load and compressor COP across all 8{,}760 hours; aqua
 shading marks free-cooling hours.}
 \end{figure}
@@ -4719,10 +4671,9 @@ month that runs integrated rather than mechanical. Across the year the economize
 delivers \textbf{526\,MWh of the 1{,}314\,MWh} of cooling the hall needs
 (\textbf{40.1\,\%}) with the compressor off or barely loaded, which is the central
 benefit of the glycol-loop free-cooling architecture and the reason the
-\emph{annual-average} efficiency beats any single design-point number. With the
-re-selected dry cooler (\S\ref{dry:sec:reselection}) the annual run is \textbf{clean
-across all 8{,}760 hours}; the 17 fan-ceiling hours seen while the original unit was
-still carried are resolved.
+\emph{annual-average} efficiency beats any single design-point number. The annual run is
+\textbf{clean across all 8{,}760 hours} --- no hour asks the selected dry cooler
+(\S\ref{dry:sec:datasheet}) for more than 100\,\% fan speed.
 
 Read through the TUE column, the same result carries a blunter message. In winter the
 plant's own overhead nearly vanishes (PUE 1.01), yet TUE still sits at 1.21 --- because
@@ -4748,94 +4699,98 @@ hourly-integrated annual energy is a contained change and is listed as an open i
 \label{perf:sec:openitems}
 
 \begin{table}[h!]
-\caption{Efficiency-metric compliance against the project targets: original vs.\
-revised design.}
-\begin{tabularx}{\linewidth}{lLLLL}
+\caption{Efficiency-metric compliance against the project targets.}
+\begin{tabularx}{\linewidth}{lLLL}
 \toprule
-\textbf{Metric} & \textbf{Target} & \textbf{Original} & \textbf{Revised} & \textbf{Status} \\
+\textbf{Metric} & \textbf{Target} & \textbf{Design} & \textbf{Status} \\
 \midrule
-Full-load COP (AHRI 6.7\,\textdegree C LCHW) & $\geq 3.5$ & 2.64 & \textbf{3.53} & \textbf{Met} \\
-Full-load COP (project 15\,\textdegree C LCHW) & (reported) & 3.42 & \textbf{4.67} & --- \\
-IPLV.IP & $\geq 5.0$ & 4.43 & \textbf{5.23} & \textbf{Met} \\
-Economizer full free cooling & $\leq 4$\,\textdegree C OAT & \multicolumn{2}{l}{4\,\textdegree C, 100\,\% load} & \textbf{Met} (Ch.~\ref{ch:dry}) \\
-Design-day PUE & (report) & 1.40 & \textbf{1.31} & --- \\
+Full-load COP (AHRI 6.7\,\textdegree C LCHW) & $\geq 3.5$ & \textbf{3.53} & \textbf{Met} \\
+Full-load COP (project 15\,\textdegree C LCHW) & (reported) & \textbf{4.67} & --- \\
+IPLV.IP & $\geq 5.0$ & \textbf{5.23} & \textbf{Met} \\
+Economizer activation & $\leq 10$\,\textdegree C OAT & 10\,\textdegree C, 50\,\% of load carried & \textbf{Met} (\S\ref{econ:sec:partialmodel}) \\
+Economizer full free cooling & $\leq 4$\,\textdegree C OAT & 4\,\textdegree C, 100\,\% load & \textbf{Met} (Ch.~\ref{ch:dry}) \\
+Design-day PUE & (report) & \textbf{1.31} & --- \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\linewidth]{figures/performance/design_point/original_vs_revised.png}
-\caption{The revision's headline result: both required metrics move from failing to
-compliant, and the design-day PUE improves as a by-product.}
-\label{fig:orig_vs_rev}
+\includegraphics[width=\linewidth]{figures/performance/design_point/compliance.pdf}
+\caption{The design against the two mandatory efficiency targets, with the design-day
+PUE it achieves. The COP margin is thin; the IPLV margin is comfortable.}
+\label{fig:compliance}
 \end{figure}
 
-All required efficiency metrics are met by the revised design. The AHRI full-load COP
-margin is thin ($\approx$1\,\%) and is contingent on the revised approaches surviving
-the final vendor re-selections; IPLV.IP carries a healthier margin, and its Point-D
-value is deliberately conservative (\S\ref{perf:sec:iplv}).
+All required efficiency metrics are met. The honest caveat is that \textbf{the AHRI
+full-load COP margin is thin --- 0.8\,\%} --- and it rests on the 10\,K condensing
+approach surviving vendor confirmation of the plate $U$-values and the dry cooler's
+rated duty (Chapter~\ref{ch:improve}, \S\ref{imp:sec:vendor}). IPLV.IP carries a
+healthier 4.6\,\% margin, and its Point-D value is deliberately conservative
+(\S\ref{perf:sec:iplv}), so the part-load result is the more robust of the two.
 
 % ── §12.7 ─────────────────────────────────────────────────────────────────────
-\section{Hardware Consequences of the Revision}
+\section{The Hardware These Targets Demand}
 \label{perf:sec:hardware}
 
-The compliance gains are bought with heat-transfer area and a drive --- quantified
-here so the revision's cost is as explicit as its benefit.
+The efficiency targets are bought with heat-transfer area and drives. This section makes
+that cost explicit, because it is the dominant capital consequence of the whole design.
 
-\subsection{Revised Overall Heat-Transfer Coefficients}
+\subsection{Overall Heat-Transfer Coefficients: the Double-Wall Derate}
 \label{perf:sec:uvalues}
 
-The tighter approaches raise the required $UA$ of both plate exchangers
-(evaporator 14.0\,$\to$\,19.7\,kW/K; condenser 13.1\,$\to$\,20.2\,kW/K). That extra
-$UA$ must be bought as \emph{area} (more plates), as \emph{coefficient} (a higher
-$U$), or --- as it turns out here --- neither, because the originally assumed plate
-size understated the real one.
+The design's approaches require $UA = 19.7$\,kW/K on the evaporator and 20.2\,kW/K on
+the condenser. That $UA$ must be bought as \emph{area} (plates) or as \emph{coefficient}
+($U$), so the $U$ adopted decides whether the exchangers fit their frame --- which makes
+the following correction load-bearing rather than a detail.
 
-\subsubsection*{Correcting the double-wall omission}
+\begin{quote}
+\textbf{The published $U$ bands do not apply to this hardware.} The bands cited in the
+component chapters (\S2.2.1: 2{,}500--4{,}500 for a water/propane BPHE; \S3.2.4:
+2{,}000--3{,}500 for refrigerant/glycol) are published for \textbf{generic, single-wall}
+plate exchangers. This design uses \textbf{double-wall} plates throughout, adopted for A3
+leak safety (\S2.4.1, \S3.4.1) --- and a double wall interposes a second plate plus an
+interstitial contact resistance directly in the heat-transfer path. The correct $U$ is
+therefore \emph{lower} than the published band, not somewhere within it. It is an easy
+error to make in the opposite direction.
+\end{quote}
 
-The $U$ bands cited in the component chapters (\S2.2.1: 2{,}500--4{,}500 for a
-water/propane BPHE; \S3.2.4: 2{,}000--3{,}500 for refrigerant/glycol) are published
-for \textbf{generic, single-wall} plate exchangers. The selected hardware is
-\textbf{double-wall} (adopted for A3 leak safety, \S2.4.1 and \S3.4.1), which
-interposes a second plate and an interstitial contact resistance in the
-heat-transfer path. \textbf{That derate was not accounted for in the original
-assumptions}, and it moves $U$ in the unfavourable direction.
-
-A resistance-network check supports the original single-wall figures: for the
-evaporator, $1/U = 1/h_{w} + t/k + 1/h_{r}$ with a water film
-$h_{w}\approx6{,}000$, a 0.4\,mm stainless wall, and a propane boiling film
-$h_{r}\approx7{,}000$\,W\,m$^{-2}$K$^{-1}$ returns $U\approx2{,}990$ --- essentially
-the 3{,}000 assumed in \S2.2.1. Published double-wall derates fall in the
-10--30\,\% range; a mid-range \textbf{20\,\% derate} is adopted here, giving the
-values in Table~\ref{tab:revision_u}. These are \emph{lower}, not higher, than the
-original assumptions.
+\noindent A resistance-network check anchors the single-wall starting point: for the
+evaporator, $1/U = 1/h_{w} + t/k + 1/h_{r}$ with a water film $h_{w}\approx6{,}000$, a
+0.4\,mm stainless wall, and a propane boiling film
+$h_{r}\approx7{,}000$\,W\,m$^{-2}$K$^{-1}$ returns $U\approx2{,}990$ --- essentially the
+3{,}000 the band would suggest. Published double-wall derates fall in the 10--30\,\%
+range; a mid-range \textbf{20\,\% derate} is adopted, giving:
 
 \begin{table}[h!]
-\caption{Revised overall heat-transfer coefficient assumptions, corrected for
-double-wall construction.}
+\caption{Overall heat-transfer coefficient assumptions, derated for double-wall
+construction.}
 \label{tab:revision_u}
-\begin{tabularx}{\linewidth}{lLLLL}
+\begin{tabularx}{\linewidth}{lLLL}
 \toprule
-\textbf{Exchanger} & \textbf{Single-wall band} & \textbf{Original (SW basis)} & \textbf{Revised (DW)} & \textbf{Basis} \\
+\textbf{Exchanger} & \textbf{Published single-wall band} & \textbf{Adopted (DW)} & \textbf{Basis} \\
 \midrule
-Evaporator (water\,/\,R-290) & 2{,}500--4{,}500 & 3{,}000 & \textbf{2{,}400} &
+Evaporator (water\,/\,R-290) & 2{,}500--4{,}500 & \textbf{2{,}400} &
 Resistance-network single-wall value ($\approx$2{,}990), $\times$0.80 double-wall derate \\
-Condenser (R-290\,/\,30\,\% PG) & 2{,}000--3{,}500 & 2{,}500 & \textbf{2{,}000} &
+Condenser (R-290\,/\,30\,\% PG) & 2{,}000--3{,}500 & \textbf{2{,}000} &
 \S3.2.4's single-wall value, $\times$0.80 double-wall derate \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
+\noindent Both adopted values sit \emph{below} their published band. The 20\,\% derate is
+itself an estimate from a 10--30\,\% literature range and is the first vendor
+confirmation to close (\S\ref{imp:sec:vendor}): Kelvion should be asked for the DW derate
+\emph{relative to the equivalent single-wall plate}.
+
 \subsubsection*{Vendor plate geometry}
 
-The sizing above originally used a placeholder plate area of
-0.0665\,m$^2$ estimated by the $A\times B$ method (\S2.6.1, \S3.6.1) against a
-100-plate frame. The confirmed \textbf{Kelvion HP\,DW\,500H} data supersedes it:
-a heat-transfer area of \textbf{195\,$\times$\,600\,mm $=$ 0.117\,m$^2$ per plate}
-($+76$\,\% on the placeholder) in a frame accepting up to \textbf{120 plates}. The
-larger real plate is what makes the revision fit: it absorbs both the tighter
-approaches \emph{and} the double-wall derate without a frame change
+The plate counts rest on confirmed \textbf{Kelvion HP\,DW\,500H} geometry: a
+heat-transfer area of \textbf{195\,$\times$\,600\,mm $=$ 0.117\,m$^2$ per plate} in a
+frame accepting up to \textbf{120 plates}. This matters more than it might appear --- the
+real plate is 76\,\% larger than the $A\times B$ estimate used before vendor data was
+available (\S2.6.1, \S3.6.1), and that margin is exactly what lets both exchangers absorb
+the tight approaches \emph{and} the double-wall derate inside a standard frame
 (\S\ref{perf:sec:hardware}).
 
 \noindent \textbf{These remain assumptions, not vendor results.} $U$ is an
@@ -4850,57 +4805,50 @@ resulting channel pressure drops, which feed pump sizing (Chapters~\ref{ch:pump}
 can fall to $\approx$1{,}700\,W\,m$^{-2}$K$^{-1}$ on either exchanger --- a further
 $\approx$30\,\% below the values adopted here --- before the 120-plate frame binds.
 
-\subsection{Component-by-Component Consequences}
+\subsection{Component by Component}
 
 \begin{table}[h!]
-\caption{Hardware consequences of the efficiency revision. Plate exchangers are
-re-sized by LMTD at the double-wall-corrected $U$ values of
-Table~\ref{tab:revision_u} against the confirmed Kelvion HP\,DW\,500H plate
-(0.117\,m$^2$, 120-plate frame); the dry cooler via the $\varepsilon$-NTU model of
-Chapter~\ref{ch:dry}. Plate counts include the report's standard 20\,\% margin.}
+\caption{The hardware the design basis demands. Plate exchangers are sized by LMTD at
+the double-wall-corrected $U$ values of Table~\ref{tab:revision_u} against the confirmed
+Kelvion HP\,DW\,500H plate (0.117\,m$^2$, 120-plate frame); the dry cooler via the
+$\varepsilon$-NTU model of Chapter~\ref{ch:dry}. Plate counts include the report's
+standard 20\,\% margin.}
 \label{tab:revision_hardware}
-\begin{tabularx}{\linewidth}{lLLL}
+\begin{tabularx}{\linewidth}{lLL}
 \toprule
-\textbf{Component} & \textbf{Original} & \textbf{Revised} & \textbf{Consequence} \\
+\textbf{Component} & \textbf{As designed} & \textbf{Consequence} \\
 \midrule
-Evaporator BPHE & LMTD 10.7\,K, $UA$ 14.0\,kW/K, $U$ 3{,}000, 4.66\,m$^2$ &
-LMTD 7.6\,K, $UA$ 19.7\,kW/K, $U$ 2{,}400 (DW), 8.21\,m$^2$,
+Evaporator BPHE & LMTD 7.6\,K, $UA$ 19.7\,kW/K, $U$ 2{,}400 (DW), 8.21\,m$^2$,
 $\approx$\textbf{84 plates} & \textbf{Fits the HP\,DW\,500H frame} with
-$\approx$36 plates spare, despite the tighter approach \emph{and} the double-wall
+$\approx$36 plates spare, despite the 5\,K approach \emph{and} the double-wall
 derate \\
-Condenser BPHE & LMTD 14.5\,K, $UA$ 13.1\,kW/K, $U$ 2{,}500, 5.25\,m$^2$ &
-LMTD 9.0\,K, $UA$ 20.2\,kW/K, $U$ 2{,}000 (DW), 10.12\,m$^2$,
+Condenser BPHE & LMTD 9.0\,K, $UA$ 20.2\,kW/K, $U$ 2{,}000 (DW), 10.12\,m$^2$,
 $\approx$\textbf{104 plates} & \textbf{Fits the frame} with $\approx$16 plates
 spare \\
-Dry cooler & Kelvion ULF-PA104Y4V, 938\,m$^2$, $UA = 47.3$\,kW/K, 60\,dB(A) &
-\textbf{Kelvion ULF-PA106K4V-091F095}, 1{,}949\,m$^2$ ($2.1\times$), 60\,dB(A),
-10\,\% fan headroom & \textbf{Re-selected} (\S\ref{dry:sec:reselection}) --- the
-original unit reaches only $\approx$146\,kW of the $\approx$182\,kW required at the
-3\,K approach. \textbf{The revision's dominant hardware cost}; resolves the 17
-fan-ceiling hours \\
-Glycol loop & 9.07\,kg/s (6\,K range), condenser $\Delta P$ 17.5\,kPa, dry cooler
-7\,psi & 11.6\,kg/s (4\,K range, $+28$\,\%), condenser $\Delta P$
-$\approx$35.8\,kPa, dry cooler 8\,psi & Pump duty rises (electrical
-1.18\,$\to$\,2.56\,kW); system curve and trim selection in Ch.~\ref{ch:pump}
-superseded --- re-derive against the 2.5AC frame (\S\ref{perf:sec:pue},
-Ch.~\ref{ch:pump} open item~3) \\
-Compressors & 2 $\times$ fixed-speed 4FEP-35Z & same units $+$ VFDs & Standard drive
-addition; also resolves the turndown-floor and 30\,kW minimum-load open items \\
+Dry cooler & \textbf{Kelvion ULF-PA106K4V-091F095}, 1{,}949\,m$^2$, $UA \approx
+73.7$\,kW/K, 60\,dB(A), 10\,\% fan headroom & \textbf{The dominant capital item of the
+whole plant.} The 3\,K approach is what makes it this large
+(\S\ref{dry:sec:capacity_trap}); the fan headroom is what keeps all 8{,}760 hours off
+the fan ceiling \\
+Glycol loop & 11.6\,kg/s at a 4\,K range, condenser $\Delta P \approx$35.8\,kPa, dry
+cooler 8\,psi & The tight 4\,K range demands high flow, so pump electrical power is
+2.56\,kW. System curve and trim in Ch.~\ref{ch:pump} predate these numbers ---
+re-derive against the 2.5AC frame (\S\ref{perf:sec:pue}, Ch.~\ref{ch:pump} open
+item~3) \\
+Compressors & 2 $\times$ 4FEP-35Z with VFDs & Standard drive addition; delivers the
+5:1 turndown to the 30\,kW minimum load without hot-gas bypass \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent None of these changes the architecture, the refrigerant, or the component
-families --- they scale existing selections and add a standard drive.
-\textbf{Both plate exchangers remain within the selected Kelvion HP\,DW\,500H
-frame}, with 36 and 16 plates of headroom respectively, so the revision's capital
-impact concentrates almost entirely in the dry cooler ($\approx$2.5$\times$ $UA$)
-and the glycol pump re-check.
+\noindent \textbf{Both plate exchangers remain within the selected Kelvion HP\,DW\,500H
+frame}, with 36 and 16 plates of headroom respectively, so the capital impact
+concentrates almost entirely in the dry cooler and the glycol pump.
 
-That the plate exchangers absorb the revision so comfortably is a direct
-consequence of the confirmed vendor plate being 76\,\% larger than the
-$A\times B$ placeholder it replaced --- the correction more than offsets both the
-tighter approaches and the newly accounted double-wall derate. The corresponding
+That the plate exchangers fit so comfortably is a direct consequence of the confirmed
+vendor plate being 76\,\% larger than the $A\times B$ placeholder used before it was
+available --- enough to absorb both the tight approaches and the double-wall derate. The
+corresponding
 \textbf{sensitivity margin is wide}: $U$ would have to fall to
 $\approx$1{,}685 (evaporator) or $\approx$1{,}729\,W\,m$^{-2}$K$^{-1}$ (condenser)
 --- roughly 30\,\% below the already double-wall-derated values adopted here, and
@@ -4926,9 +4874,9 @@ report uses (\texttt{cycle\_figures.py}), so the chart cannot drift from the mod
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.95\linewidth]{figures/cycle_diagram/ph_chart.png}
+\includegraphics[width=0.95\linewidth]{figures/cycle_diagram/ph_chart.pdf}
 \caption{R-290 p-h chart of the designed cycle at the 150\,kW / 35\,\textdegree C
-design point. The superseded original design is overlaid (dashed) for comparison.}
+design point.}
 \label{fig:phchart}
 \end{figure}
 
@@ -4948,37 +4896,46 @@ design point. The superseded original design is overlaid (dashed) for comparison
 \end{tabularx}
 \end{table}
 
-\noindent The chart makes the efficiency revision visible rather than merely asserted.
-The revised cycle (solid) sits in a \emph{shorter} vertical band than the original
-(dashed): the condensing pressure drops from 17.9 to 15.3\,bar and the evaporating
-pressure rises from 5.8 to 6.4\,bar, so the pressure ratio falls from 3.06 to 2.41.
-The COP is the ratio of the horizontal 4\,$\to$\,1 leg (refrigerating effect) to the
-1\,$\to$\,2 leg (compressor work), and the revision improves \emph{both}:
+\subsection{Why the Low Condensing Temperature Pays Twice}
+\label{cyc:sec:paystwice}
+
+The chart is also the clearest place to see \emph{why} this design spends so much dry
+cooler on holding $t_c$ down to 45\,\textdegree C. The COP is the ratio of the horizontal
+4\,$\to$\,1 leg (refrigerating effect) to the 1\,$\to$\,2 leg (compressor work), and
+raising $t_c$ damages \emph{both}. Re-solving the same cycle --- same compressor, same
+$t_o$, same superheat and subcooling --- with the condensing approach relaxed to a
+conventional air-cooled 17\,K ($t_c = 52$\,\textdegree C):
 
 \begin{table}[h!]
-\caption{Where the COP gain comes from, read off the two cycles.}
+\caption{The same cycle at two condensing temperatures. Only $t_c$ changes; the loss is
+compounded, not linear.}
 \begin{tabularx}{\linewidth}{lLLL}
 \toprule
-& \textbf{Original} & \textbf{Revised} & \textbf{Change} \\
+& \textbf{$t_c=52$\,\textdegree C (17\,K approach)} & \textbf{$t_c=45$\,\textdegree C (this design)} & \textbf{Change} \\
 \midrule
-Compressor work $h_2-h_1$        & 78.7\,kJ/kg  & 62.8\,kJ/kg  & $-20$\,\% (smaller lift) \\
-Refrigerating effect $h_1-h_4$   & 269.4\,kJ/kg & 293.3\,kJ/kg & $+9$\,\% (less flash gas) \\
-Flash gas at EEV outlet $x_4$     & 0.301        & 0.227        & $-25$\,\% \\
+Compressor work $h_2-h_1$        & 72.4\,kJ/kg  & 62.8\,kJ/kg  & $-13$\,\% (smaller lift) \\
+Refrigerating effect $h_1-h_4$   & 272.8\,kJ/kg & 293.3\,kJ/kg & $+8$\,\% (less flash gas) \\
+Flash gas at EEV outlet $x_4$     & 0.284        & 0.227        & $-20$\,\% \\
+Pressure ratio                    & 2.81         & 2.41         & $-14$\,\% \\
 \midrule
-\textbf{COP} $=(h_1-h_4)/(h_2-h_1)$ & \textbf{3.42} & \textbf{4.67} & $\mathbf{+36}$\,\% \\
+\textbf{COP} $=(h_1-h_4)/(h_2-h_1)$ & \textbf{3.77} & \textbf{4.67} & $\mathbf{+24}$\,\% \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent The work reduction is the expected consequence of the smaller lift. The
-\emph{second} gain is less obvious and is visible only on the chart: lowering $t_c$
-moves state~3 left (the liquid leaves the condenser at 40 rather than
-47\,\textdegree C), and since expansion is isenthalpic, state~4 moves left with it.
-Less of the refrigerant flashes to vapour across the valve (22.7\,\% against
-30.1\,\%), so more of it remains liquid and available to absorb heat in the
-evaporator. A lower condensing temperature therefore pays twice --- once in
-compressor work, once in refrigerating effect --- which is why the COP gain
-($+36$\,\%) exceeds the work saving ($-20$\,\%) alone.
+\noindent The work reduction is the expected consequence of a smaller lift. The
+\emph{second} gain is less obvious and is visible only on the chart: lowering $t_c$ moves
+state~3 left (the liquid leaves the condenser at 40 rather than 47\,\textdegree C), and
+because expansion is isenthalpic, state~4 moves left with it. Less refrigerant flashes to
+vapour across the valve (22.7\,\% against 28.4\,\%), so more of it arrives in the
+evaporator as liquid actually able to absorb heat.
+
+\begin{quote}
+A lower condensing temperature therefore pays \textbf{twice} --- once in compressor work,
+once in refrigerating effect --- which is why the 24\,\% COP gain is nearly double the
+13\,\% work saving alone. This compounding is the entire economic case for the
+1{,}949\,m$^2$ dry cooler.
+\end{quote}
 
 \noindent State~2 lies well right of the saturated-vapour line, confirming the
 discharge is genuinely superheated (64.8\,\textdegree C against a 45\,\textdegree C
@@ -4997,9 +4954,9 @@ report.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\linewidth]{figures/cycle_diagram/temperature_cascade.png}
-\caption{Temperature cascade from ambient air to chilled water, original vs.\ revised
-design. The condensing temperature is set by three approaches stacked in series.}
+\includegraphics[width=\linewidth]{figures/cycle_diagram/temperature_cascade.pdf}
+\caption{Temperature cascade from ambient air to chilled water at the design point. The
+condensing temperature is set by three approaches stacked in series.}
 \label{fig:cascade}
 \end{figure}
 
@@ -5012,23 +4969,32 @@ is the structural reason the full-load COP is harder to reach here than the ASHR
 implicitly assumes, and it is the cost side of the trade that buys the free-cooling
 economizer and the winter PUE of 1.01.
 
-The revision attacks each of the three: 5\,$\to$\,3\,K at the dry cooler,
-6\,$\to$\,4\,K glycol rise, 6\,$\to$\,3\,K at the condenser. Their sum --- the
-air-to-refrigerant approach --- falls from 17\,K to 10\,K, dropping $t_c$ from 52 to
-45\,\textdegree C. On the cold side the evaporator approach tightens 8\,$\to$\,5\,K,
-lifting $t_o$ from 7 to 10\,\textdegree C. Both squeeze the lift from the two ends.
+Each of the three is therefore driven as tight as the hardware allows: \textbf{3\,K} at
+the dry cooler, a \textbf{4\,K} glycol rise, \textbf{3\,K} at the condenser. Their sum is
+the 10\,K air-to-refrigerant approach that fixes $t_c = 45$\,\textdegree C. On the cold
+side the evaporator approach is held to \textbf{5\,K}, lifting $t_o$ to
+10\,\textdegree C. The lift is squeezed from both ends, and \S\ref{cyc:sec:paystwice}
+shows what each kelvin is worth.
+
+\begin{quote}
+None of these three is generous, and that is the point: at 0.09\,COP/K
+(\S\ref{perf:sec:sensitivity}) and only $\approx$0.3\,K of margin to the target,
+\textbf{there is no slack anywhere in this cascade}. Any one of them slipping by half a
+kelvin --- a fouled coil, an optimistic plate $U$, a warmer glycol loop --- puts the
+full-load COP below 3.5.
+\end{quote}
 
 \section{Heat-Exchanger Temperature Profiles}
 \label{cyc:sec:hx}
 
 Figure~\ref{fig:hxprofiles} plots temperature against duty through both refrigerant-side
-exchangers at the revised design point --- the picture behind the LMTD sizing of
+exchangers at the design point --- the picture behind the LMTD sizing of
 Chapters~\ref{ch:evap} and~\ref{ch:cond}, and where each exchanger actually pinches.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\linewidth]{figures/cycle_diagram/hx_profiles.png}
-\caption{Counter-flow temperature profiles at the revised design point: condenser
+\includegraphics[width=\linewidth]{figures/cycle_diagram/hx_profiles.pdf}
+\caption{Counter-flow temperature profiles at the design point: condenser
 (three-zone) and evaporator (two-zone).}
 \label{fig:hxprofiles}
 \end{figure}
@@ -5039,14 +5005,14 @@ duty, the dominant isothermal condensing plateau at 45\,\textdegree C, and a sho
 subcooling tail to 40\,\textdegree C. Its tightest point is the \textbf{cold end}, where
 the 40\,\textdegree C subcooled liquid leaves against 38\,\textdegree C entering glycol
 --- a 2\,K pinch. This is precisely the constraint that forces the dry cooler's 3\,K
-approach (\S\ref{dry:sec:reselection}): warmer glycol would close this gap to zero and
+approach (\S\ref{dry:sec:capacity_trap}): warmer glycol would close this gap to zero and
 the exchanger would stop working, regardless of how much area it had.
 
 The \textbf{evaporator} boils isothermally at 10\,\textdegree C over $\approx$95\,\% of
 its duty, then superheats to 18\,\textdegree C in a short tail. Its approach is set at
 the cold end, where the 15\,\textdegree C leaving chilled water meets the
-10\,\textdegree C evaporating refrigerant --- the 5\,K approach the revision tightened
-from 8\,K, bought with the extra plates of \S\ref{perf:sec:hardware}.
+10\,\textdegree C evaporating refrigerant --- the 5\,K approach, bought with the plate
+count of \S\ref{perf:sec:hardware}.
 
 
 % ══════════════════════════════════════════════════════════════════════════════
@@ -5071,7 +5037,7 @@ the per-component chapters have until now addressed only piecemeal.
 
 The inventory below is built component by component from the same geometry and
 CoolProp properties the rest of the model uses (\texttt{charge\_analysis.py}), at
-the revised design point. It is reported as a \textbf{range}, not a point value:
+the design point. It is reported as a \textbf{range}, not a point value:
 refrigerant redistributes with operating mode, and the void fractions in the two
 two-phase exchangers are genuinely uncertain. Safety systems are sized on the
 \emph{upper} bound.
@@ -5080,33 +5046,25 @@ two-phase exchangers are genuinely uncertain. Safety systems are sized on the
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\linewidth]{figures/safety/charge_inventory.png}
-\caption{R-290 charge inventory at the revised design point. Whiskers show the
+\includegraphics[width=\linewidth]{figures/safety/charge_inventory.pdf}
+\caption{R-290 charge inventory at the design point. Whiskers show the
 bounds from void fraction, receiver fill level, and oil-dissolved refrigerant.}
 \label{fig:charge_inv}
 \end{figure}
 
-\subsection{Reconciliation Against the Earlier Estimate}
+\subsection{What Dominates the Inventory}
 \label{safe:sec:higher}
 
-The total comes to \textbf{10.9--14.1\,kg}, against the $\approx$10.5\,kg
-order-of-magnitude figure that an earlier revision of this report carried. The two
-figures differ for reasons that partly offset:
+The total comes to \textbf{10.9--14.1\,kg}, and it is worth naming which items carry it,
+because the intuition that ``the charge is in the heat exchangers'' is wrong here. The
+\textbf{liquid line alone is 6.33\,kg} --- roughly half the system --- because it is the
+only component holding dense subcooled liquid over an appreciable length. Two items that
+are easy to overlook are individually significant: the \emph{oil separator} holds 40\,L
+of discharge vapour (1.37\,kg), and the suction and discharge lines together hold
+1.12\,kg. The exchangers, despite the confirmed 195\,$\times$\,600\,mm plate being large,
+contribute comparatively little.
 
-\begin{itemize}
-  \item \textbf{Upward:} the earlier estimate omitted the \emph{oil separator's} 40\,L
-        of discharge vapour (1.37\,kg) and dismissed the suction and discharge lines
-        as ``$<$1\,kg'' (they are 1.12\,kg combined). It also predates the confirmed
-        Kelvion HP\,DW\,500H plate (195\,$\times$\,600\,mm), which supersedes the
-        $A\times B$ placeholder (\S\ref{perf:sec:uvalues}) and raises both
-        exchangers' internal volume.
-  \item \textbf{Downward:} the liquid line is now 1-3/8\,in rather than 1-5/8\,in at
-        the revised state points (\S\ref{piping:sec:liquid}), and the design no
-        longer carries a \textbf{liquid receiver} --- which alone would have added
-        2.97--6.16\,kg (Chapter~\ref{ch:receiver}).
-\end{itemize}
-
-\noindent Had the receiver been retained, the inventory would read
+\noindent Had a \textbf{liquid receiver} been fitted, the inventory would read
 \textbf{13.9--20.3\,kg} --- roughly 25\,\% higher, and enough to make every EN~378
 obligation in Part~B correspondingly heavier. Omitting it is the single largest
 charge-reduction decision in the design (\S\ref{receiver:sec:charge_cost}).
@@ -5154,7 +5112,7 @@ system under 10\,kg.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\linewidth]{figures/safety/charge_concentration.png}
+\includegraphics[width=\linewidth]{figures/safety/charge_concentration.pdf}
 \caption{Room concentration following a full release of the upper-bound charge, vs.\
 room volume, against the EN~378 thresholds.}
 \label{fig:charge_conc}
@@ -5425,7 +5383,7 @@ opening, and they compound.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\linewidth]{figures/controls/eev_authority.png}
+\includegraphics[width=\linewidth]{figures/controls/eev_authority.pdf}
 \caption{EEV opening required across the 5:1 load turndown, for both candidate
 circuit architectures.}
 \label{fig:eev_authority}
@@ -5486,7 +5444,7 @@ mistake, and the mistake is instructive.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.92\linewidth]{figures/controls/superheat_sensitivity.png}
+\includegraphics[width=0.92\linewidth]{figures/controls/superheat_sensitivity.pdf}
 \caption{What the compressor map says about the superheat setpoint at fixed $t_o$ ---
 and why the trend is an artifact rather than a design lever.}
 \label{fig:superheat_sens}
@@ -5641,13 +5599,14 @@ prescribed architecture \\
 \textbf{Weakness} & \textbf{Evidence} & \textbf{Assessment} \\
 \midrule
 \textbf{The glycol loop costs three stacked approaches} & Dry cooler $+$ glycol rise
-$+$ condenser $=$ 10\,K air-to-refrigerant even after the revision, against
-$\approx$1 approach for a direct air-cooled condenser (Fig.~\ref{fig:cascade}) &
+$+$ condenser $=$ 10\,K air-to-refrigerant even with all three driven as tight as the
+hardware allows, against $\approx$1 approach for a direct air-cooled condenser
+(Fig.~\ref{fig:cascade}) &
 \textbf{The design's central weakness --- and it is inherited, not chosen.} It is why
-the original design missed both COP targets, and why the target (drawn from an
-\emph{air-cooled chiller} table) is structurally harder to hit here \\
+the COP target (drawn from an \emph{air-cooled chiller} table) is structurally harder to
+hit here, and why compliance costs a 1{,}949\,m$^2$ dry cooler \\
 \textbf{Thin AHRI compliance margin} & 3.53 against $\geq$3.5 --- $\approx$1\,\%
-(\S\ref{perf:sec:openitems}) & Contingent on the revised approaches surviving vendor
+(\S\ref{perf:sec:openitems}) & Contingent on the design approaches surviving vendor
 re-selection, and on assumed $U$ values (\S\ref{perf:sec:uvalues}). \textbf{The most
 fragile claim in the report} \\
 \textbf{A3 flammability drives real obligations} & No plausible plant room dilutes the
@@ -5663,9 +5622,10 @@ forgiveness and pushes floodback protection entirely onto controls
 superheat loop always tracks a moving target (\S\ref{ctrl:sec:interaction}) & The
 price of the efficiency revision. Standard measures exist, but tuning is now on the
 critical path \\
-\textbf{Dry cooler is the capital burden} & $UA$ $\approx$2.5$\times$ the original;
-re-selected to a 1{,}949\,m$^2$ unit (\S\ref{dry:sec:reselection}) & The revision's
-dominant cost, concentrated in one component. Larger footprint, more fans \\
+\textbf{Dry cooler is the capital burden} & A 1{,}949\,m$^2$ coil, $UA \approx
+73.7$\,kW/K, forced by the 3\,K approach the COP target needs
+(\S\ref{dry:sec:capacity_trap}) & The design's dominant cost, concentrated in one
+component. Large footprint, six fans \\
 \textbf{Two exchangers where one would do} & Every kW crosses refrigerant$\to$glycol
 $\to$air, each with its own $\Delta T$, pumping power and cost & Inherent to the
 prescribed architecture. The glycol pump alone is 2.57\,kW of parasitic load \\
@@ -5842,8 +5802,9 @@ sequence should carry a minimum-runtime guard.
 \section{Priority 5 --- Efficiency Headroom}
 \label{imp:sec:efficiency}
 
-The revision met the targets; it did not make them comfortable. In descending order
-of effect:
+The targets are met, but not comfortably --- the full-load COP clears by 0.8\,\%, worth
+about 0.3\,K of condensing temperature (\S\ref{perf:sec:sensitivity}). If more margin is
+wanted, these are the levers, in descending order of effect:
 
 \begin{table}[h!]
 \caption{Further efficiency measures, with their costs.}
@@ -5853,7 +5814,7 @@ of effect:
 \midrule
 Reduce the condensing approach further (10\,K $\to$ 7\,K) & AHRI full-load COP
 $\approx$3.48 $\to$ 3.7$+$; lifts every IPLV point
-(\S\ref{perf:sec:sensitivity}) & A larger dry cooler again --- already the revision's
+(\S\ref{perf:sec:sensitivity}) & A larger dry cooler again --- already the design's
 dominant capital item \\
 \textbf{Float the economizer changeover} instead of fixing it at
 10\,\textdegree C (\S\ref{imp:sec:floating}) & A further 1{,}568\,h/yr

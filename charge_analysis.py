@@ -22,6 +22,7 @@ import os
 
 import numpy as np
 from CoolProp.CoolProp import PropsSI
+from figsave import save_figure
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPORT = os.path.join(_HERE, "report")
@@ -177,7 +178,7 @@ def plot_inventory(inv, out_path):
                           "scopes piping to diameters only.",
             transform=ax.transAxes, fontsize=8, color=MUTED)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -231,7 +232,7 @@ def plot_concentration(m_charge, out_path):
                           "20% LFL plus emergency ventilation --- not on dilution by room volume.",
             transform=ax.transAxes, fontsize=8, color=MUTED)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, out_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {out_path}")
 

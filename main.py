@@ -25,6 +25,7 @@ from eev import EEV
 from evaporator import Evaporator
 from water_side_pump import CHWPump, TRIM_CURVES_1_5AD_1750RPM
 from weather import ChampaignWeather
+from figsave import save_figure
 
 # ---------------------------------------------------------------------
 # Report output layout -- every figure/table this file produces lands
@@ -715,7 +716,7 @@ def plot_annual_cop_load(results, save_path=None):
                 transform=ax_cop.transAxes, fontsize=8, color=MUTED)
 
     fig.tight_layout()
-    fig.savefig(save_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, save_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"\nSaved annual COP/load chart -> {save_path}")
 
@@ -1065,7 +1066,7 @@ def plot_economizer_band(save_path=None):
               transform=ax_p.transAxes, fontsize=7.5, color=MUTED)
 
     fig.tight_layout()
-    fig.savefig(save_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, save_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {save_path}")
 
@@ -1143,7 +1144,7 @@ def plot_period_performance(rows, save_path, title):
                 transform=ax_pue.transAxes, fontsize=7.5, color=MUTED)
 
     fig.tight_layout()
-    fig.savefig(save_path, dpi=150, facecolor=SURFACE)
+    save_figure(fig, save_path, facecolor=SURFACE)
     plt.close(fig)
     print(f"Saved {save_path}")
 
