@@ -142,7 +142,7 @@ Dry cooler      & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:dry} \
 Free-cooling economizer & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:econ} \\
 Oil separator   & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:oilsep} \\
 Piping          & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:piping} \\
-Liquid receiver & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:receiver} \\
+Liquid receiver & \textcolor{navy}{\textbf{Complete}} --- omitted with justification, Chapter~\ref{ch:receiver} \\
 System performance (COP / IPLV / PUE) & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:performance} \\
 Cycle representation (p-h chart) & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:cyclerep} \\
 Charge analysis \& safety measures & \textcolor{navy}{\textbf{Complete}} --- Chapter~\ref{ch:safety} \\
@@ -381,7 +381,7 @@ R-290 is selected as the project's working fluid on the combination of:
         the double-wall BPHE construction (Chapters~\ref{ch:evap}, \ref{ch:cond}),
         the oil separator's float-valve (not solenoid) oil return
         (\S\ref{oilsep:sec:oilreturn}), and the liquid receiver's
-        charge-minimization sizing (\S\ref{receiver:sec:safety}) --- each already
+        charge-minimisation objective (\S\ref{safe:sec:minimisation}) --- each already
         flagged and addressed in its own chapter rather than treated as a
         blanket risk.
 \end{enumerate}
@@ -401,7 +401,7 @@ R-290 is selected as the project's working fluid on the combination of:
   \item \textbf{No charge/leak-risk quantification is performed for the A2L or A3
         candidates in this chapter} beyond the safety-class screen itself
         (\S\ref{refrig:sec:constraints}); the detailed charge estimate
-        (\S\ref{receiver:sec:charge}) and A3-specific mitigations are developed only
+        (Chapter~\ref{ch:safety}) and A3-specific mitigations are developed only
         for the selected fluid (R-290) in their respective downstream chapters.
   \item \textbf{GWP values are approximate}, drawn from commonly cited AR5 (IPCC
         2013), 100-year integrated time horizon figures per ASHRAE Standard 34 GWP
@@ -4104,354 +4104,195 @@ Chilled-water loop          & 5.97\,kg/s & 2-1/2\,in Sch.\,40 & Steel & 1.94\,m/
 
 
 % ══════════════════════════════════════════════════════════════════════════════
-\chapter{Liquid Receiver Selection}
+\chapter{Liquid Receiver: Evaluated and Omitted}
 \label{ch:receiver}
 % ══════════════════════════════════════════════════════════════════════════════
 
-\zonedivider{Part A \quad---\quad Design Basis, Charge Estimate, and Vendor Selection}
+\section{The Brief Makes This Conditional}
+\label{receiver:sec:conditional}
 
-% ── §11.1 ─────────────────────────────────────────────────────────────────────
-\section{Purpose and Design Basis}
-\label{receiver:sec:basis}
+The project brief calls for an ``oil separator and liquid receiver, \textbf{if
+required by the chosen architecture}'' (subtask~1d). That conditional is the whole
+content of this chapter. The oil separator \emph{is} required and is selected in
+Chapter~\ref{ch:oilsep}. \textbf{A liquid receiver is not}, and this chapter
+documents why --- an omission reached on evidence, and one that improves the design
+on two independent axes.
 
-The liquid receiver sits on the high-pressure side of the circuit, between the condenser
-outlet (Chapter~\ref{ch:cond}) and the EEV inlet (Chapter~\ref{ch:eev}). Its function is
-to buffer the refrigerant inventory as it migrates around the circuit, and to guarantee
-that the EEV always sees fully subcooled liquid rather than a liquid/vapour mixture.
+An earlier revision of this report did select a receiver (Bitzer F252HP, 25\,L).
+That selection is withdrawn. Two findings, in order of severity, overturned it.
 
-This buffering role is not incidental for this project --- the control strategy switches
-between three distinct operating modes based on outdoor air temperature (Chapter~\ref{ch:dry},
-\S\ref{dry:sec:annualregime}), and each mode redistributes refrigerant differently around the
-circuit:
+\section{Finding 1: A Receiver Would Break AHRI Compliance}
+\label{receiver:sec:subcooling}
 
-\begin{itemize}
-  \item \textbf{Full mechanical} ($>10\,$\textdegree C OAT): the compressor runs
-        continuously, liquid inventory stacks up through the condenser and receiver.
-        Occurs $\approx$55.5\,\% of the year (TMY3, Champaign, IL).
-  \item \textbf{Partial free cooling} (4--10\,\textdegree C OAT): mixed operation.
-        Occurs $\approx$15.5\,\% of the year.
-  \item \textbf{Full free cooling} ($\leq$4\,\textdegree C OAT): the compressor is off and
-        the economiser (Chapter~\ref{ch:econ}) carries the full load; refrigerant
-        migrates toward the low-pressure side and sits largely static. Occurs
-        $\approx$29\,\% of the year.
-\end{itemize}
+A conventional \textbf{through-flow} receiver sits between the condenser outlet and
+the EEV, and every kilogram of refrigerant passes through it. Inside, liquid and
+vapour sit in equilibrium, so \textbf{its outlet is saturated liquid by
+construction} --- the vessel cannot deliver subcooled liquid, because any subcooling
+entering it is destroyed as vapour condenses onto the cooler liquid surface.
 
-A receiver undersized for this migration risks flash gas at the EEV inlet (eroding the
-5\,K design subcooling from Chapter~\ref{ch:cond}, \S\ref{cond:sec:subcool}), backed-up
-liquid inside the condenser (reducing active condensing area and raising head pressure),
-and --- in the worst case --- liquid reaching the vapour-equalisation line back to the
-condenser rather than staying clear of it.
-
-% ── §11.2 ─────────────────────────────────────────────────────────────────────
-\section{System Refrigerant Charge Estimate (Order-of-Magnitude)}
-\label{receiver:sec:charge}
-
-No dedicated EN~378 charge calculation exists yet for this system (it remains an open
-item across the report, most recently flagged in Chapter~\ref{ch:oilsep}). To size the
-receiver, a preliminary order-of-magnitude estimate is built here directly from the
-refrigerant-side geometry already assigned in \texttt{evaporator.py} and
-\texttt{condenser.py}, plus the line sizes selected in Chapter~\ref{ch:piping}. This
-estimate should be treated as \textbf{indicative, not final} --- see
-\S\ref{receiver:sec:limitations}.
-
-\subsection{Heat Exchanger Refrigerant-Side Holdup}
-
-Both BPHEs share the same assigned channel geometry ($D_h = 4\,$mm, $\phi = 1.17$,
-$N_{cp} = 38$, $L_w = 0.2\,$m, $L = 0.5\,$m), giving an identical refrigerant-side
-channel volume for each unit:
-
-\[
-  b = \frac{D_h\,\phi}{2} = 2.34\,\mathrm{mm}, \qquad
-  V_{\mathrm{channel}} = N_{cp}\,b\,L_w\,L = 8.89\;\mathrm{L}
-\]
-
-Because both exchangers operate two-phase over most of their length, neither is fully
-liquid nor fully vapour internally. CoolProp-evaluated bounding densities at each unit's
-operating condition are used to bracket the holdup, then a representative mid-range
-value is adopted:
+This matters because the entire cycle model assumes the condenser's \textbf{5\,K
+subcooling reaches the valve} (Chapter~\ref{ch:eev}, \S\ref{eev:sec:inlet} takes the
+condenser outlet state directly). A through-flow receiver placed between them would
+silently invalidate that assumption:
 
 \begin{table}[h!]
-\caption{HX refrigerant-side holdup, bounding densities (CoolProp) and adopted estimate.}
-\label{tab:receiver_hx_holdup}
+\caption{Effect of a through-flow receiver on the EEV inlet state and the resulting
+performance.}
+\label{tab:receiver_cop}
 \begin{tabularx}{\linewidth}{lLLLL}
 \toprule
-\textbf{Exchanger} & \textbf{Condition} & \textbf{$\rho_{\mathrm{liq}}$} & \textbf{$\rho_{\mathrm{vap}}$} & \textbf{Adopted holdup} \\
+\textbf{EEV inlet state} & \textbf{$h_3$} & \textbf{Flash gas $x_4$} & \textbf{Design COP} & \textbf{AHRI full-load COP} \\
 \midrule
-Condenser & 52\,\textdegree C sat.\ (\S\ref{cond:sec:lmtd}) & 444.9\,kg/m$^3$ & 40.6\,kg/m$^3$ &
-  $\approx$2.0\,kg \\
-Evaporator & 7\,\textdegree C sat.\ (\S\ref{ch:evap}) & 519.0\,kg/m$^3$ & 12.7\,kg/m$^3$ &
-  $\approx$0.7\,kg \\
+5\,K subcooled (condenser outlet, no receiver) & 307.1\,kJ/kg & 0.227 & 4.67 & \textbf{3.53} --- meets $\geq3.5$ \\
+Saturated liquid (through-flow receiver outlet) & 321.8\,kJ/kg & 0.268 & 4.44 & \textbf{3.35} --- \textbf{FAILS} $\geq3.5$ \\
 \bottomrule
 \end{tabularx}
-{\small Bounding masses: condenser 0.36--3.96\,kg (vapour-full to liquid-full); evaporator
-0.11--4.61\,kg. The condenser's adopted value is weighted toward the liquid-heavy end
-since the condensing zone dominates 81.5\,\% of its duty (\S\ref{cond:sec:lmtd}); the
-evaporator's is weighted toward the vapour-heavy end, consistent with the low
-$\approx$12.7\,kg/m$^3$ suction-side density already used for suction-line sizing
-(Chapter~\ref{ch:piping}, \S\ref{piping:sec:suction}).}
 \end{table}
 
-\subsection{Liquid Line Holdup}
+\noindent The receiver costs \textbf{5\,\% of the COP}, and the AHRI full-load figure
+carries only $\approx$1\,\% margin over its target (\S\ref{perf:sec:fullload}).
+\textbf{A through-flow receiver therefore takes the design from compliant to
+non-compliant} --- the single largest consequence of any component decision in this
+report. The mechanism is visible on the p-h chart (Figure~\ref{fig:phchart}): losing
+subcooling moves state~3 right, dragging state~4 with it along the isenthalpic
+expansion, so more of the refrigerant flashes to vapour before it can absorb any
+useful heat.
 
-The liquid line (Chapter~\ref{ch:piping}, \S\ref{piping:sec:liquid}) is 1-5/8\,in ACR
-copper, 38.23\,mm actual ID, carrying subcooled liquid at 47\,\textdegree C
-($\rho = 454.7\,$kg/m$^3$, CoolProp). \textbf{No line length is specified by the project
-brief} (piping scope is diameters-only, \S\ref{piping:sec:scope}); a representative
-15\,m run is \assumed{} here purely for charge-estimation purposes, following the same
-type of documented length assumption already used for pump duty-point calculations
-(Chapter~\ref{ch:pump}, \S\ref{pump:sec:piping}, 65\,m glycol run).
+\section{Finding 2: A Receiver Is $\approx$25\,\% of the Charge, in an A3 System}
+\label{receiver:sec:charge_cost}
 
-\[
-  V_{\mathrm{line}} = \frac{\pi}{4}(0.03823)^2 \times 15\;\mathrm{m} = 17.2\;\mathrm{L}
-  \quad\Rightarrow\quad
-  m_{\mathrm{line}} = V_{\mathrm{line}} \times 454.7\;\mathrm{kg/m^3} = 7.8\;\mathrm{kg}
-\]
+The withdrawn F252HP held \textbf{2.97--6.16\,kg} of a then-13.9--20.3\,kg total
+inventory --- roughly a quarter of the system charge, sitting in a vessel whose only
+purpose is to hold charge. For an A3 refrigerant this is close to circular: the
+receiver holds charge, the charge drives the EN~378 obligations
+(Chapter~\ref{ch:safety}), and a larger charge demands a larger receiver.
 
-This single term is the largest contributor to the estimate, and is also the most
-uncertain --- it scales directly with an assumed length that has no basis yet in an
-actual equipment layout.
-
-\subsection{Suction and Discharge Line Holdup}
-
-Both lines carry low-density superheated vapour: $\approx$12.7\,kg/m$^3$ at the suction
-condition and 34.9\,kg/m$^3$ at the discharge condition (72\,\textdegree C,
-17.89\,bar(a), CoolProp) --- one to two orders of magnitude below the liquid-side
-densities above. Even accounting for the suction line's larger 62.87\,mm ID
-(Chapter~\ref{ch:piping}, Table~\ref{tab:liquid_candidates}), their combined holdup is
-well under 1\,kg for any plausible run length and is neglected below.
-
-\subsection{Total Estimate}
+The withdrawal removes it outright:
 
 \begin{table}[h!]
-\caption{System refrigerant charge estimate, excluding the receiver itself.}
-\label{tab:receiver_charge_total}
-\begin{tabularx}{\linewidth}{lL}
+\caption{Effect of omitting the receiver on the system charge and its EN~378 consequences.}
+\begin{tabularx}{\linewidth}{lLL}
 \toprule
-\textbf{Component} & \textbf{Estimated holdup} \\
+& \textbf{With F252HP receiver} & \textbf{No receiver (adopted)} \\
 \midrule
-Condenser (refrigerant side) & $\approx$2.0\,kg \\
-Evaporator (refrigerant side) & $\approx$0.7\,kg \\
-Liquid line (15\,m \assumed) & $\approx$7.8\,kg \\
-Suction \& discharge lines & $<$1\,kg (neglected) \\
-\midrule
-\textbf{Total (excluding receiver)} & \textbf{$\approx$10.5\,kg} (range $\approx$9--13\,kg) \\
+System charge & 13.9--20.3\,kg & \textbf{10.9--14.1\,kg} \\
+Emergency ventilation (EN 378-3) & 375\,m$^3$/h & \textbf{294\,m$^3$/h} \\
+Room volume to reach LFL on full release & 533\,m$^3$ & 371\,m$^3$ \\
+Receiver adequacy & \textbf{F252HP undersized} (11.3\,kg $<$ 13.9\,kg low bound) & Not applicable \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-The receiver must be able to accept this full charge during a pump-down (service,
-shutdown, or a worst-case migration to the high side) while retaining vapour headspace
---- not merely absorb the \emph{difference} in charge between modes. This $\approx$10.5\,kg
-figure is therefore the number the receiver's rated maximum charge is checked against in
-\S\ref{receiver:sec:selected}.
+\noindent Note the third row: the F252HP was \emph{undersized anyway} --- it could not
+hold the charge it was partly responsible for creating. Resolving that by buying a
+larger vessel would have added yet more charge. Omission resolves the problem instead
+of escalating it.
 
-% ── §11.3 ─────────────────────────────────────────────────────────────────────
-\section{Design Pressure Determination}
-\label{receiver:sec:pressure}
+\section{Is the Receiver's Function Actually Needed Here?}
+\label{receiver:sec:functions}
 
-As with the evaporator and condenser BPHEs (\S\ref{ch:evap}, design pressure section),
-the receiver's design pressure is governed by the \textbf{standstill condition}, not the
-running condensing pressure. With the system off and no flow, refrigerant equalises to
-the highest ambient the unit may see; using the same 55\,\textdegree C soak-temperature
-basis (ASHRAE~15 / EN~378 / IEC~60335-2-40) already adopted elsewhere in this report:
-
-\[
-  p_{\mathrm{sat}}(55\,\text{\textdegree C}) = 19.07\;\mathrm{bar(a)} \quad\text{(CoolProp)}
-\]
-
-This matches the 19.1\,bar(a) figure independently derived in \S\ref{ch:evap}, confirming
-consistency across chapters. The receiver's design pressure must exceed this value with
-margin.
-
-% ── §11.4 ─────────────────────────────────────────────────────────────────────
-\section{Vendor Selection: Bitzer P-Series (Hydrocarbon Liquid Receivers)}
-\label{receiver:sec:vendor}
-
-Staying with \textbf{Bitzer} keeps the plant on a single compressor/accessory vendor,
-consistent with the rationale already applied to the compressor (Chapter~\ref{ch:comp})
-and oil separator (Chapter~\ref{ch:oilsep}) selections. Bitzer's standard K-series liquid
-receivers are built for CO$_2$/R410A service; hydrocarbons instead use the dedicated
-\textbf{P-series} (catalog DP-341-1), developed specifically for propane (R-290) and
-propene (R-1270), refrigerants of safety group A3 per EN~378. The P-series is rated to a
-\textbf{maximum allowable pressure of 33\,bar} and $-10$ to $120\,$\textdegree C ---
-comfortably above the 19.07\,bar(a) standstill basis from \S\ref{receiver:sec:pressure}.
+A receiver is omitted only if the jobs it does are either unnecessary or done
+elsewhere. Each of its conventional functions is assessed against this specific
+architecture:
 
 \begin{table}[h!]
-\caption{Bitzer P-series horizontal receivers, candidate size range (DP-341-1).}
-\label{tab:receiver_candidates}
-\begin{tabularx}{\linewidth}{lLLLL}
+\caption{Conventional receiver functions, assessed against this design.}
+\begin{tabularx}{\linewidth}{lLL}
 \toprule
-\textbf{Model} & \textbf{Volume} & \textbf{Max.\ R290 charge} & \textbf{Connections (in/out)} \\
+\textbf{Function} & \textbf{Needed here?} & \textbf{Reasoning} \\
 \midrule
-F202HP & 20\,L & 9.0\,kg  & 22\,mm (7/8\,in) / 22\,mm (7/8\,in) \\
-\textbf{F252HP} & \textbf{25\,L} & \textbf{11.3\,kg} & \textbf{22\,mm (7/8\,in) / 22\,mm (7/8\,in)} \\
-F302NP & 30\,L & 13.5\,kg & 22\,mm (7/8\,in) / 22\,mm (7/8\,in) \\
-F392TP / F402HP & 39\,L & 17.6\,kg & 28\,mm (1\,1/8\,in) / 28\,mm (1\,1/8\,in) \\
+Guarantee liquid (no flash gas) at the EEV & \textbf{No --- it does the opposite} &
+The condenser's 5\,K subcooling already guarantees it; a receiver \emph{degrades}
+this to saturated liquid (\S\ref{receiver:sec:subcooling}) \\
+Buffer charge redistribution across ambient & \textbf{No} & Mechanical mode spans only
+$t_c \approx 23$--45\,\textdegree C (below that the plant is in free cooling,
+Ch.~\ref{ch:dry}). Falling ambient frees condenser area, which \emph{increases}
+subcooling --- self-correcting in the favourable direction \\
+Absorb off-design operating variation & \textbf{No} & This is the EEV's function: it
+modulates continuously to hold evaporator superheat (Ch.~\ref{ch:eev}), and does so
+across the load and ambient range \\
+Buffer the mechanical\,/\,free-cooling mode switch & \textbf{No} & In free cooling the
+compressor is off and the refrigerant circuit is simply idle --- there is no
+redistribution to buffer, only a static inventory \\
+Storage for service pump-down & \textbf{Partly} & The one genuine loss. Recovery into
+service cylinders is standard practice for hydrocarbon plant and is adopted instead
+(\S\ref{receiver:sec:consequences}) \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\subsection{Horizontal vs.\ Vertical Orientation}
-\label{receiver:sec:orientation}
+\noindent Only the pump-down function is genuinely given up, and it has a routine
+alternative. This conclusion is also consistent with commercial practice: production
+R-290 chillers in this capacity class are typically \textbf{critically charged with no
+receiver}, precisely because charge minimisation dominates the design of an A3 system.
 
-Horizontal (F-series) is selected over vertical (FS-series). A horizontal vessel spreads
-liquid over a much larger surface area for a given internal volume, so the liquid level
-changes only modestly as charge redistributes between modes; a vertical vessel of equal
-volume sees a proportionally larger level swing for the same charge shift, since the
-liquid pools in a narrower cross-section. Given this system's mode-switching behaviour
-(\S\ref{receiver:sec:basis}) --- charge actively migrating around the loop roughly 45\,\%
-of the year (partial + full free cooling combined) --- the larger safety margin against
-uncovering the liquid outlet or flooding the vapour-equalisation line favours horizontal.
-The tradeoff is footprint: horizontal units occupy more floor area than a vertical unit
-of equal volume, judged acceptable here given no stated floor-space constraint for the
-mechanical room.
+\section{Consequences of the Omission}
+\label{receiver:sec:consequences}
 
-% ── §11.5 ─────────────────────────────────────────────────────────────────────
-\section{Selected Unit: Bitzer F252HP}
-\label{receiver:sec:selected}
+\begin{enumerate}
+  \item \textbf{The system is critically charged.} There is no buffer vessel, so the
+        charge must be correct rather than merely sufficient. It is established by
+        \textbf{weighing at commissioning} against the inventory of
+        Chapter~\ref{ch:safety}, and confirmed by observing the design subcooling at
+        the condenser outlet --- \textbf{5\,K subcooling is now a commissioning
+        acceptance criterion}, not merely a design assumption.
+  \item \textbf{Subcooling is delivered by the condenser alone}, which is what the
+        cycle model and the EEV chapter already assume. The architectural
+        inconsistency between the former receiver chapter and
+        Chapter~\ref{ch:eev} is resolved by removing the receiver, not by weakening
+        the assumption.
+  \item \textbf{Service recovery uses cylinders}, not pump-down to a vessel ---
+        standard for hydrocarbon plant, and consistent with the charge-minimisation
+        objective (\S\ref{safe:sec:minimisation}).
+  \item \textbf{Fewer components, fewer leak paths.} For an A3 refrigerant every
+        joint is a potential release; deleting a vessel with two connections and a
+        sight glass is a safety gain in its own right, not only a cost saving.
+\end{enumerate}
 
-\begin{table}[h!]
-\caption{Selected unit --- key specifications (Bitzer F252HP, per DP-341-1).}
-\begin{tabularx}{\linewidth}{lL}
-\toprule
-\textbf{Parameter} & \textbf{Value} \\
-\midrule
-Model & F252HP \\
-Orientation & Horizontal \\
-Internal volume & 25\,L (dm$^3$) \\
-Maximum allowable pressure & 33\,bar \\
-Temperature range & $-$10\,\textdegree C to 120\,\textdegree C \\
-Maximum refrigerant charge, R-290 & 11.3\,kg (at 20\,\textdegree C, 90\,\% fill) \\
-Maximum refrigerant charge, R-1270 & 11.5\,kg \\
-Weight (empty) & 24\,kg \\
-Refrigerant inlet / outlet & 22\,mm (7/8\,in), each \\
-Joining threads, inlet / outlet & 1\,1/4\,in-12\,UNF, each \\
-Pressure gauge connection & 7/16\,in-20\,UNF \\
-Sight glasses & 2 \\
-Pressure relief valve port & Rotalock, 3/4\,in-18\,NPTF internal / 1\,1/4\,in-12\,UNF external \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\section{If a Receiver Were Nonetheless Required}
+\label{receiver:sec:ifrequired}
 
-At 11.3\,kg maximum R-290 charge, F252HP sits almost exactly at the $\approx$10.5\,kg
-system charge estimate from \S\ref{receiver:sec:charge} --- selected here as the smallest
-practical model that still clears that figure, consistent with the general
-charge-minimisation objective for an A3-classified system (\S\ref{receiver:sec:safety}).
-The very thin margin this leaves is flagged explicitly in
-\S\ref{receiver:sec:limitations} and should be re-checked once the charge estimate is
-firmed up.
+Should a later stage of the design reintroduce a need for one --- for example if a
+real layout produced a much longer liquid line, or if commissioning found the
+critical charge unacceptably sensitive --- it \textbf{must not} be a through-flow
+vessel. The correct arrangement is a \textbf{surge (bypass) receiver}, teed off the
+liquid line so that only surplus charge enters it while the main liquid flow passes
+by and retains its subcooling. This preserves the COP at the cost of a more complex
+arrangement and some added charge, and would need to be re-evaluated against
+Chapter~\ref{ch:safety}'s inventory.
 
-\begin{quote}
-\noindent\textbf{SUPERSEDED --- this selection does not survive the charge analysis.}
-The full inventory of Chapter~\ref{ch:safety} (\S\ref{safe:sec:inventory}) returns
-\textbf{13.9--20.3\,kg}, not $\approx$10.5\,kg: the estimate below omits the receiver's
-own content and the oil separator's, and predates the confirmed (larger) vendor plate.
-\textbf{F252HP is undersized against even the low bound} and must be replaced ---
-see \S\ref{safe:sec:receiver_undersized}, which recommends F392TP/F402HP (39\,L,
-17.6\,kg) as the minimum and also resolves the connection-size mismatch of open
-item~4. Open item~3 below anticipated precisely this outcome. The sections that follow
-remain valid as the sizing \emph{method}; the model number does not.
-\end{quote}
-
-\zonedivider{Part B \quad---\quad Safety, Connections, and Open Items}
-
-% ── §11.6 ─────────────────────────────────────────────────────────────────────
-\section{A3 Safety Considerations}
-\label{receiver:sec:safety}
-
-\begin{itemize}
-  \item \textbf{Charge minimisation.} Per IEC~60335-2-40 and EN~378, allowable A3
-        refrigerant charge scales with occupied-space ventilation and installation
-        category. Every additional litre of receiver volume raises total system charge
-        and pushes the installation toward stricter ventilation/leak-detection
-        requirements --- the driving reason for selecting the smallest model that clears
-        the charge estimate (\S\ref{receiver:sec:selected}) rather than adding margin for
-        its own sake.
-  \item \textbf{Relief discharge routing.} Bitzer's own documentation for this series
-        states explicitly that when the pressure relief valve opens, flammable and
-        explosive refrigerant is released from the system; the relief discharge must be
-        routed outdoors to a safe location, away from ignition sources, per EN~378 ---
-        not vented indoors into the mechanical room.
-  \item \textbf{Consistency with the oil separator chapter.} The same 55\,\textdegree C
-        standstill-pressure basis and A3 handling requirements applied to the oil
-        separator selection (Chapter~\ref{ch:oilsep}, \S\ref{oilsep:sec:basis}) are
-        applied here, keeping the two pressure-vessel selections on a consistent basis.
-\end{itemize}
-
-% ── §11.7 ─────────────────────────────────────────────────────────────────────
 \section{Limitations and Open Items}
 \label{receiver:sec:limitations}
 
 \begin{enumerate}
-  \item \textbf{The system charge estimate (\S\ref{receiver:sec:charge}) is
-        order-of-magnitude, not a completed EN~378 charge calculation.} It is not yet
-        cross-checked against a full charge calc, which remains an open item across the
-        report (Chapter~\ref{ch:oilsep}, \S\ref{oilsep:sec:limitations}).
-  \item \textbf{The dominant term (liquid line, $\approx$7.8\,kg) rests on an
-        \assumed{} 15\,m line length}, chosen for estimation purposes only since the
-        project brief scopes piping to diameters, not lengths
-        (\S\ref{piping:sec:scope}). The total estimate scales close to linearly with this
-        assumption --- a 10\,m run gives $\approx$8.0\,kg total; a 20\,m run gives
-        $\approx$13.1\,kg total. \textbf{This should be revisited once an actual
-        equipment layout is available.}
-  \item \textbf{Selected model leaves very little charge margin.} F252HP's 11.3\,kg
-        rated maximum sits within $\approx$10\,\% of the $\approx$10.5\,kg point estimate
-        --- i.e., essentially no margin once the estimate's own $\approx$9--13\,kg range
-        is considered. If the liquid-line length assumption above lands anywhere past
-        $\approx$16\,m, or if the pending EN~378 calculation finds additional charge
-        elsewhere in the circuit, \textbf{F302NP (13.5\,kg) or F392TP/F402HP (17.6\,kg)
-        should be adopted instead.} This is a deliberate, flagged risk of the current
-        selection, not an oversight.
-  \item \textbf{Connection size vs.\ liquid line: a real mismatch, not yet resolved.}
-        F252HP's 22\,mm (7/8\,in) connections are markedly smaller than the 38.23\,mm
-        (1-5/8\,in) liquid line selected in Chapter~\ref{ch:piping}. Checking velocity
-        through the receiver's own connection at the design mass flow
-        ($\mdot_r = 0.553\,$kg/s, $\rho = 454.7\,$kg/m$^3$ at 47\,\textdegree C):
-        \[
-          v_{\mathrm{conn}} = \frac{\mdot_r}{\rho \times \frac{\pi}{4}(0.022)^2}
-          \approx 3.2\;\mathrm{m/s}
-        \]
-        This is more than double the project brief's 1.5\,m/s liquid-line ceiling
-        (Chapter~\ref{ch:piping}, Table~1). \textbf{A reducer/adapter fitting at the
-        receiver connections does not resolve this} --- it is the connection itself, not
-        just the transition, that is undersized relative to the selected liquid line.
-        This is the report's most significant open item on this chapter and should be
-        resolved before procurement, most likely by moving to a model with 28\,mm
-        (1\,1/8\,in) or larger connections (F392TP/F402HP, or larger), which is also
-        consistent with item 3 above.
-  \item \textbf{Selection basis inherits the same $t_c$ mismatch flagged elsewhere.} The
-        47\,\textdegree C liquid-outlet condition used throughout this chapter follows the
-        condenser chapter's 52\,\textdegree C / 5\,K subcooling basis
-        (\S\ref{cond:sec:subcool}), not the compressor chapter's 50\,\textdegree C / 0\,K
-        basis (Chapter~\ref{ch:comp}, \S\ref{comp:sec:limitations}). Once that
-        cross-chapter discrepancy is resolved, the density values in
-        \S\ref{receiver:sec:charge} should be re-evaluated.
-  \item \textbf{Final model should be confirmed in Bitzer's selection software} with
-        R-290 entered directly, the same practice already recommended for the oil
-        separator (Chapter~\ref{ch:oilsep}, \S\ref{oilsep:sec:limitations}), before this
-        model is locked into the BOM.
+  \item \textbf{Critical-charge tolerance has not been quantified.} How sensitive the
+        plant's subcooling and superheat are to a $\pm$5\,\% charge error across the
+        ambient range has not been modelled, and a receiver-less system is by
+        definition less forgiving. This should be checked before commissioning
+        procedures are finalised (subtask~2).
+  \item \textbf{Condenser liquid holdup at low ambient is not modelled.} At the
+        coldest mechanical-mode condition ($t_c \approx 23$\,\textdegree C) more
+        liquid sits in the condenser. The argument above is that this is
+        self-correcting (it raises subcooling), but the flooded fraction and its
+        effect on active condensing area have not been computed.
+  \item \textbf{No head-pressure control strategy is specified.} With no receiver,
+        low-ambient head-pressure control (if needed) must be achieved by dry-cooler
+        fan-speed control rather than by flooding a receiver --- consistent with the
+        variable-speed fans already selected (Ch.~\ref{ch:dry}), but not yet designed
+        as a control loop.
 \end{enumerate}
 
-% ── §11.8 ─────────────────────────────────────────────────────────────────────
 \section{References}
 
 \begin{enumerate}
-  \item Bitzer, \textit{Liquid Receivers --- P Series, for Hydrocarbon Applications},
-        Product Data Sheet DP-341-1 --- technical features, pressure/temperature
-        ratings, connection sizes and dimensional data for the P-series receiver range.
-  \item Bitzer, \textit{Pressure vessels: Liquid receivers and oil separators}, Operating
-        Instructions DB-300-9 --- general handling and installation guidance, consistent
-        with the reference already used in Chapter~\ref{ch:oilsep}.
-  \item EN 378, \textit{Refrigerating systems and heat pumps --- Safety and environmental
-        requirements} --- basis for A3 charge and standstill-pressure handling throughout
-        this chapter.
-  \item IEC 60335-2-40, \textit{Household and similar electrical appliances --- Safety:
-        Particular requirements for electrical heat pumps, air-conditioners and
-        dehumidifiers} --- charge-limit basis referenced in \S\ref{receiver:sec:safety}.
-  \item ASHRAE 15, \textit{Safety Standard for Refrigeration Systems} --- standstill
-        soak-temperature basis, consistent with \S\ref{ch:evap}.
+  \item Project \#3 brief, IRCC 2026: subtask~1d, ``Oil separator and liquid
+        receiver, \emph{if required by the chosen architecture}.''
+  \item EN 378, \textit{Refrigerating systems and heat pumps --- Safety and
+        environmental requirements} --- A3 charge-minimisation basis.
+  \item Bitzer, \textit{Liquid Receivers --- P Series, for Hydrocarbon
+        Applications}, Product Data Sheet DP-341-1 --- the withdrawn F252HP
+        selection's source data.
 \end{enumerate}
-
 
 % ══════════════════════════════════════════════════════════════════════════════
 \chapter{System Performance: Full-Load COP, IPLV, and PUE}
@@ -5054,25 +4895,30 @@ bounds from void fraction, receiver fill level, and oil-dissolved refrigerant.}
 \label{fig:charge_inv}
 \end{figure}
 
-\subsection{Finding: the Charge Is Substantially Higher Than Previously Estimated}
+\subsection{Reconciliation Against the Earlier Estimate}
 \label{safe:sec:higher}
 
-The total comes to \textbf{13.9--20.3\,kg}, against the
-$\approx$10.5\,kg order-of-magnitude figure carried in Chapter~\ref{ch:receiver}
-(\S\ref{receiver:sec:charge}). Three causes, all of which make the earlier estimate
-an under-count rather than a disagreement:
+The total comes to \textbf{10.9--14.1\,kg}, against the $\approx$10.5\,kg
+order-of-magnitude figure that an earlier revision of this report carried. The two
+figures differ for reasons that partly offset:
 
-\begin{enumerate}
-  \item \textbf{The earlier estimate omitted the vessels themselves.} The liquid
-        receiver's own operating content (2.97--6.16\,kg) and the oil separator's
-        40\,L of discharge vapour (1.37\,kg) were not counted --- together
-        $\approx$4.3--7.5\,kg, the largest single correction.
-  \item \textbf{The confirmed vendor plate is larger.} The Kelvion HP\,DW\,500H
-        plate (195\,$\times$\,600\,mm) supersedes the $A\times B$ placeholder
-        (\S\ref{perf:sec:uvalues}), raising both exchangers' internal volume.
-  \item \textbf{Suction and discharge lines were neglected} as ``$<$1\,kg''; they
-        are 1.12\,kg combined.
-\end{enumerate}
+\begin{itemize}
+  \item \textbf{Upward:} the earlier estimate omitted the \emph{oil separator's} 40\,L
+        of discharge vapour (1.37\,kg) and dismissed the suction and discharge lines
+        as ``$<$1\,kg'' (they are 1.12\,kg combined). It also predates the confirmed
+        Kelvion HP\,DW\,500H plate (195\,$\times$\,600\,mm), which supersedes the
+        $A\times B$ placeholder (\S\ref{perf:sec:uvalues}) and raises both
+        exchangers' internal volume.
+  \item \textbf{Downward:} the liquid line is now 1-3/8\,in rather than 1-5/8\,in at
+        the revised state points (\S\ref{piping:sec:liquid}), and the design no
+        longer carries a \textbf{liquid receiver} --- which alone would have added
+        2.97--6.16\,kg (Chapter~\ref{ch:receiver}).
+\end{itemize}
+
+\noindent Had the receiver been retained, the inventory would read
+\textbf{13.9--20.3\,kg} --- roughly 25\,\% higher, and enough to make every EN~378
+obligation in Part~B correspondingly heavier. Omitting it is the single largest
+charge-reduction decision in the design (\S\ref{receiver:sec:charge_cost}).
 
 \subsection{The Dominant Uncertainty --- and the Design Lever}
 \label{safe:sec:linelength}
@@ -5084,17 +4930,18 @@ it:
 
 \begin{table}[h!]
 \caption{System charge vs.\ the assumed liquid-line length. The liquid line is both
-the dominant uncertainty and the most effective charge-reduction lever.}
+the dominant uncertainty and, now that the receiver is gone, the most effective
+remaining charge-reduction lever.}
 \label{tab:charge_sensitivity}
 \begin{tabularx}{\linewidth}{lLL}
 \toprule
-\textbf{Liquid-line length} & \textbf{Total charge} & \textbf{Receiver volume required ($90\,\%$ fill)} \\
+\textbf{Liquid-line length} & \textbf{Total charge} & \textbf{vs.\ the 15\,m baseline} \\
 \midrule
-5\,m  & 9.6--16.0\,kg  & $\approx$36\,L \\
-10\,m & 11.8--18.2\,kg & $\approx$40\,L \\
-\textbf{15\,m (assumed)} & \textbf{13.9--20.3\,kg} & $\approx$\textbf{45\,L} \\
-20\,m & 16.0--22.4\,kg & $\approx$50\,L \\
-25\,m & 18.1--24.5\,kg & $\approx$54\,L \\
+5\,m  & 6.7--9.9\,kg   & $-39$\,\% \\
+10\,m & 8.8--12.0\,kg  & $-18$\,\% \\
+\textbf{15\,m (assumed)} & \textbf{10.9--14.1\,kg} & baseline \\
+20\,m & 13.0--16.2\,kg & $+16$\,\% \\
+25\,m & 15.1--18.3\,kg & $+33$\,\% \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -5102,46 +4949,10 @@ the dominant uncertainty and the most effective charge-reduction lever.}
 \noindent This is not merely an uncertainty to be flagged --- it is an actionable
 design instruction. For an A3 refrigerant, \textbf{every metre of liquid line is
 charge}, and charge is what drives the EN~378 obligations of Part~B. The
-architecture should therefore \textbf{co-locate the compressor pack, condenser and
-receiver as tightly as the layout permits}, and the liquid line should be the first
-thing shortened if the plant room is laid out for real.
-
-\subsection{Consequence: the Selected Liquid Receiver Is Undersized}
-\label{safe:sec:receiver_undersized}
-
-A liquid receiver must accept the entire charge on pump-down while retaining vapour
-headspace (Chapter~\ref{ch:receiver}, \S\ref{receiver:sec:basis}). Against the
-revised inventory:
-
-\begin{table}[h!]
-\caption{Bitzer P-series receivers against the revised charge estimate.}
-\begin{tabularx}{\linewidth}{lLLL}
-\toprule
-\textbf{Model} & \textbf{Max R-290 charge} & \textbf{vs.\ low bound (13.9\,kg)} & \textbf{vs.\ high bound (20.3\,kg)} \\
-\midrule
-F202HP & 9.0\,kg & Undersized & Undersized \\
-\textbf{F252HP (currently selected)} & \textbf{11.3\,kg} & \textbf{Undersized} & \textbf{Undersized} \\
-F302NP & 13.5\,kg & Marginal & Undersized \\
-F392TP\,/\,F402HP & 17.6\,kg & \textbf{Adequate} & Undersized \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\noindent \textbf{The F252HP selected in Chapter~\ref{ch:receiver} is undersized
-against even the low bound} and must be replaced. Chapter~\ref{ch:receiver}'s own
-open item~3 anticipated exactly this outcome, stating that if ``the pending EN~378
-calculation finds additional charge elsewhere in the circuit, F302NP (13.5\,kg) or
-F392TP/F402HP (17.6\,kg) should be adopted instead'' --- and item~4 separately
-flagged the F252HP's undersized 22\,mm connections. Both are now confirmed.
-
-\textbf{Recommendation: adopt F392TP/F402HP (39\,L, 17.6\,kg)} as the minimum, which
-also resolves the connection-size mismatch (28\,mm vs.\ the 1-3/8\,in liquid line).
-Note that even this does not cover the 20.3\,kg upper bound; a $\approx$45\,L vessel
-would. The honest resolution is to \emph{first} shorten the liquid line
-(\S\ref{safe:sec:linelength}) and re-run this inventory against real layout
-geometry, rather than buy a larger vessel to hold an avoidable charge --- larger
-charge is itself the thing A3 safety practice is trying to minimise
-(\S\ref{safe:sec:minimisation}).
+architecture should therefore \textbf{co-locate the compressor pack and condenser as
+tightly as the layout permits}, and the liquid line should be the first thing
+shortened when the plant room is laid out for real. A 5\,m run would take the whole
+system under 10\,kg.
 
 \zonedivider{Part B \quad---\quad EN 378 Safety Assessment}
 
@@ -5159,12 +4970,19 @@ room volume, against the EN~378 thresholds.}
 \end{figure}
 
 The assessment is decisive and is worth stating plainly. Diluting a full
-20.3\,kg release below R-290's practical limit by room volume alone would require a
-\textbf{2{,}533\,m$^3$} plant room; even reaching the bare LFL needs
-\textbf{533\,m$^3$}. A realistically sized machinery room for a 150\,kW chiller
-($\approx$90\,m$^3$) would reach $\approx$225\,g/m$^3$ --- \textbf{5.9$\times$ the
+14.1\,kg release below R-290's practical limit by room volume alone would require a
+\textbf{1{,}763\,m$^3$} plant room; even reaching the bare LFL needs
+\textbf{371\,m$^3$}. A realistically sized machinery room for a 150\,kW chiller
+($\approx$90\,m$^3$) would reach $\approx$157\,g/m$^3$ --- \textbf{4.1$\times$ the
 LFL}. \textbf{Room volume is therefore not a viable safety strategy}, and the
 installation cannot rely on dilution.
+
+This conclusion is robust to the charge decisions taken elsewhere in the report: even
+the receiver-less 10.9\,kg lower bound would need a 273\,m$^3$ room to reach the bare
+LFL, and a 1{,}363\,m$^3$ room to reach the practical limit. \textbf{No plausible
+plant room dilutes this charge to safety.} Omitting the receiver
+(Chapter~\ref{ch:receiver}) lowers every number in Part~B --- ventilation falls from
+375 to 294\,m$^3$/h --- but it does not, and could not, change the conclusion.
 
 Compliance instead rests on treating the plant room as a \textbf{dedicated
 refrigerating machinery room} under EN~378, whose provisions decouple the permitted
@@ -5175,7 +4993,7 @@ charge from room volume:
         ($\mathbf{7.6\,g/m^3}$), which alarms and starts emergency ventilation
         long before a flammable mixture can form.
   \item \textbf{Emergency mechanical ventilation} of
-        $\dot V = 0.014\,m^{2/3} = \mathbf{375\,m^3/h}$ (0.104\,m$^3$/s) per
+        $\dot V = 0.014\,m^{2/3} = \mathbf{294\,m^3/h}$ (0.082\,m$^3$/s) per
         EN~378-3 --- a modest fan, and a reminder that \emph{detection plus
         ventilation}, not volume, is what makes A3 installations safe.
   \item \textbf{Ignition-source control} in the machinery room: no open flames, and
@@ -5205,12 +5023,16 @@ open-drive machine would have & \S9.2 \\
 Float-valve oil return (not solenoid) & Avoids an electrical ignition source in the
 refrigerant-wetted oil path & \S\ref{oilsep:sec:oilreturn} \\
 Relief discharge routed outdoors & A relieving vessel vents flammable gas to a safe
-outdoor location, never into the plant room & \S\ref{receiver:sec:safety} \\
+outdoor location, never into the plant room & \S\ref{ch:oilsep} \\
 Pressure vessels rated 28--45\,bar & All clear the 19.07\,bar 55\,\textdegree C
-standstill pressure with large margin & \S\ref{receiver:sec:pressure} \\
+standstill pressure with large margin & \S\ref{ch:evap}, \S\ref{ch:oilsep} \\
 \midrule
-\textbf{Short liquid line} (recommended) & The most effective remaining
-charge-reduction lever & \S\ref{safe:sec:linelength} \\
+\textbf{No liquid receiver} & Removes 2.97--6.16\,kg ($\approx$25\,\%) of charge and
+two more joints --- the largest single charge reduction available, and it
+\emph{improves} the COP rather than costing it & Ch.~\ref{ch:receiver} \\
+\textbf{Short liquid line} (recommended) & The most effective \emph{remaining}
+charge-reduction lever: a 5\,m run would take the system under 10\,kg &
+\S\ref{safe:sec:linelength} \\
 \bottomrule
 \end{tabularx}
 \end{table}

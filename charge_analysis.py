@@ -52,8 +52,15 @@ N_CP_EVAP, N_CP_COND = 38, 47   # refrigerant channels (main.py)
 ID_SUCTION, ID_DISCHARGE, ID_LIQUID = 0.06287, 0.03823, 0.03388
 LEN_SUCTION, LEN_DISCHARGE, LEN_LIQUID = 15.0, 15.0, 15.0   # ASSUMED, see report
 
-RECEIVER_VOLUME = 0.025          # m3, Bitzer F252HP (25 L)
-RECEIVER_FILL_RANGE = (0.20, 0.50)   # operating liquid fill fraction, assumed range
+# NO LIQUID RECEIVER -- see the report's receiver chapter. The project brief
+# admits one only "if required by the chosen architecture", and it is not:
+#   * a through-flow receiver's outlet is SATURATED liquid, which destroys the
+#     condenser's 5 K subcooling and costs 5% of the COP -- taking the AHRI
+#     full-load COP from 3.53 (pass) to 3.35 (FAIL against the 3.5 target);
+#   * it held ~3-6 kg of a 13.9-20.3 kg charge (~25%), which for an A3
+#     refrigerant is charge that directly drives the EN 378 obligations.
+# The system is therefore CRITICALLY CHARGED: the condenser provides subcooling
+# directly, and the EEV absorbs off-design variation.
 
 
 def _rho(T_C, Q=None, P=None):
@@ -90,9 +97,6 @@ def inventory():
         ("Liquid line (15 m)", V_liq, rho_liq_line, rho_liq_line),
         ("Suction line (15 m)", V_suc, rho_suc, rho_suc),
         ("Discharge line (15 m)", V_dis, rho_dis, rho_dis),
-        ("Liquid receiver (25 L)", RECEIVER_VOLUME,
-            RECEIVER_FILL_RANGE[0] * rho_l_c + (1 - RECEIVER_FILL_RANGE[0]) * rho_v_c,
-            RECEIVER_FILL_RANGE[1] * rho_l_c + (1 - RECEIVER_FILL_RANGE[1]) * rho_v_c),
         ("Oil separator (40 L vessel)", 0.040, rho_v_c, rho_v_c),
         ("Compressors (2 x, oil-dissolved)", None, 0.4, 1.2),  # kg directly, not V*rho
     ]
