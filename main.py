@@ -132,11 +132,20 @@ h_2 = per_unit["h_suction"] + per_unit["P_w"] / (per_unit["m_dot_kgh"] / 3600.0)
 T_2 = PropsSI("T", "HMASS", h_2, "P", p_c, R)
 
 # ---------------------------------------------------------------------
-# 2) Condenser -- same corrugation-family placeholder geometry as the
-#    evaporator (D_h, Lambda, beta, L), pending a real datasheet.
+# 2) Condenser -- same corrugation family as the evaporator (D_h, Lambda,
+#    beta), sharing the Kelvion HP DW 500H plate.
+#
+#    PLATE DIMENSIONS ARE NOW VENDOR-CONFIRMED (superseding the earlier
+#    L=0.5/L_w=0.2 placeholders): the HP DW 500H plate is 195 x 600 mm
+#    (0.117 m2 of heat-transfer area, 120-plate frame). L_w and L below are
+#    those real dimensions. NOTE: 600 mm is the plate's stated heat-transfer
+#    length; the true port-to-port flow length L_v is marginally shorter, so
+#    using it here is slightly conservative for pressure drop (dP ~ L_v).
+#    D_h/Lambda/beta remain the corrugation-family placeholders -- Kelvion
+#    does not publish them per model.
 # ---------------------------------------------------------------------
-D_h, Lambda, beta, L = 0.004, 0.005, 30, 0.5
-b, L_w = D_h * 1.17 / 2, 0.2
+D_h, Lambda, beta, L = 0.004, 0.005, 30, 0.6
+b, L_w = D_h * 1.17 / 2, 0.195
 # N_cp=47 (not 38, the evaporator's value) -- the condenser carries a higher
 # refrigerant mass flow than the evaporator, so it needs more channels to
 # hold the same G_c~25 kg/m2s design target inside Han's validated 13-34

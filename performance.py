@@ -53,9 +53,9 @@ IPLV_TARGET = 5.0
 # carried as a placeholder pending re-selection at the larger 3 K approach.
 PUE_LOADS_KW = {
     "Compressor bank": 31.72,
-    "Glycol loop pump": 2.30,
+    "Glycol loop pump": 2.43,
     "Dry cooler fans": 10.74,
-    "CHW/CRAH pump": 1.09,
+    "CHW/CRAH pump": 1.11,
 }
 
 

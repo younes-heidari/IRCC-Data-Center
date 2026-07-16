@@ -4471,14 +4471,27 @@ electrical loads at the 35\,\textdegree C / full-load design point.
 \input{tables/performance/design_day_pue.tex}
 
 The design-day PUE is \textbf{1.31} (improved from the original design's 1.40),
-dominated by the compressor bank (31.7\,kW of the 45.9\,kW total --- itself down from
+dominated by the compressor bank (31.7\,kW of the 46.0\,kW total --- itself down from
 47.1\,kW, the revision's lift reduction at work). The glycol pump load roughly doubles
-(1.18\,$\to$\,2.30\,kW) because the tighter 4\,K glycol range demands
-$\approx$28\,\% more flow --- a real, counted cost of the revision, far outweighed by
-the 15.4\,kW compressor saving. This is the \emph{worst-case} PUE --- it occurs only
-at the hottest design ambient; the seasonal analysis below shows the annual-average
-PUE is far more favourable because most of the year runs at part load or in free
-cooling.
+(1.18\,$\to$\,2.43\,kW) because the tighter 4\,K glycol range demands
+$\approx$28\,\% more flow, and the confirmed (longer) vendor plate raises the
+condenser's glycol-side pressure drop --- both real, counted costs of the revision,
+together far outweighed by the 15.4\,kW compressor saving. This is the
+\emph{worst-case} PUE --- it occurs only at the hottest design ambient; the seasonal
+analysis below shows the annual-average PUE is far more favourable because most of
+the year runs at part load or in free cooling.
+
+\noindent \textbf{Open item --- glycol pump system curve.} The higher glycol flow and
+the confirmed plate geometry raise the condenser's glycol-side pressure drop from the
+17.50\,kPa carried in Chapter~\ref{ch:pump}'s system-curve table
+(\S\ref{pump:sec:syscurve}) to $\approx$35.8\,kPa as now computed by the model. The
+pump's electrical power reported above is derived live from the model's actual system
+curve and so already reflects this; \textbf{the tabulated duty point and trim
+selection in Chapter~\ref{ch:pump} are, however, now stale} and must be re-derived
+alongside the dry cooler re-selection (whose own vendor $\Delta P$ reference is
+likewise superseded). This reinforces that chapter's existing open item~3: the 2AD
+frame sat near the top of its envelope already, and the revised duty makes the 2.5AC
+frame the more likely selection.
 
 \zonedivider{Part B \quad---\quad Seasonal Weather-Driven Performance}
 
@@ -4565,68 +4578,99 @@ here so the revision's cost is as explicit as its benefit.
 
 The tighter approaches raise the required $UA$ of both plate exchangers
 (evaporator 14.0\,$\to$\,19.7\,kW/K; condenser 13.1\,$\to$\,20.2\,kW/K). That extra
-$UA$ can be bought either as \emph{area} (more plates) or as \emph{coefficient} (a
-higher $U$). The original chapters deliberately assumed values at the conservative
-end of their published bands ($U_{\mathrm{evap}} = 3{,}000$,
-$U_{\mathrm{cond}} = 2{,}500$\,W\,m$^{-2}$K$^{-1}$); the revision re-assumes them
-near the top of those bands, which keeps both exchangers inside the same
-GBH-DW\,500H frame:
+$UA$ must be bought as \emph{area} (more plates), as \emph{coefficient} (a higher
+$U$), or --- as it turns out here --- neither, because the originally assumed plate
+size understated the real one.
+
+\subsubsection*{Correcting the double-wall omission}
+
+The $U$ bands cited in the component chapters (\S2.2.1: 2{,}500--4{,}500 for a
+water/propane BPHE; \S3.2.4: 2{,}000--3{,}500 for refrigerant/glycol) are published
+for \textbf{generic, single-wall} plate exchangers. The selected hardware is
+\textbf{double-wall} (adopted for A3 leak safety, \S2.4.1 and \S3.4.1), which
+interposes a second plate and an interstitial contact resistance in the
+heat-transfer path. \textbf{That derate was not accounted for in the original
+assumptions}, and it moves $U$ in the unfavourable direction.
+
+A resistance-network check supports the original single-wall figures: for the
+evaporator, $1/U = 1/h_{w} + t/k + 1/h_{r}$ with a water film
+$h_{w}\approx6{,}000$, a 0.4\,mm stainless wall, and a propane boiling film
+$h_{r}\approx7{,}000$\,W\,m$^{-2}$K$^{-1}$ returns $U\approx2{,}990$ --- essentially
+the 3{,}000 assumed in \S2.2.1. Published double-wall derates fall in the
+10--30\,\% range; a mid-range \textbf{20\,\% derate} is adopted here, giving the
+values in Table~\ref{tab:revision_u}. These are \emph{lower}, not higher, than the
+original assumptions.
 
 \begin{table}[h!]
-\caption{Revised overall heat-transfer coefficient assumptions.}
+\caption{Revised overall heat-transfer coefficient assumptions, corrected for
+double-wall construction.}
 \label{tab:revision_u}
 \begin{tabularx}{\linewidth}{lLLLL}
 \toprule
-\textbf{Exchanger} & \textbf{Published band} & \textbf{Original} & \textbf{Revised} & \textbf{Justification} \\
+\textbf{Exchanger} & \textbf{Single-wall band} & \textbf{Original (SW basis)} & \textbf{Revised (DW)} & \textbf{Basis} \\
 \midrule
-Evaporator (water\,/\,R-290) & 2{,}500--4{,}500 & 3{,}000 & \textbf{4{,}000} &
-Near the top of the band, consistent with propane's favourable transport properties
-already noted in \S2.2.1 \\
-Condenser (R-290\,/\,30\,\% PG) & 2{,}000--3{,}500 & 2{,}500 & \textbf{3{,}650} &
-Marginally \emph{above} the band; the small excess is attributed to the revision's
-$+28$\,\% glycol flow (\S\ref{perf:sec:hardware}) raising the glycol-side film
-coefficient, the very term \S3.2.4 identifies as the limiting one \\
+Evaporator (water\,/\,R-290) & 2{,}500--4{,}500 & 3{,}000 & \textbf{2{,}400} &
+Resistance-network single-wall value ($\approx$2{,}990), $\times$0.80 double-wall derate \\
+Condenser (R-290\,/\,30\,\% PG) & 2{,}000--3{,}500 & 2{,}500 & \textbf{2{,}000} &
+\S3.2.4's single-wall value, $\times$0.80 double-wall derate \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent \textbf{These are assumptions, not results}, and they are the least
-certain input in the revision. $U$ is an \emph{outcome} of real plate geometry and
-channel velocity, not a free parameter, and the condenser value sits just outside
-its published band. Both must be confirmed in \textbf{Kelvion Select PHE} before
-procurement; if the vendor returns materially lower coefficients, the plate counts
-below rise and the 500H frame limit returns as a binding constraint. The same
-selection run should also report the resulting channel pressure drops, since a
-higher $U$ is bought with higher channel velocity and therefore feeds back into
-pump sizing (Chapters~\ref{ch:pump}, \ref{ch:chwpump}).
+\subsubsection*{Vendor plate geometry}
+
+The sizing above originally used a placeholder plate area of
+0.0665\,m$^2$ estimated by the $A\times B$ method (\S2.6.1, \S3.6.1) against a
+100-plate frame. The confirmed \textbf{Kelvion HP\,DW\,500H} data supersedes it:
+a heat-transfer area of \textbf{195\,$\times$\,600\,mm $=$ 0.117\,m$^2$ per plate}
+($+76$\,\% on the placeholder) in a frame accepting up to \textbf{120 plates}. The
+larger real plate is what makes the revision fit: it absorbs both the tighter
+approaches \emph{and} the double-wall derate without a frame change
+(\S\ref{perf:sec:hardware}).
+
+\noindent \textbf{These remain assumptions, not vendor results.} $U$ is an
+\emph{outcome} of real plate geometry, channel velocity, and the specific
+double-wall construction, not a free parameter, and the 20\,\% derate is an
+estimate spanning a 10--30\,\% literature range rather than a datasheet figure.
+Both coefficients must be confirmed in \textbf{Kelvion Select PHE} before
+procurement --- the decisive question being the \emph{double-wall derate relative
+to the equivalent single-wall plate}. The same selection run should also report the
+resulting channel pressure drops, which feed pump sizing (Chapters~\ref{ch:pump},
+\ref{ch:chwpump}). The sensitivity is documented in \S\ref{perf:sec:hardware}: $U$
+can fall to $\approx$1{,}700\,W\,m$^{-2}$K$^{-1}$ on either exchanger --- a further
+$\approx$30\,\% below the values adopted here --- before the 120-plate frame binds.
 
 \subsection{Component-by-Component Consequences}
 
 \begin{table}[h!]
-\caption{Hardware consequences of the efficiency revision (LMTD re-sizing at the
-revised $U$ values of Table~\ref{tab:revision_u} and the 500H's
-0.0665\,m$^2$/plate; dry cooler via the $\varepsilon$-NTU model of
-Chapter~\ref{ch:dry}). Plate counts include the report's standard 20\,\% margin.}
+\caption{Hardware consequences of the efficiency revision. Plate exchangers are
+re-sized by LMTD at the double-wall-corrected $U$ values of
+Table~\ref{tab:revision_u} against the confirmed Kelvion HP\,DW\,500H plate
+(0.117\,m$^2$, 120-plate frame); the dry cooler via the $\varepsilon$-NTU model of
+Chapter~\ref{ch:dry}. Plate counts include the report's standard 20\,\% margin.}
 \label{tab:revision_hardware}
 \begin{tabularx}{\linewidth}{lLLL}
 \toprule
 \textbf{Component} & \textbf{Original} & \textbf{Revised} & \textbf{Consequence} \\
 \midrule
-Evaporator BPHE & LMTD 10.7\,K, $UA$ 14.0\,kW/K, 4.66\,m$^2$, $\approx$84 plates &
-LMTD 7.6\,K, $UA$ 19.7\,kW/K, 4.93\,m$^2$, $\approx$\textbf{89 plates} & $+5$ plates;
-\textbf{stays in the GBH-DW\,500H frame} (100-plate limit) at the revised $U$ \\
-Condenser BPHE & LMTD 14.5\,K, $UA$ 13.1\,kW/K, 5.25\,m$^2$, $\approx$95 plates &
-LMTD 9.0\,K, $UA$ 20.2\,kW/K, 5.54\,m$^2$, $\approx$\textbf{100 plates} & $+5$ plates;
-\textbf{exactly at the 500H's 100-plate limit} --- no frame change, but no headroom
-either \\
+Evaporator BPHE & LMTD 10.7\,K, $UA$ 14.0\,kW/K, $U$ 3{,}000, 4.66\,m$^2$ &
+LMTD 7.6\,K, $UA$ 19.7\,kW/K, $U$ 2{,}400 (DW), 8.21\,m$^2$,
+$\approx$\textbf{84 plates} & \textbf{Fits the HP\,DW\,500H frame} with
+$\approx$36 plates spare, despite the tighter approach \emph{and} the double-wall
+derate \\
+Condenser BPHE & LMTD 14.5\,K, $UA$ 13.1\,kW/K, $U$ 2{,}500, 5.25\,m$^2$ &
+LMTD 9.0\,K, $UA$ 20.2\,kW/K, $U$ 2{,}000 (DW), 10.12\,m$^2$,
+$\approx$\textbf{104 plates} & \textbf{Fits the frame} with $\approx$16 plates
+spare \\
 Dry cooler & $UA = 47.3$\,kW/K (Kelvion ULF-PA104Y4V) & $UA \approx 118$\,kW/K
 ($\approx$2.5$\times$) & Substantially larger unit; vendor re-selection at the 3\,K
 approach required (17 fan-ceiling hours in the annual run until then). \textbf{The
 revision's dominant hardware cost} \\
-Glycol loop & 9.07\,kg/s (6\,K range) & 11.6\,kg/s (4\,K range, $+28$\,\%) & Pump
-duty rises (electrical 1.18\,$\to$\,2.30\,kW); the 2AD frame was already near its
-envelope top --- re-check against the 2.5AC (Ch.~\ref{ch:pump},
-open item~3) \\
+Glycol loop & 9.07\,kg/s (6\,K range), condenser-side $\Delta P$ 17.5\,kPa &
+11.6\,kg/s (4\,K range, $+28$\,\%), condenser-side $\Delta P$ $\approx$35.8\,kPa &
+Pump duty rises (electrical 1.18\,$\to$\,2.43\,kW); system curve and trim selection
+in Ch.~\ref{ch:pump} superseded --- re-derive against the 2.5AC frame
+(\S\ref{perf:sec:pue}, Ch.~\ref{ch:pump} open item~3) \\
 Compressors & 2 $\times$ fixed-speed 4FEP-35Z & same units $+$ VFDs & Standard drive
 addition; also resolves the turndown-floor and 30\,kW minimum-load open items \\
 \bottomrule
@@ -4634,14 +4678,23 @@ addition; also resolves the turndown-floor and 30\,kW minimum-load open items \\
 \end{table}
 
 \noindent None of these changes the architecture, the refrigerant, or the component
-families --- they scale existing selections and add a standard drive. With the
-revised $U$ values \textbf{both plate exchangers remain in the originally selected
-GBH-DW\,500H frame}, each gaining only $\approx$5 plates, so the revision's real
-capital impact concentrates in the dry cooler ($\approx$2.5$\times$ $UA$) and the
-glycol pump re-check. The condenser sitting exactly on the 100-plate limit is the
-tightest point in the revised design: it depends on both the assumed
-$U = 3{,}650$ and the 20\,\% margin, and any adverse movement in either pushes it
-to the next frame size or to two units in parallel.
+families --- they scale existing selections and add a standard drive.
+\textbf{Both plate exchangers remain within the selected Kelvion HP\,DW\,500H
+frame}, with 36 and 16 plates of headroom respectively, so the revision's capital
+impact concentrates almost entirely in the dry cooler ($\approx$2.5$\times$ $UA$)
+and the glycol pump re-check.
+
+That the plate exchangers absorb the revision so comfortably is a direct
+consequence of the confirmed vendor plate being 76\,\% larger than the
+$A\times B$ placeholder it replaced --- the correction more than offsets both the
+tighter approaches and the newly accounted double-wall derate. The corresponding
+\textbf{sensitivity margin is wide}: $U$ would have to fall to
+$\approx$1{,}685 (evaporator) or $\approx$1{,}729\,W\,m$^{-2}$K$^{-1}$ (condenser)
+--- roughly 30\,\% below the already double-wall-derated values adopted here, and
+below the floor of even the single-wall published bands --- before the 120-plate
+frame becomes binding. The plate-exchanger sizing is therefore robust to a
+substantially worse-than-expected vendor answer, which is the opposite of the
+knife-edge the earlier optimistic-$U$ treatment implied.
 
 
 % ══════════════════════════════════════════════════════════════════════════════
