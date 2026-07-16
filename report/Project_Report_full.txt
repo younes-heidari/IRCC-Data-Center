@@ -4502,6 +4502,63 @@ likewise superseded). This reinforces that chapter's existing open item~3: the 2
 frame sat near the top of its envelope already, and the revised duty makes the 2.5AC
 frame the more likely selection.
 
+% ── §12.4b ────────────────────────────────────────────────────────────────────
+\subsection{Beyond PUE: TUE and the Losses PUE Cannot See}
+\label{perf:sec:tue}
+
+PUE has a well-known blind spot: it stops at the rack. Every watt crossing into the IT
+equipment counts as ``useful,'' so the losses \emph{inside} the servers --- power-supply
+conversion, on-board voltage regulators, and the servers' own cooling fans --- are
+invisible to it. Two facilities with an identical PUE of 1.31 can therefore deliver
+materially different compute per watt. Worse, the metric can be gamed in the wrong
+direction: moving heat rejection onto the server (bigger on-board fans) \emph{lowers}
+PUE while raising total site power.
+
+\textbf{TUE} (Total-power Usage Effectiveness, Patterson et al., 2013) closes the gap by
+referencing all facility power to actual \emph{compute} power:
+
+\begin{equation}
+\mathrm{TUE} = \mathrm{ITUE} \times \mathrm{PUE},
+\qquad
+\mathrm{ITUE} = \frac{\text{total IT equipment power}}{\text{compute power}}
+\label{eq:tue}
+\end{equation}
+
+\noindent where ``compute power'' is what reaches the processors, memory, storage and
+network silicon.
+
+\begin{quote}
+\textbf{Assumption, stated plainly.} This project models the 150\,kW as a
+\emph{black-box IT load} --- there is no server-level power model anywhere in it, and
+the project brief specifies none. \textbf{ITUE $= 1.20$ is therefore an assumption, not
+a result.} It is a mid-range literature value for modern volume servers ($\approx$94\,\%
+PSU efficiency, $\approx$5\,\% on-board fan power, plus VRM and conversion losses). The
+band carried throughout is 1.10 (best-in-class 80\,PLUS Titanium supplies, minimal fan
+power) to 1.30 (older or fan-heavy hardware).
+\end{quote}
+
+\noindent Two consequences follow, and both matter for how much weight the reader should
+put on the TUE columns that follow:
+
+\begin{itemize}
+  \item \textbf{With ITUE held constant, TUE is simply PUE $\times$ 1.20.} It re-ranks
+        nothing in this report and introduces no new physics. Every conclusion drawn
+        from PUE --- the free-cooling benefit, the seasonal spread, the revision's gain
+        --- is unchanged.
+  \item \textbf{Its value is one of honesty about scope.} The design-day TUE of
+        \textbf{1.57} (band 1.44--1.70) says that for every watt of real compute, the
+        site draws about 1.57\,W --- and that the \emph{cooling plant is responsible for
+        only part of that overhead}. Of the 0.57 of overhead, roughly 0.31 is this
+        project's mechanical plant and roughly 0.26 is IT-internal losses this project
+        does not control and has not designed.
+\end{itemize}
+
+\noindent A defensible TUE for this facility would require measured server power data
+(compute vs.\ PSU vs.\ fan), which sits outside the project scope. The figure is
+reported because the metric was requested and because it correctly frames how much of
+the total energy problem the chiller design can actually address --- not because 1.57
+is a validated result.
+
 \zonedivider{Part B \quad---\quad Seasonal Weather-Driven Performance}
 
 % ── §12.5 ─────────────────────────────────────────────────────────────────────
@@ -4534,21 +4591,39 @@ dry-bulb temperature from the real 8{,}760-hour Champaign TMY3 file (WMO~725315)
 automatically switching between mechanical and free-cooling mode at the ASHRAE~90.1
 4\,\textdegree C full-free-cooling threshold (\texttt{main.py}). The total-system COP
 below is $Q_{\mathrm{cool}}/P_{\mathrm{total}}$ (all facility power: compressor, both
-pumps, and fans), equivalently $1/(\mathrm{PUE}-1)$.
+pumps, and fans), equivalently $1/(\mathrm{PUE}-1)$. Each period carries both PUE and
+TUE (Eq.~\ref{eq:tue}); the TUE columns are PUE $\times$ 1.20 throughout, on the assumed
+ITUE of \S\ref{perf:sec:tue}, and are reported for scope honesty rather than as an
+independent result.
 
 \input{tables/performance/seasonal_perf_summary.tex}
+
+\subsection{Month-by-Month Detail}
+\label{perf:sec:monthly}
+
+Table~\ref{tab:monthly_summary} resolves the seasonal averages into the 12 monthly runs
+they are grouped from, which is where the free-cooling transition is actually visible:
+March flips to mechanical mode at a 6.0\,\textdegree C monthly average, and November
+flips back at 7.1\,\textdegree C, bracketing a nine-month mechanical season whose
+compressor power tracks ambient almost linearly (10.7\,kW in March to 23.2\,kW in July).
+
+\input{tables/performance/monthly/monthly_summary.tex}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.90\linewidth]{figures/performance/monthly/monthly_cop_pue.png}
-\caption{Monthly-average total-system COP and PUE. Aqua bars are free-cooling months
-(compressor off).}
+\caption{Monthly-average total-system COP (top) with PUE and TUE (bottom). Aqua bars are
+free-cooling months (compressor off), blue are mechanical; solid bars are PUE, hatched
+bars TUE. The COP panel's scale is set by the free-cooling months, which is the point:
+winter operation is an order of magnitude more efficient than summer.}
+\label{fig:monthly_cop_pue}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.85\linewidth]{figures/performance/seasonal/seasonal_cop_pue.png}
-\caption{Seasonal-average total-system COP and PUE.}
+\caption{Seasonal-average total-system COP, PUE and TUE (same encoding as
+Fig.~\ref{fig:monthly_cop_pue}).}
 \end{figure}
 
 \begin{figure}[h!]
@@ -4559,16 +4634,35 @@ shading marks free-cooling hours.}
 \end{figure}
 
 The seasonal picture is strongly favourable and stands in deliberate contrast to the
-worst-case design-day metrics of Part~A. Winter runs almost entirely in free cooling
-(compressor off, PUE $\approx$1.01, total-system COP in the high tens), while even the
-hottest monthly average (July) holds PUE 1.23, and the worst-case design day 1.31.
-Roughly 29\,\% of the year is full free cooling and a further 15.5\,\% is partial free
-cooling (Chapter~\ref{ch:dry}, \S\ref{dry:sec:annualregime}), so the
+worst-case design-day metrics of Part~A. Winter runs entirely in free cooling
+(compressor off, PUE 1.01, TUE 1.21, total-system COP near 88), while even the hottest
+monthly average (July) holds PUE 1.21 / TUE 1.46, against the worst-case design day's
+1.31 / 1.57. Roughly 29\,\% of the year is full free cooling and a further 15.5\,\% is
+partial free cooling (Chapter~\ref{ch:dry}, \S\ref{dry:sec:annualregime}), so the
 \emph{annual-average} efficiency is far better than any single design-point number ---
 the central benefit of the glycol-loop free-cooling architecture. With the re-selected
 dry cooler (\S\ref{dry:sec:reselection}) the annual run is \textbf{clean across all
 8{,}760 hours}; the 17 fan-ceiling hours seen while the original unit was still carried
 are resolved.
+
+Read through the TUE column, the same result carries a blunter message. In winter the
+plant's own overhead nearly vanishes (PUE 1.01), yet TUE still sits at 1.21 --- because
+the IT-internal losses do not go away when the compressor stops. \textbf{In the best
+months, essentially all remaining site overhead is inside the servers, not in this
+design.} That is the useful thing TUE says here: the mechanical plant's headroom for
+further improvement is largest in summer and close to exhausted in winter, and beyond
+that point the lever belongs to IT procurement, not to the chiller.
+
+\begin{quote}
+\textbf{Method note --- averaged temperature, not averaged hours.} Each monthly and
+seasonal row is one cycle run at that period's \emph{average} dry-bulb, not an
+integration of its individual hourly runs. Because COP is non-linear in ambient, these
+are representative-condition results and will differ modestly from a true hourly
+energy integration --- generally flattering, since averaging hides the hot tail. The
+8{,}760-hour simulation that would support the exact integration already exists (it
+produces Fig.~\ref{fig:duration} and the regime hour counts); converting the tables to
+hourly-integrated annual energy is a contained change and is listed as an open item.
+\end{quote}
 
 % ── §12.6 ─────────────────────────────────────────────────────────────────────
 \section{Compliance Summary}

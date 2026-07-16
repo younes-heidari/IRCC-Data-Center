@@ -337,6 +337,30 @@ P_chw_pump = chw_pump.shaft_power_w(eta_pump=0.60) / 0.90
 P_other = P_compressor + P_glycol_pump + P_FAN_DESIGN + P_chw_pump
 PUE = (Q_TARGET + P_other) / Q_TARGET
 
+# TUE (Total-power Usage Effectiveness, Patterson et al. 2013):
+#     TUE = ITUE x PUE,   ITUE = (total IT power) / (compute power)
+# PUE stops at the IT rack and is blind to losses INSIDE the IT equipment
+# (server PSU, VRMs, on-board fans), so two facilities with identical PUE
+# can differ in real compute delivered per watt. TUE closes that gap by
+# referencing every facility watt to actual compute power.
+#
+# ASSUMPTION, not derived: this project models the 150 kW as a black-box IT
+# load -- there is no server-level power model anywhere in it, and the
+# project brief specifies none. ITUE = 1.20 is a mid-range literature value
+# for modern volume servers (~94% PSU efficiency, ~5% on-board fans, plus
+# VRM/conversion losses). Reported band: 1.10 (best-in-class 80PLUS
+# Titanium, minimal fan power) to 1.30 (older or fan-heavy hardware).
+#
+# Consequence worth being honest about: with ITUE held constant, TUE is
+# just PUE scaled by 1.20. It re-ranks nothing in this report and adds no
+# new physics -- its value is that it states the IT-side overhead the PUE
+# convention hides, and it shows how much of the total facility power the
+# cooling plant is actually responsible for. A real TUE study would need
+# measured server data.
+ITUE = 1.20
+ITUE_BAND = (1.10, 1.30)
+TUE = ITUE * PUE
+
 # ---------------------------------------------------------------------
 # Report
 # ---------------------------------------------------------------------
@@ -382,7 +406,7 @@ print(f"Energy balance check   : Q_cond ({condenser.Q/1e3:.1f} kW) "
 print(f"Map cross-check        : catalog-predicted Q ({bank_result['Q_total_w']/1e3:.1f} kW) "
       f"vs cycle-derived Q ({evaporator.Q/1e3:.1f} kW)")
 print()
-print("=== DESIGN-DAY PUE ===")
+print("=== DESIGN-DAY PUE / TUE ===")
 print(f"IT load (proxy)      : {Q_TARGET/1e3:.1f} kW")
 print(f"Compressor bank      : {P_compressor/1e3:.2f} kW")
 print(f"Glycol loop pump     : {P_glycol_pump/1e3:.2f} kW")
@@ -390,6 +414,8 @@ print(f"Dry cooler fans      : {P_FAN_DESIGN/1e3:.2f} kW  (fan-law estimate, re-
 print(f"CHW/CRAH pump        : {P_chw_pump/1e3:.2f} kW")
 print(f"Other facility loads : {P_other/1e3:.2f} kW")
 print(f"PUE = (IT + other)/IT = {PUE:.3f}")
+print(f"TUE = ITUE x PUE      = {TUE:.3f}   (ITUE = {ITUE:.2f} ASSUMED, band "
+      f"{ITUE_BAND[0]:.2f}-{ITUE_BAND[1]:.2f} -> TUE {ITUE_BAND[0]*PUE:.3f}-{ITUE_BAND[1]*PUE:.3f})")
 
 
 # =======================================================================
@@ -616,7 +642,7 @@ def run_full_cycle(T_air_C, label=""):
         "m_dot_water_kgs": None, "m_dot_glycol_kgs": None,
         "P_glycol_pump_kW": None, "P_chw_pump_kW": None,
         "fan_speed_pct": None, "P_fan_kW": None,
-        "Q_delivered_kW": None, "P_other_kW": None, "PUE": None,
+        "Q_delivered_kW": None, "P_other_kW": None, "PUE": None, "TUE": None,
         "COP_sys_fc": None,
     }
 
@@ -651,6 +677,7 @@ def run_full_cycle(T_air_C, label=""):
             "P_glycol_pump_kW": P_glycol_pump_row / 1e3, "P_chw_pump_kW": P_chw_pump / 1e3,
             "fan_speed_pct": fan_result["fan_speed_frac"] * 100, "P_fan_kW": P_fan / 1e3,
             "Q_delivered_kW": Q_TARGET / 1e3, "P_other_kW": P_other_row / 1e3, "PUE": PUE_row,
+            "TUE": ITUE * PUE_row,
             "COP_sys_fc": COP_sys_fc,
         })
         return row
@@ -728,6 +755,7 @@ def run_full_cycle(T_air_C, label=""):
         "P_glycol_pump_kW": P_glycol_pump_p / 1e3, "P_chw_pump_kW": P_chw_pump / 1e3,
         "fan_speed_pct": fan_result["fan_speed_frac"] * 100, "P_fan_kW": P_fan / 1e3,
         "Q_delivered_kW": Q_delivered_p / 1e3, "P_other_kW": P_other_p / 1e3, "PUE": PUE_p,
+        "TUE": ITUE * PUE_p,
     })
     return row
 
@@ -820,6 +848,7 @@ def plot_period_performance(rows, save_path, title):
     colors = [AQUA if f else BLUE for f in is_free]
     cop = [_row_cop_total(r) for r in rows]
     pue = [r["PUE"] for r in rows]
+    tue = [r["TUE"] for r in rows]
     x = np.arange(len(rows))
 
     fig, (ax_cop, ax_pue) = plt.subplots(2, 1, figsize=(9, 6), facecolor=SURFACE)
@@ -842,14 +871,24 @@ def plot_period_performance(rows, save_path, title):
         ax_cop.text(b.get_x() + b.get_width() / 2, v, f"{v:.1f}", ha="center",
                     va="bottom", fontsize=7, color=SECONDARY_INK)
 
-    bars_pue = ax_pue.bar(x, pue, color=colors, width=0.6, zorder=2)
-    ax_pue.set_ylabel("PUE [-]", color=SECONDARY_INK, fontsize=9)
-    for b, v in zip(bars_pue, pue):
-        ax_pue.text(b.get_x() + b.get_width() / 2, v, f"{v:.2f}", ha="center",
-                    va="bottom", fontsize=7, color=SECONDARY_INK)
+    # PUE and TUE share a panel: same units, comparable range, and TUE is a
+    # fixed 1.20x of PUE, so the pair reads as one story. Mode stays encoded in
+    # the bar COLOR; the metric is encoded by FILL (solid PUE vs outlined TUE)
+    # so the two encodings don't collide.
+    bars_pue = ax_pue.bar(x - 0.19, pue, color=colors, width=0.36, zorder=2)
+    bars_tue = ax_pue.bar(x + 0.19, tue, facecolor="none", edgecolor=colors,
+                          linewidth=1.4, hatch="///", width=0.36, zorder=2)
+    ax_pue.set_ylabel("PUE / TUE [-]", color=SECONDARY_INK, fontsize=9)
+    for bars, series, fmt in ((bars_pue, pue, "{:.2f}"), (bars_tue, tue, "{:.2f}")):
+        for b, v in zip(bars, series):
+            ax_pue.text(b.get_x() + b.get_width() / 2, v, fmt.format(v), ha="center",
+                        va="bottom", fontsize=6.5, color=SECONDARY_INK)
 
-    ax_pue.text(0.0, -0.30, "Aqua = free-cooling (compressor off)   Blue = mechanical",
-                transform=ax_pue.transAxes, fontsize=8, color=MUTED)
+    ax_pue.text(0.0, -0.34, "Aqua = free-cooling (compressor off)   Blue = mechanical      "
+                            "Solid = PUE   Hatched = TUE\n"
+                            f"TUE = ITUE x PUE with ITUE = {ITUE:.2f} ASSUMED (no server power "
+                            f"model in this project); band {ITUE_BAND[0]:.2f}-{ITUE_BAND[1]:.2f}.",
+                transform=ax_pue.transAxes, fontsize=7.5, color=MUTED)
 
     fig.tight_layout()
     fig.savefig(save_path, dpi=150, facecolor=SURFACE)
@@ -872,7 +911,7 @@ def write_summary_latex_table(rows, out_path, caption, label):
     cols = [
         ("label", "Period"), ("T_air_C", "$T_{air}$ [C]"), ("mode", "Mode"),
         ("P_compressor_kW", "$P_{comp}$ [kW]"), ("Q_delivered_kW", "$Q$ [kW]"),
-        ("PUE", "PUE [-]"),
+        ("PUE", "PUE [-]"), ("TUE", "TUE [-]"),
     ]
     lines = []
     lines.append(r"\begin{table}[h!]")
@@ -888,6 +927,8 @@ def write_summary_latex_table(rows, out_path, caption, label):
         for key, _ in cols:
             if key == "PUE":
                 vals.append(f"{row['PUE']:.2f} (COP {cop_total:.1f})")
+            elif key == "TUE":
+                vals.append(f"{row['TUE']:.2f}")
             elif key == "T_air_C":
                 vals.append(f"{row['T_air_C']:.1f}")
             elif key in ("P_compressor_kW", "Q_delivered_kW"):
@@ -920,17 +961,20 @@ monthly_rows, seasonal_rows = run_monthly_seasonal_reports()
 
 plot_period_performance(
     monthly_rows, os.path.join(FIG_PERF_MONTHLY, "monthly_cop_pue.png"),
-    "Monthly-average total system COP and PUE (Champaign, IL TMY3)",
+    "Monthly-average total system COP, PUE and TUE (Champaign, IL TMY3)",
 )
 plot_period_performance(
     seasonal_rows, os.path.join(FIG_PERF_SEASONAL, "seasonal_cop_pue.png"),
-    "Seasonal-average total system COP and PUE (Champaign, IL TMY3)",
+    "Seasonal-average total system COP, PUE and TUE (Champaign, IL TMY3)",
 )
+_TUE_NOTE = (rf" TUE $=$ ITUE $\times$ PUE with ITUE $= {ITUE:.2f}$ \textbf{{assumed}} "
+             rf"(band {ITUE_BAND[0]:.2f}--{ITUE_BAND[1]:.2f}); this project has no "
+             rf"server-level power model, so TUE is PUE scaled by a constant.")
 write_summary_latex_table(
     monthly_rows, os.path.join(TABLE_PERF_MONTHLY, "monthly_summary.tex"),
-    "Monthly-average system performance summary.", "tab:monthly_summary",
+    "Monthly-average system performance summary." + _TUE_NOTE, "tab:monthly_summary",
 )
 write_summary_latex_table(
     seasonal_rows, os.path.join(TABLE_PERF_SEASONAL, "seasonal_summary.tex"),
-    "Seasonal-average system performance summary.", "tab:seasonal_summary",
+    "Seasonal-average system performance summary." + _TUE_NOTE, "tab:seasonal_summary",
 )

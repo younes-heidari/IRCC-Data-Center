@@ -59,6 +59,12 @@ PUE_LOADS_KW = {
     "CHW/CRAH pump": 1.11,
 }
 
+# ITUE for the TUE metric -- must match main.py's ITUE (restated here so this
+# chapter stands alone; see main.py's TUE block for the full rationale).
+# ASSUMPTION, not a result: no server-level power model exists in this project.
+ITUE_ASSUMED = 1.20
+ITUE_BAND_LO, ITUE_BAND_HI = 1.10, 1.30
+
 
 def full_load_cop():
     """Full-load COP at (a) the strict AHRI 550/590-2023 rating point
@@ -156,8 +162,9 @@ def read_seasonal_from_monthly():
         s = season_of[i + 1]
         pue = float(row["PUE"])
         cop_total = 1.0 / (pue - 1.0)
-        seasons.setdefault(s, {"pue": [], "cop": [], "mech": 0, "free": 0, "T": []})
+        seasons.setdefault(s, {"pue": [], "tue": [], "cop": [], "mech": 0, "free": 0, "T": []})
         seasons[s]["pue"].append(pue)
+        seasons[s]["tue"].append(float(row["TUE"]))
         seasons[s]["cop"].append(cop_total)
         seasons[s]["T"].append(float(row["T_air_C"]))
         if row["mode"] == "mechanical":
@@ -173,6 +180,7 @@ def read_seasonal_from_monthly():
             "T_air_C": sum(d["T"]) / len(d["T"]),
             "cop_total": sum(d["cop"]) / len(d["cop"]),
             "pue": sum(d["pue"]) / len(d["pue"]),
+            "tue": sum(d["tue"]) / len(d["tue"]),
             "mech_months": d["mech"], "free_months": d["free"],
         })
     return out
@@ -354,8 +362,13 @@ def write_pue_table(pue, out_path):
         r"\midrule",
         f"Total other facility loads & {pue['P_other_kW']:.2f} \\\\",
         rf"\textbf{{PUE}} $=$ (IT $+$ other)$/$IT & \textbf{{{pue['PUE']:.3f}}} \\",
+        rf"\textbf{{TUE}} $=$ ITUE $\times$ PUE $^{{\dagger}}$ & \textbf{{{ITUE_ASSUMED * pue['PUE']:.3f}}} \\",
         r"\bottomrule",
         r"\end{tabularx}",
+        rf"{{\small $^{{\dagger}}$ \textbf{{ITUE $= {ITUE_ASSUMED:.2f}$ assumed}} "
+        rf"(band {ITUE_BAND_LO:.2f}--{ITUE_BAND_HI:.2f} $\rightarrow$ TUE "
+        rf"{ITUE_BAND_LO * pue['PUE']:.2f}--{ITUE_BAND_HI * pue['PUE']:.2f}); "
+        rf"no server-level power model exists in this project.}}",
         r"\end{table}",
     ]
     with open(out_path, "w") as f:
@@ -370,17 +383,23 @@ def write_seasonal_summary_table(seasons, out_path):
         r"\begin{table}[h!]",
         r"\caption{Seasonal-average system performance (Champaign, IL TMY3), grouped from the 12 monthly-average runs of main.py.}",
         r"\label{tab:seasonal_perf_summary}",
-        r"\begin{tabularx}{\linewidth}{lLLLL}",
+        r"\begin{tabularx}{\linewidth}{lLLLLL}",
         r"\toprule",
-        r"\textbf{Season} & \textbf{Avg. $T_{air}$ [\textdegree C]} & \textbf{Total-system COP [-]} & \textbf{PUE [-]} & \textbf{Mechanical / free-cooling months} \\",
+        r"\textbf{Season} & \textbf{Avg. $T_{air}$ [\textdegree C]} & \textbf{Total-system COP [-]} & \textbf{PUE [-]} & \textbf{TUE [-]} $^{\dagger}$ & \textbf{Mechanical / free-cooling months} \\",
         r"\midrule",
     ]
     for s in seasons:
         lines.append(f"{s['season']} & {s['T_air_C']:.1f} & {s['cop_total']:.1f} & "
-                     f"{s['pue']:.2f} & {s['mech_months']} / {s['free_months']} \\\\")
+                     f"{s['pue']:.2f} & {s['tue']:.2f} & "
+                     f"{s['mech_months']} / {s['free_months']} \\\\")
     lines += [
         r"\bottomrule",
         r"\end{tabularx}",
+        rf"{{\small $^{{\dagger}}$ TUE $=$ ITUE $\times$ PUE (Patterson et al., 2013). "
+        rf"\textbf{{ITUE $= {ITUE_ASSUMED:.2f}$ is an assumption}}, not a result: this project "
+        rf"models the 150\,kW as a black-box IT load and has no server-level power model. "
+        rf"Band {ITUE_BAND_LO:.2f}--{ITUE_BAND_HI:.2f}. With ITUE constant, TUE re-ranks "
+        rf"nothing here --- it states the IT-side overhead PUE hides.}}",
         r"\end{table}",
     ]
     with open(out_path, "w") as f:
