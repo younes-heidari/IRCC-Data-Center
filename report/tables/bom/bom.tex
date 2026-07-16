@@ -1,7 +1,9 @@
 \begin{table}[h!]
 \caption{Bill of materials --- major equipment and accessories. Model numbers and
 key ratings are drawn from each component's own chapter; quantities reflect the
-dual 75\,kW parallel-circuit architecture (Chapter~\ref{ch:comp}).}
+confirmed architecture --- \textbf{one shared refrigerant circuit} fed by two parallel
+75\,kW compressors, hence one evaporator, one condenser and one EEV
+(Chapter~\ref{ch:comp}, \S\ref{ctrl:sec:architecture_resolved}).}
 \label{tab:bom}
 \small
 \begin{tabularx}{\linewidth}{lLlLl}
@@ -14,7 +16,7 @@ dual 75\,kW parallel-circuit architecture (Chapter~\ref{ch:comp}).}
 2 & Compressor & 2 & Bitzer 4FEP-35Z, semi-hermetic reciprocating, R-290, with VFD (efficiency revision, \S\ref{perf:sec:revision}) & Ch.~\ref{ch:comp}, \ref{ch:performance} \\
 3 & Evaporator BPHE & 1 & Kelvion HP\,DW\,500H, 45\,bar double-wall, 0.117\,m$^2$/plate (195$\times$600\,mm); $\approx$\textbf{84 plates} of the 120-plate frame ($U=2{,}400$ DW-derated, pending Kelvion confirmation, \S\ref{perf:sec:uvalues}) & Ch.~\ref{ch:evap}, \ref{ch:performance} \\
 4 & Condenser BPHE & 1 & Kelvion HP\,DW\,500H, 45\,bar double-wall, 0.117\,m$^2$/plate (195$\times$600\,mm); $\approx$\textbf{104 plates} of the 120-plate frame ($U=2{,}000$ DW-derated, pending Kelvion confirmation, \S\ref{perf:sec:uvalues}) & Ch.~\ref{ch:cond}, \ref{ch:performance} \\
-5 & Electronic expansion valve & 2 & $\approx$25.7\,mm$^2$ orifice ($d\approx5.7$\,mm); Danfoss ETS / Emerson EX class & Ch.~\ref{ch:eev} \\
+5 & Electronic expansion valve & \textbf{1} & Sized for the \emph{full} 150\,kW flow (single shared circuit): $\approx$25.7\,mm$^2$ orifice ($d\approx5.7$\,mm); Danfoss ETS / Emerson EX class. 82.6\,\% open at design, 24.3\,\% at the 30\,kW minimum --- inside its controllable range (\S\ref{ctrl:sec:authority}) & Ch.~\ref{ch:eev}, \ref{ch:controls} \\
 6 & Oil separator & 1 & Bitzer OA1954, primary, A3-rated, 28\,bar, 18\,L oil charge & Ch.~\ref{ch:oilsep} \\
 7 & Liquid receiver & \textbf{0} & \textbf{Not required by this architecture} --- a through-flow receiver would destroy the condenser's 5\,K subcooling (AHRI COP 3.53 $\to$ 3.35, failing target) and add $\approx$25\,\% charge. System is critically charged (Ch.~\ref{ch:receiver}) & Ch.~\ref{ch:receiver} \\
 8 & Discharge check valve & 2 & One per compressor discharge branch (idle-unit isolation) & Ch.~\ref{ch:comp} \\

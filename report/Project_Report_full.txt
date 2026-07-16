@@ -3244,16 +3244,32 @@ generous by normal NEMA practice, reflecting this chapter's deliberately conserv
 % ── §9.1 ──────────────────────────────────────────────────────────────────────
 \section{Design Basis and Staging Strategy}
 
-The 150\,kW cooling duty is split across \textbf{two identical 75\,kW parallel
-refrigerant circuits}, each with its own compressor, evaporator/condenser water and
-glycol connections, and EEV. This chapter covers the compressor selection and
-performance modeling common to both circuits; the two units are assumed identical.
+The 150\,kW cooling duty is carried by \textbf{two identical 75\,kW compressors in
+parallel on a common suction and discharge manifold}, feeding a \textbf{single shared
+refrigerant circuit} --- one condenser, one evaporator, one expansion valve. This
+chapter covers the compressor selection and performance modeling; the two units are
+assumed identical.
+
+\begin{quote}
+\noindent\textbf{Architecture note.} An earlier revision of this chapter described
+``two identical 75\,kW parallel refrigerant \emph{circuits}, each with its own
+compressor, evaporator/condenser \dots\ and EEV''. That was \textbf{incorrect}, and it
+contradicted this chapter's own staging analysis (\S\ref{comp:sec:staging}), which
+depends on both compressors sharing one $t_o$/$t_c$ --- only possible on a common
+manifold. It also contradicted the model (\texttt{main.py}), which has always built a
+single shared circuit. \textbf{The single-circuit reading is correct} and is adopted
+throughout; the consequences for the expansion valve are worked through in
+Chapter~\ref{ch:controls}, \S\ref{ctrl:sec:authority}.
+\end{quote}
 
 The staging rationale (developed alongside this selection):
 \begin{itemize}
-  \item \textbf{Redundancy}: losing one compressor leaves 50\,\% capacity available,
-        versus 25\,\% for an unequal split --- a materially better partial-failure
-        state for a data-center cooling system.
+  \item \textbf{Compressor redundancy}: losing one compressor leaves 50\,\% capacity
+        available, versus 25\,\% for an unequal split --- a materially better
+        partial-failure state for a data-center cooling system. Note this is
+        \emph{compressor} redundancy only: with a single shared circuit, a fault in
+        the condenser, evaporator or expansion valve stops the plant regardless
+        (\S\ref{pc:sec:cons}).
   \item \textbf{IPLV coverage}: 50\,\% and 100\,\% load points are met by exactly one
         and two units running at their own full capacity, respectively; the 25\,\% and
         75\,\% points require partial loading of the active unit(s), discussed in
@@ -5242,40 +5258,50 @@ circuit architectures.}
 \label{fig:eev_authority}
 \end{figure}
 
-\subsection{Finding: the Answer Depends on an Unresolved Architecture Question}
+\subsection{Result: the Single-Circuit Architecture Is Confirmed}
+\label{ctrl:sec:architecture_resolved}
 
-\textbf{The report is not self-consistent about how many refrigerant circuits exist},
-and this analysis is where that finally bites:
+This analysis settled an architecture question the report had previously left
+inconsistent. Chapter~\ref{ch:comp} once described ``two parallel refrigerant
+\emph{circuits}, each with its own \dots\ EEV'', while \texttt{main.py} had always
+modelled a \textbf{single shared circuit} --- one condenser, one evaporator, one
+expansion valve, fed by two compressors on a common manifold.
 
-\begin{itemize}
-  \item \textbf{Chapter~\ref{ch:comp}} states the duty is split across ``two identical
-        75\,kW parallel refrigerant circuits, \emph{each with its own compressor,
-        evaporator/condenser \dots\ and EEV}'', and the BOM follows it with a quantity
-        of two.
-  \item \textbf{\texttt{main.py}} models \emph{one} shared condenser, \emph{one}
-        shared evaporator and \emph{one} EEV, sized for the combined flow. The
-        compressors are parallel on a common manifold (\S\ref{comp:sec:staging}), but
-        they feed a single set of exchangers.
-\end{itemize}
-
-\noindent The two readings give materially different answers:
+\textbf{The single-circuit architecture is adopted}, and the valve authority is one of
+the reasons why. Table~\ref{tab:eev_authority} evaluates both readings:
 
 \begin{itemize}
-  \item \textbf{One EEV on the full flow}: 82.6\,\% open at design, falling to
-        \textbf{24.3\,\%} at minimum load. Comfortable authority throughout, and the
-        valve is well matched to the duty.
-  \item \textbf{Two EEVs on split flow}: only 41.3\,\% open at design --- the E3V65 is
-        \textbf{oversized} for half the flow --- falling to \textbf{12.2\,\%} at
-        minimum load, \emph{below} the $\approx$15\,\% floor at which an EEV's
-        characteristic goes non-linear and stepper resolution and stiction begin to
-        dominate. Superheat control would degrade exactly where floodback protection
-        matters most, and where there is no receiver to forgive it.
+  \item \textbf{One EEV on the full flow (adopted)}: \textbf{82.6\,\% open at design,
+        falling to 24.3\,\%} at the 30\,kW minimum load. Comfortable authority across
+        the whole 5:1 turndown, and the E3V65 is well matched to the duty.
+  \item \textbf{Two EEVs on split flow (rejected)}: only 41.3\,\% open at design ---
+        the E3V65 would be \textbf{oversized} for half the flow --- falling to
+        \textbf{12.2\,\%} at minimum load, \emph{below} the $\approx$15\,\% floor at
+        which an EEV's characteristic goes non-linear and stepper resolution and
+        stiction begin to dominate. Superheat control would degrade exactly where
+        floodback protection matters most, and where there is no receiver to forgive
+        it (\S\ref{ctrl:sec:exposure}).
 \end{itemize}
 
-\noindent \textbf{The EEV selection cannot be finalised until the circuit
-architecture is settled.} If the two-circuit reading is correct, the E3V65 must be
-replaced with a smaller valve (an E3V45-class device) so that half-flow lands nearer
-the middle of its range. This is the single most actionable outcome of this chapter.
+\noindent The rejected column is retained deliberately: it shows that the
+single-circuit choice is not merely a modelling convenience but the arrangement that
+keeps the expansion valve inside its controllable range at minimum load. Had the
+two-circuit reading been adopted, the E3V65 would have had to be replaced with a
+smaller (E3V45-class) valve to move half-flow nearer the middle of its range.
+
+\textbf{Consequences of the confirmed architecture}, now applied throughout the
+report:
+
+\begin{itemize}
+  \item \textbf{One EEV}, not two --- the BOM quantity is corrected accordingly.
+  \item \textbf{Compressor redundancy only.} Two parallel compressors protect against
+        a compressor failure, but a fault in the single condenser, evaporator or
+        expansion valve stops the plant. The redundancy claim is restated on that
+        narrower basis (\S\ref{pc:sec:cons}).
+  \item \textbf{Fewer components and less charge} than two independent circuits ---
+        consistent with the A3 charge-minimisation objective
+        (\S\ref{safe:sec:minimisation}).
+\end{itemize}
 
 \section{The Superheat Setpoint --- and a Trap}
 \label{ctrl:sec:superheat}
@@ -5349,10 +5375,13 @@ boundaries & The bank stages at $\approx$50\,\% load (\S\ref{comp:sec:staging}) 
 \label{ctrl:sec:openitems}
 
 \begin{enumerate}
-  \item \textbf{Circuit architecture unresolved} (\S\ref{ctrl:sec:authority}). One
-        shared refrigerant circuit or two independent ones? The EEV size, quantity,
-        and its authority at minimum load all depend on the answer. \textbf{This is
-        the blocking decision} and should be closed before any valve is ordered.
+  \item \textbf{EEV vendor confirmation.} With the single-circuit architecture
+        confirmed (\S\ref{ctrl:sec:architecture_resolved}), the E3V65 sits at
+        82.6\,\% open at design and 24.3\,\% at minimum load --- comfortable, but
+        computed from the incompressible-orifice $K_v$ estimate of
+        Chapter~\ref{ch:eev}, which is explicitly a shortlisting figure rather than a
+        vendor two-phase capacity rating (\S\ref{eev:sec:whyfirstcut}). Confirm the
+        opening range against the manufacturer's own capacity table before ordering.
   \item \textbf{No dynamic model, therefore no tuning constants.} This chapter gives
         the architecture, the failure modes and the measures, but not PID gains or a
         stability proof. Those need a transient model and, ultimately, commissioning
@@ -5410,9 +5439,11 @@ compressor were available A3-rated from a single vendor \\
 design COP 4.67 against 3.53 at the AHRI 6.7\,\textdegree C rating point
 (\S\ref{perf:sec:fullload}) & The design is tuned for the condition it actually runs
 at, not the rating condition. Data-center CHW envelopes reward this \\
-\textbf{N$+$1-shaped redundancy} & Two 75\,kW compressors on a common manifold; losing
-one leaves 50\,\% capacity (\S9.1) & For 24/7/365 IT load, partial failure beats total
-failure. An unequal split would leave 25\,\% \\
+\textbf{Compressor redundancy} & Two 75\,kW compressors on a common manifold; losing
+one leaves 50\,\% capacity (\S9.1). \textbf{Compressors only} --- the shared circuit's
+exchangers and EEV are unduplicated & For 24/7/365 IT load, partial failure beats total
+failure, and the compressor is the likeliest thing to fail. But this is not full
+N$+$1: see \S\ref{imp:sec:architecture} \\
 \textbf{Genuine 5:1 turndown} & VFD $+$ staging covers 150\,kW to the 30\,kW minimum
 without hot-gas bypass (\S\ref{perf:sec:iplv}) & Resolves the turndown floor the
 fixed-speed design could not, and lifts IPLV.IP from 4.43 to 5.23 \\
@@ -5537,29 +5568,38 @@ vendor basis at all \\
 \end{tabularx}
 \end{table}
 
-\section{Priority 2 --- Resolve the Circuit Architecture}
+\section{Priority 2 --- Consider Circuit Redundancy Against the Single Point of Failure}
 \label{imp:sec:architecture}
 
-\textbf{The report is not self-consistent about how many refrigerant circuits exist}
-(\S\ref{ctrl:sec:authority}): Chapter~\ref{ch:comp} and the BOM say two independent
-circuits; \texttt{main.py} models one shared set of exchangers fed by parallel
-compressors. This is not cosmetic --- it decides:
+The circuit architecture is now \textbf{settled: one shared refrigerant circuit} fed
+by two parallel compressors (\S\ref{ctrl:sec:architecture_resolved}). That choice is
+right on the merits --- it keeps the EEV inside its controllable range at minimum load
+(24.3\,\% open, against 12.2\,\% and unworkable on a split-flow arrangement), and it
+means fewer components and less charge, which an A3 system wants.
+
+It does, however, leave an honest weakness worth naming: \textbf{the shared circuit is
+a single point of failure}. Two parallel compressors protect against a compressor
+fault, but the condenser, the evaporator and the expansion valve are each unduplicated
+--- a fault in any of them stops all 150\,kW of cooling. For a facility whose IT load
+runs 24/7/365, that is a real exposure, and the redundancy the design claims
+(\S\ref{pc:sec:pros}) is narrower than a casual reading suggests.
+
+Options, none free:
 
 \begin{itemize}
-  \item \textbf{EEV size and quantity}, and whether the valve keeps control authority
-        at the 30\,kW minimum load (12.2\,\% open on the two-circuit reading, below
-        the workable floor).
-  \item \textbf{Redundancy}, which the design claims as a strength
-        (\S\ref{pc:sec:pros}). Two truly independent circuits fail gracefully; parallel
-        compressors on shared exchangers do not protect against an exchanger fault.
-  \item \textbf{Exchanger count and cost.}
+  \item \textbf{Accept it} and manage the risk operationally (spares held, service
+        contract). Reasonable for an edge facility, and the status quo.
+  \item \textbf{Two fully independent circuits} --- restores graceful degradation to
+        50\,\% on any single fault, at the cost of duplicated exchangers, more charge,
+        higher capital, and a smaller EEV to keep authority at part load.
+  \item \textbf{Duplicate only the cheapest single points} (e.g.\ a parallel EEV with
+        isolation valves), which buys partial coverage for modest cost.
 \end{itemize}
 
-\noindent Recommendation: adopt the \textbf{single-circuit} reading that
-\texttt{main.py} already models --- it gives the better EEV authority, fewer
-components and less charge --- and correct Chapter~\ref{ch:comp}'s wording and the
-BOM to match. The redundancy claim should then be restated honestly as
-\emph{compressor} redundancy, not full-circuit redundancy.
+\noindent Recommendation: \textbf{accept the single circuit}, but state the exposure
+explicitly to the client. The strengths table (\S\ref{pc:sec:pros}) is worded to that
+standard --- ``compressor redundancy'', not ``N$+$1'' --- and any client-facing summary
+should keep it that way.
 
 \section{Priority 3 --- Shorten the Liquid Line}
 \label{imp:sec:liquidline}

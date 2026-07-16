@@ -132,9 +132,9 @@ def plot_authority(one, two, out_path):
     fig, ax = plt.subplots(figsize=(10, 5.4), facecolor=SURFACE)
     _style(ax, axis="y")
     b1 = ax.bar(x - w/2, [r["open_pct"] for r in one], w, color=BLUE, zorder=3,
-                label="One EEV, full flow (as main.py models)")
+                label="One EEV, full flow --- SELECTED (single shared circuit)")
     b2 = ax.bar(x + w/2, [r["open_pct"] for r in two], w, color=YELLOW, zorder=3,
-                label="Two EEVs, split flow (as Ch. Compressor / BOM specify)")
+                label="Two EEVs, split flow --- rejected (shown for comparison)")
     ax.axhline(AUTHORITY_FLOOR_PCT, color=RED, linestyle="--", linewidth=1.6, zorder=4)
     ax.text(len(labels) - 0.45, AUTHORITY_FLOOR_PCT + 1.5,
             f"$\\approx${AUTHORITY_FLOOR_PCT:.0f}\\% --- below this, EEV control degrades",
@@ -151,9 +151,9 @@ def plot_authority(one, two, out_path):
     ax.set_ylim(0, 100)
     ax.legend(fontsize=8.5, edgecolor=BASELINE, loc="upper right")
     ax.text(0.0, -0.20, "Each load point sits at its own reduced condenser-entering-air temperature "
-                        "(AHRI 550/590), so this is the real envelope.\nThe two-EEV case runs out of "
-                        "authority at minimum load; the one-EEV case does not. The architecture is "
-                        "unresolved (see text).",
+                        "(AHRI 550/590), so this is the real envelope.\nThe rejected two-EEV case runs "
+                        "out of authority at minimum load; the selected one-EEV arrangement stays "
+                        "controllable across the full 5:1 turndown.",
             transform=ax.transAxes, fontsize=8, color=MUTED)
     fig.tight_layout()
     fig.savefig(out_path, dpi=150, facecolor=SURFACE)
@@ -200,11 +200,13 @@ def plot_superheat(rows, out_path):
 def write_tables(one, two, sh_rows, out_dir):
     lines = [r"\begin{table}[h!]",
              r"\caption{EEV control authority across the operating envelope. Each load point "
-             r"sits at its own reduced condenser-entering-air temperature per AHRI 550/590.}",
+             r"sits at its own reduced condenser-entering-air temperature per AHRI 550/590. "
+             r"The single-EEV column is the selected arrangement; the two-EEV column is retained "
+             r"as the evidence for that choice.}",
              r"\label{tab:eev_authority}",
              r"\begin{tabularx}{\linewidth}{lLLLLL}", r"\toprule",
              r"\textbf{Load} & \textbf{$T_{air}$ [\textdegree C]} & \textbf{$t_c$ [\textdegree C]} "
-             r"& \textbf{$\Delta p$ [bar]} & \textbf{Opening, 1 EEV} & \textbf{Opening, 2 EEVs} \\",
+             r"& \textbf{$\Delta p$ [bar]} & \textbf{1 EEV (selected)} & \textbf{2 EEVs (rejected)} \\",
              r"\midrule"]
     for a, b in zip(one, two):
         flag = r" $^{\dagger}$" if b["open_pct"] < AUTHORITY_FLOOR_PCT else ""
