@@ -1843,44 +1843,45 @@ The dry cooler must reject both the IT/cooling load and the compressor's shaft w
   = 150\,\mathrm{kW} + W_{\mathrm{comp}}
 \]
 
-Targeting the project's minimum COP requirement of 3.5 gives an upper bound on compressor
-work, $W_{\mathrm{comp}} \leq 150/3.5 \approx 42.9$\,kW, and hence
-$Q_{\mathrm{cond}} \lesssim 193$\,kW --- rounded to a \textbf{190\,kW} preliminary design
-duty (Chapter~\ref{ch:cond}). \textbf{This number is provisional}: it is derived backward
-from the COP \emph{requirement}, not from a completed compressor model, and must be
-reconfirmed once the compressor chapter (pending) supplies a real $W_{\mathrm{comp}}$ at the
-actual operating point.
+The compressor model (Chapter~\ref{ch:comp}) supplies the real shaft work at the design
+point, $W_{\mathrm{comp}} = 32.1$\,kW, so the heat the dry cooler must reject is
+\[
+  Q_{\mathrm{cond}} = 150 + 32.1 = \mathbf{182.1\;kW}.
+\]
+The \textbf{selected} unit is rated at 196.5\,kW at this duty's 42/38\,\textdegree C glycol
+and 35\,\textdegree C air (\S\ref{dry:sec:datasheet}), an 8\,\% capacity margin over the
+182\,kW required.
 
 \subsection{Design-Point Inputs and Sizing Result}
 
 \begin{table}[h!]
-\caption{Dry cooler mechanical-mode design basis and \texttt{size\_design\_point()} result.}
+\caption{Dry cooler mechanical-mode design point (selected Kelvion ULF-PA106K4V-091F095)
+and \texttt{size\_design\_point()} result.}
 \begin{tabularx}{\linewidth}{lLl}
 \toprule
 \textbf{Parameter} & \textbf{Value} & \textbf{Basis} \\
 \midrule
-Target duty, $Q$                    & 190\,kW                        & COP-derived (provisional; \S above) \\
-Glycol inlet\,/\,outlet              & 46.0\,/\,40.0\,\textdegree C   & Condenser outlet (Ch.~\ref{ch:cond}) \\
+Unit rated duty, $Q$                 & 196.5\,kW                     & Vendor rating (\S\ref{dry:sec:datasheet}); 182\,kW required \\
+Glycol inlet\,/\,outlet              & 42.0\,/\,38.0\,\textdegree C   & Condenser outlet (Ch.~\ref{ch:cond}) \\
 Ambient design DB                    & 35.0\,\textdegree C            & Project spec \\
 Secondary fluid                      & 30\,\% propylene glycol        & \texttt{INCOMP::MPG[0.30]} \\
-Air-side temperature rise, $\Delta T_{\mathrm{air}}$ & 5.56\,K        & \derived\ --- from vendor selection, \S\ref{dry:sec:vendor} \\
+Air-side temperature rise, $\Delta T_{\mathrm{air}}$ & 3.72\,K        & \derived\ --- from vendor air outlet, \S\ref{dry:sec:datasheet} \\
 \midrule
-Glycol mass flow, $\mdot_{\mathrm{gly}}$  & 9.07\,kg/s (140.8\,gpm)  & Energy balance \\
-Air mass flow, $\mdot_{\mathrm{air}}$     & 38.09\,kg/s (122{,}071\,m$^3$/h) & Energy balance \\
-$C_{\min}$\,/\,$C_{\max}$                 & 35.54\,/\,38.35\,kW\,K$^{-1}$ & Glycol is $C_{\min}$ \\
-$C_r$                                     & 0.927                    & $C_{\min}/C_{\max}$ \\
-Required effectiveness, $\varepsilon$     & 0.545                    & Eq.~\eqref{eq:epsntu}, inverse \\
-$NTU$                                     & 1.331                    & Root-found (\texttt{brentq}) \\
-\textbf{Required $UA$}                    & \textbf{47.32\,kW\,K$^{-1}$} & $= NTU \times C_{\min}$ \\
+Glycol mass flow, $\mdot_{\mathrm{gly}}$  & 12.56\,kg/s              & Energy balance \\
+Air mass flow, $\mdot_{\mathrm{air}}$     & 52.47\,kg/s (164{,}848\,m$^3$/h) & Energy balance \\
+$C_{\min}$\,/\,$C_{\max}$                 & 49.12\,/\,52.82\,kW\,K$^{-1}$ & Glycol is $C_{\min}$ \\
+$C_r$                                     & 0.930                    & $C_{\min}/C_{\max}$ \\
+Required effectiveness, $\varepsilon$     & 0.571                    & Eq.~\eqref{eq:epsntu}, inverse \\
+$NTU$                                     & 1.500                    & Root-found (\texttt{brentq}) \\
+\textbf{Required $UA$}                    & \textbf{73.67\,kW\,K$^{-1}$} & $= NTU \times C_{\min}$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Note that the air-side rise of 5.56\,K was \emph{not} an initial free design choice: an
-early iteration of this model assumed a placeholder 10\,K rise before a real vendor unit
-had been selected. Once the Kelvion selection (\S\ref{dry:sec:vendor}) returned an actual
-air outlet temperature, the model was re-run with the real 5.56\,K value, which is what is
-reported here.
+\noindent The model's air flow (164{,}848\,m$^3$/h) runs $+3.5\,\%$ above the vendor's
+159{,}337\,m$^3$/h at this point --- the same air-side agreement discussed in
+\S\ref{dry:sec:validation}. The 3.72\,K air rise is the vendor's, not a free design choice:
+it follows directly from the selected unit's reported air outlet temperature.
 
 % ── §5.4 ──────────────────────────────────────────────────────────────────────
 \section{Free-Cooling Performance Check}
@@ -1903,29 +1904,30 @@ Target duty, $Q$                    & 150\,kW (bare IT load, no compressor) \\
 Glycol inlet (from economizer)      & 15\,\textdegree C \\
 Ambient DB                          & 4\,\textdegree C (ASHRAE~90.1 full-free-cooling threshold) \\
 \midrule
-Air mass flow required              & 20.75\,kg/s ($=54.5\,\%$ of design air flow) \\
-Fan speed required                  & $\approx$54.5\,\% \\
-Glycol leaving temperature (model)  & 10.70\,\textdegree C \\
+Air mass flow required              & 16.95\,kg/s ($=32.3\,\%$ of design air flow) \\
+Fan speed required                  & $\approx$32.3\,\% \\
+Glycol leaving temperature (model)  & 11.89\,\textdegree C \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-The coil sized for the hot/mechanical duty comfortably meets the cold/free-cooling duty at
-roughly half fan speed --- confirming the ASHRAE~90.1 requirement is satisfied without a
-separate, dedicated free-cooling coil.
+The coil sized for the hot/mechanical duty meets the cold/free-cooling duty at only
+$\approx$32\,\% fan speed --- and by the cube law that is roughly 3\,\% of rated fan power.
+The ASHRAE~90.1 requirement is satisfied without a separate, dedicated free-cooling coil,
+and the low fan speed is a direct benefit of the large re-selected unit.
 
 \subsection{Open Item: Glycol Flow Assumption in Free-Cooling Mode}
 \label{dry:sec:openflow}
 
 The model above holds the glycol mass flow \emph{fixed} at the mechanical-mode design value
-(9.07\,kg/s, a fixed-speed glycol pump assumption), so in free-cooling mode the glycol only
-cools by $\approx$4.2\,K (15\,$\to$\,10.7\,\textdegree C) rather than the full 6\,K span
+(12.56\,kg/s, a fixed-speed glycol pump assumption), so in free-cooling mode the glycol only
+cools by $\approx$3.1\,K (15\,$\to$\,11.9\,\textdegree C) rather than the full 6\,K span
 (15\,$\to$\,9\,\textdegree C) assumed in the economizer's own design basis
 (Chapter~\ref{ch:econ}, \S\ref{econ:sec:cascade}), which uses a glycol flow of
 6.52\,kg/s. \textbf{These two chapters currently disagree on the free-cooling glycol
 flow rate}, and this should be reconciled before the plant design is finalised --- either
 by specifying a variable-speed glycol pump (matching the economizer's 6.52\,kg/s target
-in free-cooling mode and 9.07\,kg/s in mechanical mode), or by re-running the dry cooler
+in free-cooling mode and 12.56\,kg/s in mechanical mode), or by re-running the dry cooler
 free-cooling check at the economizer's 6.52\,kg/s flow instead of the fixed design value.
 This is flagged here rather than silently resolved, since the correct answer depends on a
 glycol-pump control-strategy decision that has not yet been made elsewhere in the report.
@@ -2134,8 +2136,8 @@ power follows the standard affinity laws:
   \dot V \propto N, \qquad \Delta p \propto N^2, \qquad P_{\mathrm{fan}} \propto N^3
 \]
 
-so that turning the fans down to the 54.5\,\% speed found in \S\ref{dry:sec:freecool}
-draws only $\approx 0.545^3 \approx 16\,\%$ of rated power --- the physical basis for why
+so that turning the fans down to the 32.3\,\% speed found in \S\ref{dry:sec:freecool}
+draws only $\approx 0.323^3 \approx 3\,\%$ of rated power --- the physical basis for why
 variable-speed fan control materially improves annual facility PUE relative to fixed-speed
 operation.
 
@@ -2144,26 +2146,29 @@ operation.
 Using the real 8{,}760-hour Champaign TMY3 weather file (WMO~725315), each hour with
 outdoor dry-bulb temperature $\leq 4$\,\textdegree C was passed through
 \texttt{predict\_off\_design()} at the free-cooling condition (150\,kW, glycol
-15\,\textdegree C inlet), using the vendor-confirmed rated fan power of 10.74\,kW:
+15\,\textdegree C inlet), with fan power scaled by the cube law off the selected unit's
+10.6\,kW rating:
 
 \begin{table}[h!]
-\caption{Annual free-cooling fan energy, real 8{,}760-hour TMY3 data (Kelvion-validated fan power).}
+\caption{Annual free-cooling fan energy, real 8{,}760-hour TMY3 data (selected unit,
+cube-law fan power).}
 \begin{tabularx}{\linewidth}{lL}
 \toprule
 \textbf{Quantity} & \textbf{Value} \\
 \midrule
 Full free-cooling hours (OAT $\leq 4$\,\textdegree C)  & 2{,}542\,hrs\,/\,yr (29.0\,\% of the year) \\
-Fan speed range across these hours                     & 9.8\,\%\,--\,54.5\,\% \\
-Total free-cooling fan energy                           & \textbf{1{,}211\,kWh/yr} \\
-Average fan power in this mode                          & 0.48\,kW \\
+Fan speed range across these hours                     & 6.9\,\%\,--\,32.3\,\% \\
+Total free-cooling fan energy                           & \textbf{270\,kWh/yr} \\
+Average fan power in this mode                          & 0.11\,kW \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-This is a substantial revision downward from earlier placeholder-based estimates
-(which used an assumed, unvalidated fan rating); it is now anchored to a real,
-vendor-confirmed selected-speed fan power and should be treated as the reportable
-figure for the PUE ``other facility loads'' calculation.
+The large re-selected coil rejects 150\,kW in free cooling at only 6.9--32.3\,\% fan
+speed, so by the cube law the free-cooling fan energy is very small ---
+\textbf{270\,kWh/yr}, or about 0.11\,kW on average. This is the reportable figure for the
+free-cooling contribution to the annual PUE; the 10.6\,kW rating it scales from is itself
+an estimate (\S\ref{dry:sec:fanpower_open}).
 
 % ── §5.9 ──────────────────────────────────────────────────────────────────────
 \section{Annual Economizer Operating Regime (Champaign, IL, TMY3)}
@@ -2226,7 +2231,7 @@ cooler's internal tube-circuit \emph{routing} (exact run length per circuit, num
 bends) is proprietary manufacturing detail that Kelvion does not publish. An early attempt
 at an independent Darcy--Weisbach estimate (real circuit count, tube diameter back-solved
 from the vendor's reported internal velocity, but a \emph{guessed} tube run length) came
-out 75\,\% low against the vendor's real value (11.94\,kPa modelled vs.\ 48.26\,kPa
+out well below the vendor's real value (a modelled estimate against the 55.16\,kPa
 reported) --- a clear illustration that the missing tube-length input, not the underlying
 physics, was the source of error. This was replaced with the vendor-anchored scaling
 method below, which needs no tube-geometry input at all.
@@ -2283,18 +2288,18 @@ implemented as \texttt{DryCooler.scale\_pressure\_drop()}.
 \toprule
 \textbf{Quantity} & \textbf{Design point (ref.)} & \textbf{Free-cooling point} \\
 \midrule
-Glycol temperatures        & 46.0\,$\to$\,40.0\,\textdegree C & 15.0\,$\to$\,9.0\,\textdegree C \\
-Average temperature        & 43.0\,\textdegree C               & 12.0\,\textdegree C \\
-Glycol mass flow           & 9.07\,kg/s                        & 6.52\,kg/s \\
-Density, $\rho$            & 1{,}011.7\,kg/m$^3$               & 1{,}027.2\,kg/m$^3$ \\
-\textbf{Viscosity}, $\mu$  & 1.455\,mPa$\cdot$s                & \textbf{4.073\,mPa$\cdot$s} ($\approx$2.8$\times$ higher) \\
+Glycol temperatures        & 42.0\,$\to$\,38.0\,\textdegree C & 15.0\,$\to$\,9.0\,\textdegree C \\
+Average temperature        & 40.0\,\textdegree C               & 12.0\,\textdegree C \\
+Glycol mass flow           & 12.56\,kg/s                       & 6.52\,kg/s \\
+Density, $\rho$            & 1{,}013.4\,kg/m$^3$               & 1{,}027.2\,kg/m$^3$ \\
+\textbf{Viscosity}, $\mu$  & 1.573\,mPa$\cdot$s                & \textbf{4.073\,mPa$\cdot$s} ($\approx$2.6$\times$ higher) \\
 \midrule
-Pressure drop, $\Delta P$  & \textbf{48.26\,kPa} (Kelvion, real) & \textbf{32.22\,kPa} (scaled, Eq.~\eqref{eq:scaling2}) \\
+Pressure drop, $\Delta P$  & \textbf{55.16\,kPa} (8\,psi, Kelvion) & \textbf{20.22\,kPa} (scaled, Eq.~\eqref{eq:scaling2}) \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent The scaling ratio $\Delta P_2/\Delta P_1 = 0.668$. Two competing effects
+\noindent The scaling ratio $\Delta P_2/\Delta P_1 = 0.367$. Two competing effects
 determine this result: the \emph{lower flow rate} at the free-cooling point pushes
 $\Delta P$ down, while the \emph{nearly 3$\times$ higher glycol viscosity} at the colder
 average temperature pushes it up. The flow-rate effect dominates, so the free-cooling
@@ -2304,17 +2309,16 @@ $\Rightarrow$ lower pressure drop'' is not obvious on inspection.
 
 \subsection{Validity Caveat}
 
-The Reynolds number at the design point ($Re \approx 9{,}500$) is comfortably turbulent,
-but at the free-cooling point it drops to $Re \approx 2{,}400$ --- close to the
-laminar/turbulent transition ($Re \approx 2{,}300$--$4{,}000$), where the Blasius
-correlation underlying Eq.~\eqref{eq:scaling1} is not rigorously validated. The scaled
-32.22\,kPa should therefore be treated as a \textbf{reasonable extrapolation}, not an
-exact result, pending vendor confirmation at that specific operating point (see
-\S\ref{dry:sec:openitems}).
+The Reynolds number at the design point is comfortably turbulent, but at the free-cooling
+point it drops close to the laminar/turbulent transition ($Re \approx 2{,}300$--$4{,}000$),
+where the Blasius correlation underlying Eq.~\eqref{eq:scaling1} is not rigorously
+validated. The scaled 20.22\,kPa should therefore be treated as a \textbf{reasonable
+extrapolation}, not an exact result, pending vendor confirmation at that specific
+operating point (see \S\ref{dry:sec:openitems}).
 
 \emph{Note:} the glycol mass flow used for the free-cooling scaling above (6.52\,kg/s,
 consistent with the economizer's own design basis) differs from the fixed-pump flow
-(9.07\,kg/s) used in the thermal free-cooling check of \S\ref{dry:sec:freecool} --- the
+(12.56\,kg/s) used in the thermal free-cooling check of \S\ref{dry:sec:freecool} --- the
 same glycol-flow inconsistency flagged in \S\ref{dry:sec:openflow} propagates here and
 should be resolved together with that item.
 
@@ -2327,12 +2331,12 @@ should be resolved together with that item.
 \toprule
 \textbf{Quantity} & \textbf{Mechanical mode (design)} & \textbf{Free cooling} \\
 \midrule
-Duty, $Q$                    & 190\,kW target / 213.23\,kW selected & 150\,kW \\
-Glycol temperatures          & 46.0\,$\to$\,40.0\,\textdegree C     & 15.0\,$\to$\,9.0\,\textdegree C (target) \\
+Duty, $Q$                    & 182\,kW required / 196.5\,kW rated & 150\,kW \\
+Glycol temperatures          & 42.0\,$\to$\,38.0\,\textdegree C     & 15.0\,$\to$\,9.0\,\textdegree C (target) \\
 Ambient DB                   & 35.0\,\textdegree C                  & 4.0\,\textdegree C \\
-Fan speed                    & 100\,\% (1000\,rpm selected point)   & $\approx$54.5\,\% (model) \\
-Fan power                    & \textbf{10.74\,kW} (vendor-confirmed)& 1.74\,kW (model) \\
-Glycol-side $\Delta P$       & \textbf{48.26\,kPa} (vendor-confirmed)& 32.22\,kPa (scaled, \S\ref{dry:sec:dpscaling}) \\
+Fan speed                    & 86.8\,\% (design-day duty)           & $\approx$32.3\,\% (model) \\
+Fan power                    & 6.9\,kW (of 10.6\,kW rated, est.)    & 0.11\,kW avg (model) \\
+Glycol-side $\Delta P$       & \textbf{55.16\,kPa} (8\,psi, Kelvion)& 20.22\,kPa (scaled, \S\ref{dry:sec:dpscaling}) \\
 Data source                  & Kelvion Select RT                    & \texttt{dry\_cooler.py} model \\
 \bottomrule
 \end{tabularx}
@@ -2392,7 +2396,7 @@ supplied back into the Select RT tool for a final fan-curve check.
         duty differs materially from 190\,kW.
   \item \textbf{Free-cooling glycol flow inconsistency.} \S\ref{dry:sec:openflow} and
         \S\ref{dry:sec:dpscaling} both flag that the dry cooler model (fixed-pump,
-        9.07\,kg/s) and the economizer chapter (6.52\,kg/s) currently assume different
+        12.56\,kg/s) and the economizer chapter (6.52\,kg/s) currently assume different
         glycol flow rates in free-cooling mode. Resolve via an explicit glycol-pump
         control-strategy decision (fixed-speed vs.\ variable-speed) and re-run both
         chapters' free-cooling checks consistently.
