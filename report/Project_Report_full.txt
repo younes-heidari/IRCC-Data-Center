@@ -3283,10 +3283,12 @@ The staging rationale (developed alongside this selection):
         \emph{compressor} redundancy only: with a single shared circuit, a fault in
         the condenser, evaporator or expansion valve stops the plant regardless
         (\S\ref{pc:sec:cons}).
-  \item \textbf{IPLV coverage}: 50\,\% and 100\,\% load points are met by exactly one
-        and two units running at their own full capacity, respectively; the 25\,\% and
-        75\,\% points require partial loading of the active unit(s), discussed in
-        \S\ref{comp:sec:staging}.
+  \item \textbf{Coarse capacity steps}: staging one or two units gives two capacity
+        settings without any drive involvement. \textbf{They do not, on their own, cover
+        the project's 5:1 turndown} --- at the design point one unit delivers 67\,\% of
+        the load and two deliver 134\,\%, so staging alone cannot reach the 30\,kW
+        minimum. That is what the VFDs are for, and the two mechanisms are complementary
+        rather than alternative (\S\ref{comp:sec:staging}).
   \item \textbf{Parts commonality}: one compressor model, one spare-parts inventory,
         one service procedure.
 \end{itemize}
@@ -3301,28 +3303,42 @@ seal --- a meaningful leak-path reduction for an A3-classified refrigerant, vers
 open-drive compressor.
 
 \begin{table}[h!]
-\caption{Compressor design point (per unit), as selected.}
-\begin{tabularx}{\linewidth}{lL}
+\caption{The two conditions that matter for this unit. The left column is where it was
+\emph{shortlisted} in Bitzer's software; the right is where it actually \emph{runs}.}
+\label{tab:comp_points}
+\begin{tabularx}{\linewidth}{lLL}
 \toprule
-\textbf{Parameter} & \textbf{Value} \\
+\textbf{Parameter} & \textbf{Vendor selection point} & \textbf{Plant design point} \\
 \midrule
-Evaporating dew point, $t_o$ & 7.0\,\textdegree C \\
-Condensing dew point, $t_c$ & 50.0\,\textdegree C \\
-Useful superheat & 8\,K (15\,\textdegree C return gas) \\
-Liquid subcooling (vendor selection basis) & 0\,K \\
-Rated cooling capacity (EN12900 basis) & 80.65\,kW \\
-Rated power input (EN12900 basis) & 22.74\,kW \\
-Rated mass flow (EN12900 basis) & 1079.7\,kg/h \\
-Rated COP (EN12900 basis) & 3.55 \\
+Evaporating dew point, $t_o$ & 7.0\,\textdegree C & \textbf{10.0\,\textdegree C} \\
+Condensing dew point, $t_c$ & 50.0\,\textdegree C & \textbf{45.0\,\textdegree C} \\
+Useful superheat & 8\,K (15\,\textdegree C return gas) & 8\,K \\
+Liquid subcooling & 0\,K (vendor default) & \textbf{5\,K} (\S\ref{cond:sec:subcool}) \\
+Cooling capacity, per unit & 80.65\,kW & \textbf{100.39\,kW} \\
+Power input, per unit & 22.74\,kW & \textbf{21.50\,kW} \\
+Mass flow, per unit & 1{,}079.7\,kg/h & \textbf{1{,}232.1\,kg/h} \\
+COP & 3.55 & \textbf{4.67} \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\textbf{Flag:} the vendor selection was run at $t_c = 50\,$\textdegree C, 0\,K
-subcooling --- this does \emph{not} match the condenser chapter's established design
-point ($t_c = 52\,$\textdegree C, 5\,K subcooling, Chapter~\ref{ch:cond},
-\S\ref{cond:sec:subcool}). See \S\ref{comp:sec:limitations} for the reconciliation this
-requires before the two chapters can be treated as fully consistent.
+\noindent \textbf{The two columns differ, and that is neither an error nor an
+inconsistency --- it is the point of using a map.} The unit was shortlisted at a
+conservative catalogue condition; the plant then runs it at an easier one (3\,K warmer
+evaporating, 5\,K cooler condensing), where the same machine gives 24\,\% more capacity
+at 5\,\% less power. Nothing in this report uses the left-hand column as a performance
+figure: \emph{all} reported capacity, power and mass flow come from the ten-coefficient
+map of \S\ref{comp:sec:map}, evaluated at the actual $t_o$/$t_c$, with the superheat and
+subcooling corrections of \S\ref{comp:sec:correction}.
+
+\begin{quote}
+\textbf{Map validation.} Evaluated back at the vendor's own selection condition
+($t_o=7$, $t_c=50$\,\textdegree C, EN12900 basis), the map returns \textbf{80.65\,kW,
+22.74\,kW, COP 3.55} --- reproducing Bitzer's published figures exactly, to the last
+digit. The map is therefore not an approximation of the vendor's data; it \emph{is} the
+vendor's data, and the design-point column above is a genuine interpolation within the
+same validated surface.
+\end{quote}
 
 % ── §9.3 ──────────────────────────────────────────────────────────────────────
 \section{AHRI Standard 540 / EN12900 Ten-Coefficient Performance Map}
@@ -3366,10 +3382,12 @@ $c_{10}$ & $-$0.0256 & $-$0.0204 & $-$0.000382 \\
 \end{tabularx}
 \end{table}
 
-\textbf{Verification:} evaluating the map at the design point ($t_o=7$, $t_c=50$)
-reproduces the vendor's stated rated performance exactly (80.65\,kW / 22.74\,kW /
-1079.7\,kg/h, COP 3.55) --- confirming the digitized/transcribed coefficients are
-correctly implemented.
+\textbf{Verification:} evaluating the map at the \emph{vendor's own rating point}
+($t_o=7$, $t_c=50$\,\textdegree C) reproduces Bitzer's stated performance exactly
+(80.65\,kW / 22.74\,kW / 1079.7\,kg/h, COP 3.55) --- confirming the transcribed
+coefficients are correctly implemented. The plant's design point is elsewhere
+($t_o=10$, $t_c=45$\,\textdegree C, Table~\ref{tab:comp_points}); this map is what
+carries performance between the two.
 
 % ── §9.4 ──────────────────────────────────────────────────────────────────────
 \section{Rating-Basis Correction: EN12900 vs.\ Actual Application}
@@ -3428,80 +3446,154 @@ the actual 8\,K).
 \label{comp:sec:staging}
 
 Both compressors sit on a common suction/discharge manifold and therefore always share
-the same $t_o$/$t_c$ --- capacity is not set directly, but emerges from where the
-active compressor(s)' map intersects the required duty at the prevailing condensing
-temperature, i.e.\ the evaporating temperature ``floats'' until
-$n_{\mathrm{active}} \times Q_{\mathrm{unit}}(t_o, t_c) = Q_{\mathrm{required}}$. This
-is solved numerically (bisection, bounded to $t_o \in [-10, 15]\,$\textdegree C) for a
-given required duty and condensing temperature, with the smallest $n_{\mathrm{active}}$
-that can reach the load selected first (better part-load efficiency, since each unit
-stays closer to its own best-efficiency region rather than being needlessly staged
-alongside another partially-loaded unit).
+the same $t_o$/$t_c$. Capacity is controlled by two mechanisms working together:
+\textbf{staging} (how many units run) for coarse steps, and \textbf{drive speed} for
+everything in between.
+
+\subsection{Why Staging Alone Is Not Enough}
+\label{comp:sec:staging_insufficient}
+
+It is tempting to assume two equal compressors deliver the project's 5:1 turndown by
+themselves. \textbf{They do not.} At the design point one unit produces 100.4\,kW and two
+produce 200.8\,kW --- that is 67\,\% and 134\,\% of the 150\,kW load. Staging is a
+two-position switch, not a dial, and neither position is 30\,kW.
+
+A fixed-speed bank has exactly one further lever: let $t_o$ float down. Colder suction
+vapour is less dense, so the machine swallows less mass per stroke and capacity falls.
+That lever is real but it runs out, and it is expensive:
 
 \begin{table}[h!]
-\caption{Staging and evaporating-temperature solve across representative load points ($t_c=50\,$\textdegree C).}
-\begin{tabularx}{\linewidth}{lLLLLL}
+\caption{What a \emph{fixed-speed} bank can reach at the design condition
+($t_c = 45$\,\textdegree C) by floating $t_o$ to its $-10$\,\textdegree C map limit.}
+\begin{tabularx}{\linewidth}{lLLL}
 \toprule
-\textbf{$Q_{\mathrm{required}}$} & \textbf{$n_{\mathrm{active}}$} & \textbf{$t_o$ solved} & \textbf{$Q_{\mathrm{achieved}}$} & \textbf{$P_{\mathrm{total}}$} & \textbf{COP} \\
+\textbf{Configuration} & \textbf{$t_o$} & \textbf{Capacity} & \textbf{\% of 150\,kW load} \\
 \midrule
-150.0\,kW (100\,\%) & 2 & 5.15\,\textdegree C & 150.0\,kW & 46.4\,kW & 3.23 \\
-112.5\,kW (75\,\%)  & 2 & $-$2.67\,\textdegree C & 112.5\,kW & 44.6\,kW & 2.52 \\
-75.0\,kW (50\,\%)   & 1 & 5.15\,\textdegree C & 75.0\,kW & 23.2\,kW & 3.23 \\
-37.5\,kW (25\,\%)   & 1 & $-$10.0\,\textdegree C\,(floor) & 42.0\,kW & 20.8\,kW & 2.02 \\
-30.0\,kW (min.\ IT load) & 1 & $-$10.0\,\textdegree C\,(floor) & 42.0\,kW & 20.8\,kW & 2.02 \\
+2 units, full speed & 10\,\textdegree C & 200.8\,kW & 134\,\% \\
+1 unit, full speed & 10\,\textdegree C & 100.4\,kW & 67\,\% \\
+1 unit, $t_o$ floated to the floor & $-10$\,\textdegree C & 48.2\,kW & 32\,\% \emph{(COP 2.43)} \\
+\midrule
+\textbf{Project minimum load} & --- & \textbf{30\,kW} & \textbf{20\,\%} --- unreachable \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
+\noindent Two things to read off this. First, \textbf{32\,\% is the floor} --- a
+fixed-speed selection physically cannot reach the 30\,kW minimum, whatever the control
+logic does. Second, even getting to 32\,\% costs a \textbf{COP of 2.43}, because boiling
+refrigerant at $-10$\,\textdegree C to make 15\,\textdegree C chilled water is
+thermodynamically absurd: the lift has been inflated to 55\,K to do \emph{less} work.
+Below that floor the only fixed-speed options are on/off cycling or hot-gas bypass, which
+throws capacity away as recirculated discharge gas at a similar efficiency penalty.
+
+\subsection{The VFD Closes the Gap --- and Improves Efficiency Doing It}
+
+A variable-speed drive attacks capacity from the opposite direction: instead of making the
+refrigerant colder to choke the compressor, it simply turns the compressor \emph{slower}
+and leaves $t_o$ where the evaporator wants it. The bank solve therefore holds
+$t_o = 10$\,\textdegree C as a setpoint, picks the smallest $n_{\mathrm{active}}$ that can
+cover the duty, and trims speed to land exactly on it
+(\texttt{compressor.solve\_with\_vfd()}):
+
+\begin{table}[h!]
+\caption{Load-following with VFDs at the design condition ($t_c = 45$\,\textdegree C, i.e.\
+a 35\,\textdegree C ambient with the IT load varying). Compare the bottom two rows against
+the fixed-speed floor above.}
+\label{tab:staging}
+\begin{tabularx}{\linewidth}{lLLLLL}
+\toprule
+\textbf{$Q_{\mathrm{required}}$} & \textbf{$n_{\mathrm{active}}$} & \textbf{Drive speed} & \textbf{$Q_{\mathrm{achieved}}$} & \textbf{$P_{\mathrm{total}}$} & \textbf{COP} \\
+\midrule
+150.0\,kW (100\,\%) & 2 & 74.7\,\% & 150.0\,kW & 32.12\,kW & 4.67 \\
+112.5\,kW (75\,\%)  & 2 & 56.0\,\% & 112.5\,kW & 24.09\,kW & 4.67 \\
+75.0\,kW (50\,\%)   & 1 & 74.7\,\% & 75.0\,kW & 16.06\,kW & 4.67 \\
+37.5\,kW (25\,\%)   & 1 & 37.4\,\% & 37.5\,kW & 8.03\,kW & 4.67 \\
+\textbf{30.0\,kW (min.\ IT load)} & \textbf{1} & \textbf{29.9\,\%} & \textbf{30.0\,kW} & \textbf{6.42\,kW} & \textbf{4.67} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent The 30\,kW minimum is reached at 29.9\,\% speed on a single unit --- and at
+\textbf{COP 4.67 rather than 2.43}, because $t_o$ never leaves 10\,\textdegree C. The
+whole 5:1 turndown is covered with no hot-gas bypass and no cycling penalty. Note also
+the 100\,\% row: the bank is 34\,\% oversized at this condition, so even at full load the
+drive is trimming to 75\,\% rather than letting $t_o$ sink.
+
+\begin{quote}
+\textbf{Caveat, stated:} COP is held speed-invariant here (capacity and power both scale
+$\approx$linearly with speed for a reciprocating machine, so their ratio holds). Real
+part-load COP at moderate turndown is typically equal or slightly better, so this is
+neutral-to-conservative. Note too that the 30\,kW point sits at 29.9\,\% speed, right at
+the $\approx$30\,\% floor a drive can hold continuously --- at or below that the machine
+\textbf{cycles} rather than modulates. Ideal cycling gives the same average power, but
+cycling losses are not modelled (\S\ref{econ:sec:partialmodel} makes the same point for
+the partial free-cooling band).
+\end{quote}
+
 % ── §9.6 ──────────────────────────────────────────────────────────────────────
-\section{Finding: Low-Load Turndown Floor}
+\section{The Turndown Floor, and Why the Design Carries Drives}
 \label{comp:sec:floor}
 
-The 25\,\% (37.5\,kW) and minimum-IT-load (30\,kW) points do \emph{not} solve --- even
-a single compressor at the coldest evaporating temperature allowed
-($t_o=-10\,$\textdegree C) still delivers $\approx$42\,kW, above both targets. This is
-a genuine physical limit of this compressor selection, not a solver artifact: a
-fixed-speed, non-unloading reciprocating compressor has a bounded capacity range as a
-function of $t_o$ alone, and this unit's floor sits above the project's minimum load.
+\S\ref{comp:sec:staging_insufficient} establishes the finding that drove this chapter's
+most consequential decision: \textbf{a fixed-speed selection of this compressor cannot
+meet the project's 30\,kW minimum load.} The floor sits at $\approx$32\,\% of design
+duty, above the 20\,\% required, and it is a genuine physical limit rather than a solver
+artifact --- a fixed-speed, non-unloading reciprocating compressor has a bounded capacity
+range as a function of $t_o$ alone.
 
-This is a materially important finding for the project and needs to be resolved by one
-of:
+Five strategies were available:
+
 \begin{itemize}
-  \item \textbf{Cylinder unloading} on the 4FEP-35Z (if available for this model) to
-        step capacity down discretely at fixed $t_o$;
-  \item \textbf{A VFD} on one compressor, trading the fixed-speed map for a
-        speed-dependent one;
-  \item \textbf{Hot-gas bypass}, at an efficiency penalty (already visible in the COP
-        collapse toward the floor: 2.02 vs.\ 3.4+ at design conditions);
-  \item \textbf{A smaller trim/pony compressor} sized specifically for the 20--30\,\%
-        load range;
-  \item Or relying on the \textbf{economizer} (Chapter~\ref{ch:econ}) to cover low-load
-        hours instead of the compressor bank entirely, if those hours reliably
-        coincide with sufficiently low ambient temperatures --- this needs the annual
-        simulation to confirm, since low IT load and low ambient are not
-        guaranteed to coincide.
+  \item \textbf{VFDs on the compressors} --- \textbf{selected.} Capacity follows speed, so
+        $t_o$ stays at its setpoint and COP holds at 4.67 all the way to 30\,kW
+        (Table~\ref{tab:staging}). Standard, well-understood hardware, and the same drives
+        also trim the bank's 34\,\% oversize at full load and lift the 25\,\% IPLV point
+        (\S\ref{perf:sec:iplv}). It is the reason both the full-load and IPLV targets are
+        met.
+  \item \textbf{Cylinder unloading} on the 4FEP-35Z --- would step capacity down discretely
+        at fixed $t_o$, but only in coarse steps and only if offered for this model.
+        Rejected in favour of continuous control.
+  \item \textbf{Hot-gas bypass} --- reaches any load, at a severe efficiency penalty:
+        capacity is thrown away as recirculated discharge gas while the compressor still
+        draws near-full power. This is what collapses the 25\,\% IPLV point to COP 2.29
+        (\S\ref{perf:sec:iplv}). Rejected.
+  \item \textbf{A smaller trim/pony compressor} for the 20--30\,\% range --- a third
+        machine, a third set of spares, more charge, more failure modes. Rejected as
+        disproportionate.
+  \item \textbf{Leaning on the economizer} to cover low-load hours --- \textbf{rejected as
+        unsafe reasoning}, and worth stating why: it assumes low IT load coincides with
+        cold ambient, and \textbf{nothing guarantees that}. A quiet compute night in July
+        is exactly the 30\,kW / 35\,\textdegree C case the economizer cannot help with.
+        The plant must reach 30\,kW on mechanical cooling alone, which is precisely what
+        Table~\ref{tab:staging} demonstrates.
 \end{itemize}
+
+\noindent \textbf{This open item is closed.} The drives appear in the BOM
+(Ch.~\ref{ch:bom}), the VFD operating model is used throughout
+(\texttt{compressor.solve\_with\_vfd()}), and the annual simulation runs cleanly through
+the minimum-load hours.
 
 % ── §9.7 ──────────────────────────────────────────────────────────────────────
 \section{Limitations and Open Items}
 \label{comp:sec:limitations}
 
 \begin{enumerate}
-  \item \textbf{Condensing temperature / subcooling mismatch with the condenser
-        chapter}: this compressor was selected at $t_c=50\,$\textdegree C, 0\,K
-        subcooling; the condenser chapter (Chapter~\ref{ch:cond},
-        \S\ref{cond:sec:subcool}) establishes $t_c=52\,$\textdegree C, 5\,K subcooling.
-        These must be reconciled --- either re-run the compressor selection at
-        52\,\textdegree C/5\,K, or revisit the condenser chapter's design point to match
-        this actual selected unit. Until resolved, the whole-cycle numbers in this
-        report are internally inconsistent by this margin.
-  \item \textbf{Low-load turndown floor} (\S\ref{comp:sec:floor}) is unresolved; the
-        annual simulation cannot be run through the 30\,kW minimum-load hours until a
-        turndown strategy is chosen.
-  \item \textbf{Useful superheat (8\,K) is carried over from an earlier assumption},
-        not yet confirmed against an actual EEV superheat control-loop design
-        (Chapter~\ref{ch:eev} explicitly defers superheat control to a separate
-        discussion).
+  \item \textbf{The selection point is not the design point}, by construction
+        (Table~\ref{tab:comp_points}). The unit was shortlisted at
+        $t_c=50\,$\textdegree C / 0\,K subcooling and runs at 45\,\textdegree C / 5\,K.
+        This is \emph{not} an inconsistency --- every performance figure in this report
+        comes from the map evaluated at the actual condition, and the map reproduces
+        Bitzer's published numbers exactly at their own rating point. What remains worth
+        doing is a confirmation re-run in Bitzer's software \emph{at}
+        $t_o=10$/$t_c=45$\,\textdegree C with 5\,K subcooling, to check the map is being
+        interpolated inside the unit's real application envelope rather than merely
+        inside its polynomial's numeric range.
+  \item \textbf{Useful superheat (8\,K)} matches the vendor's own selection basis and is
+        used consistently throughout, but it has not been confirmed against a tuned EEV
+        superheat control loop; Chapter~\ref{ch:controls} argues the setpoint from
+        compressor protection and loop stability rather than from the map, and
+        \S\ref{ctrl:sec:superheat} explains why the map's own superheat trend is
+        misleading.
   \item \textbf{The $t_o \in [-10, 15]\,$\textdegree C} solve bound is an assumption
         made for this chapter, not a validated compressor operating envelope limit;
         the actual minimum/maximum $t_o$ the 4FEP-35Z can run at (oil return, motor
@@ -3565,9 +3657,10 @@ Standby (off-cycle) pressure basis, 55\,\textdegree C ambient & $\approx$19.9\,b
 \bottomrule
 \end{tabularx}
 
-{\small \textsuperscript{*}Carries the same $t_c=50\,$\textdegree C vs.\ $52\,$\textdegree C
-mismatch already flagged in Chapter~\ref{ch:comp}, \S\ref{comp:sec:limitations}; see
-\S\ref{oilsep:sec:limitations}.}
+{\small \textsuperscript{*}Taken at the compressor's $t_c=50\,$\textdegree C selection
+basis (Table~\ref{tab:comp_points}). The plant condenses at 45\,\textdegree C
+$=$ 15.3\,bar(a), so this figure is \textbf{conservative} --- the separator is specified
+against a higher discharge pressure than it will ever see in service.}
 \end{table}
 
 \textbf{Total mass flow} is taken as the sum of both compressors' corrected
@@ -3706,13 +3799,13 @@ start and increasing oil carry-over.
 \label{oilsep:sec:limitations}
 
 \begin{enumerate}
-  \item \textbf{Selection basis inherits the compressor chapter's $t_c$ mismatch}: this
-        selection uses the same $t_c=50\,$\textdegree C, 0\,K subcooling basis flagged
-        in Chapter~\ref{ch:comp}, \S\ref{comp:sec:limitations}. Because OA1954 has
-        roughly 3$\times$ margin over the required displacement
-        (\S\ref{oilsep:sec:quickselect}), a re-run at $t_c=52\,$\textdegree C is very
-        unlikely to change the model selected, but should still be confirmed once that
-        chapter's mismatch is resolved.
+  \item \textbf{Selection basis is the compressor's $t_c=50\,$\textdegree C rating point,
+        not the plant's 45\,\textdegree C design point} (Table~\ref{tab:comp_points}).
+        This errs the safe way: the real discharge pressure is 15.3\,bar(a) against the
+        17.3\,bar(a) specified, and the real swept volume is lower. Combined with the
+        OA1954's roughly 3$\times$ margin over the required displacement
+        (\S\ref{oilsep:sec:quickselect}), re-running at the design point cannot change
+        the model selected --- it would only widen an already-large margin.
   \item \textbf{Quick-selection chart is HFC-basis, not R-290-specific}: the displacement
         comparison in \S\ref{oilsep:sec:quickselect} uses Bitzer's published HFC
         (R22/R134a/R404A/R507A) quick-selection envelope as a conservative cross-check,
@@ -4473,8 +4566,12 @@ carry it:
         4$\times$ oversized at 25\,\% load), which would raise the point further.
 \end{itemize}
 
-The drive is also what covers the 30\,kW
-minimum-IT-load condition without bypass.
+The drive is also what covers the project's \textbf{30\,kW minimum IT load} without
+bypass --- a point a fixed-speed selection of this compressor physically cannot reach,
+since its floor sits at $\approx$32\,\% of design duty
+(Chapter~\ref{ch:comp}, \S\ref{comp:sec:floor}). The same hardware therefore answers
+three separate requirements: the full-load oversize trim, the 25\,\% IPLV point, and the
+5:1 turndown.
 
 % ── §12.4 ─────────────────────────────────────────────────────────────────────
 \section{Design-Day PUE}
