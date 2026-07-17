@@ -49,9 +49,20 @@ B = D_H * PHI / 2               # 2.34 mm channel spacing
 L_W, L_V = 0.195, 0.600         # confirmed Kelvion HP DW 500H plate
 N_CP_EVAP, N_CP_COND = 38, 47   # refrigerant channels (main.py)
 
-# Line sizes at the revised design point (main.py's select_tube output)
+# Line sizes at the design point (main.py's select_tube output)
 ID_SUCTION, ID_DISCHARGE, ID_LIQUID = 0.06287, 0.03823, 0.03388
-LEN_SUCTION, LEN_DISCHARGE, LEN_LIQUID = 15.0, 15.0, 15.0   # ASSUMED, see report
+# Tight, charge-minimized machine-room layout (A3 refrigerant -> charge is the
+# safety currency, so line length is a design decision, not an afterthought).
+# The LIQUID line dominates the inventory -- it is the only line holding dense
+# liquid -- so the condenser and evaporator are deliberately co-located to keep
+# it short (4 m). Suction/discharge hold low-density vapour, so their length is
+# nearly immaterial to charge; the discharge line is the longest of the three
+# only because the oil separator sits in it. The floor on all three is set by
+# service clearance, isolation valves, compressor vibration loops, and bend
+# radii -- below this is not credible for field-installed 150 kW equipment.
+LEN_LIQUID = 4.0
+LEN_SUCTION = 4.0
+LEN_DISCHARGE = 5.0
 
 # NO LIQUID RECEIVER -- see the report's receiver chapter. The project brief
 # admits one only "if required by the chosen architecture", and it is not:
@@ -95,9 +106,9 @@ def inventory():
                                  0.45 * rho_l_c + 0.55 * rho_v_c),
         ("Evaporator (2-phase)", V_evap, 0.05 * rho_l_o + 0.95 * rho_v_o,
                                   0.20 * rho_l_o + 0.80 * rho_v_o),
-        ("Liquid line (15 m)", V_liq, rho_liq_line, rho_liq_line),
-        ("Suction line (15 m)", V_suc, rho_suc, rho_suc),
-        ("Discharge line (15 m)", V_dis, rho_dis, rho_dis),
+        (f"Liquid line ({LEN_LIQUID:.0f} m)", V_liq, rho_liq_line, rho_liq_line),
+        (f"Suction line ({LEN_SUCTION:.0f} m)", V_suc, rho_suc, rho_suc),
+        (f"Discharge line ({LEN_DISCHARGE:.0f} m)", V_dis, rho_dis, rho_dis),
         ("Oil separator (40 L vessel)", 0.040, rho_v_c, rho_v_c),
         ("Compressors (2 x, oil-dissolved)", None, 0.4, 1.2),  # kg directly, not V*rho
     ]
@@ -170,12 +181,12 @@ def plot_inventory(inv, out_path):
     ax.set_xlabel("R-290 charge [kg]   (bar = mid-estimate, whiskers = bounds)",
                   color=SECONDARY, fontsize=10)
     tl, th = totals(inv)
-    ax.set_title(f"R-290 charge inventory at the revised design point --- total {tl:.1f} to {th:.1f} kg",
+    ax.set_title(f"R-290 charge inventory at the design point --- total {tl:.1f} to {th:.1f} kg",
                  color=PRIMARY, fontsize=12, loc="left")
     ax.set_xlim(0, max(hi) * 1.42)
-    ax.text(0.0, -0.155, "Ranges reflect two-phase void fraction (exchangers), receiver fill level, and "
-                          "oil-dissolved refrigerant.\nLine lengths are an assumed 15 m each --- the project brief "
-                          "scopes piping to diameters only.",
+    ax.text(0.0, -0.155, "Ranges reflect two-phase void fraction (exchangers) and oil-dissolved "
+                          "refrigerant.\nCharge-minimized layout: 4 m liquid line (condenser and evaporator "
+                          "co-located), no receiver; brief scopes piping to diameters only.",
             transform=ax.transAxes, fontsize=8, color=MUTED)
     fig.tight_layout()
     save_figure(fig, out_path, facecolor=SURFACE)
@@ -240,8 +251,8 @@ def plot_concentration(m_charge, out_path):
 def write_tables(inv, m_hi, out_dir):
     tl, th = totals(inv)
     lines = [r"\begin{table}[h!]",
-             r"\caption{R-290 charge inventory at the revised design point. Ranges reflect "
-             r"two-phase void fraction, receiver fill level, and oil-dissolved refrigerant.}",
+             r"\caption{R-290 charge inventory at the design point (4\,m liquid line, no "
+             r"receiver). Ranges reflect two-phase void fraction and oil-dissolved refrigerant.}",
              r"\label{tab:charge_inventory}",
              r"\begin{tabularx}{\linewidth}{lLLL}", r"\toprule",
              r"\textbf{Component} & \textbf{Internal volume} & \textbf{Charge (low)} & \textbf{Charge (high)} \\",

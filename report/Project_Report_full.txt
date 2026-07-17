@@ -4282,27 +4282,29 @@ subcooling moves state~3 right, dragging state~4 with it along the isenthalpic
 expansion, so more of the refrigerant flashes to vapour before it can absorb any
 useful heat.
 
-\section{Finding 2: A Receiver Is $\approx$25\,\% of the Charge, in an A3 System}
+\section{Finding 2: A Receiver Would Be a Third to a Half of the Charge, in an A3 System}
 \label{receiver:sec:charge_cost}
 
-The withdrawn F252HP held \textbf{2.97--6.16\,kg} of a then-13.9--20.3\,kg total
-inventory --- roughly a quarter of the system charge, sitting in a vessel whose only
-purpose is to hold charge. For an A3 refrigerant this is close to circular: the
-receiver holds charge, the charge drives the EN~378 obligations
-(Chapter~\ref{ch:safety}), and a larger charge demands a larger receiver.
+An F252HP receiver would hold \textbf{2.97--6.16\,kg} of refrigerant. Added to the
+charge-minimized 5.5--8.7\,kg inventory of Chapter~\ref{ch:safety}, that is
+\textbf{35--42\,\% of the whole system charge}, sitting in a vessel whose only purpose is
+to hold charge. For an A3 refrigerant this is close to circular: the receiver holds
+charge, the charge drives the EN~378 obligations (Chapter~\ref{ch:safety}), and a larger
+charge demands a larger receiver. The tighter the rest of the plant is made, the worse
+that ratio gets --- which is exactly the direction this design has taken the line lengths.
 
-The withdrawal removes it outright:
+Omitting it, both columns at the same charge-minimized line lengths:
 
 \begin{table}[h!]
-\caption{Effect of omitting the receiver on the system charge and its EN~378 consequences.}
+\caption{Effect of omitting the receiver on the system charge and its EN~378 consequences
+(both columns at the adopted 4\,m liquid line).}
 \begin{tabularx}{\linewidth}{lLL}
 \toprule
 & \textbf{With F252HP receiver} & \textbf{No receiver (adopted)} \\
 \midrule
-System charge & 13.9--20.3\,kg & \textbf{10.9--14.1\,kg} \\
-Emergency ventilation (EN 378-3) & 375\,m$^3$/h & \textbf{294\,m$^3$/h} \\
-Room volume to reach LFL on full release & 533\,m$^3$ & 371\,m$^3$ \\
-Receiver adequacy & \textbf{F252HP undersized} (11.3\,kg $<$ 13.9\,kg low bound) & Not applicable \\
+System charge & 8.4--14.8\,kg & \textbf{5.5--8.7\,kg} \\
+Emergency ventilation (EN 378-3) & 303\,m$^3$/h & \textbf{213\,m$^3$/h} \\
+Room volume to reach LFL on full release & 221\,m$^3$ & \textbf{143\,m$^3$} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -5144,61 +5146,69 @@ two-phase exchangers are genuinely uncertain. Safety systems are sized on the
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\linewidth]{figures/safety/charge_inventory.pdf}
-\caption{R-290 charge inventory at the design point. Whiskers show the
-bounds from void fraction, receiver fill level, and oil-dissolved refrigerant.}
+\caption{R-290 charge inventory at the design point (4\,m liquid line, no receiver).
+Whiskers show the bounds from two-phase void fraction and oil-dissolved refrigerant.}
 \label{fig:charge_inv}
 \end{figure}
 
 \subsection{What Dominates the Inventory}
 \label{safe:sec:higher}
 
-The total comes to \textbf{10.9--14.1\,kg}, and it is worth naming which items carry it,
-because the intuition that ``the charge is in the heat exchangers'' is wrong here. The
-\textbf{liquid line alone is 6.33\,kg} --- roughly half the system --- because it is the
-only component holding dense subcooled liquid over an appreciable length. Two items that
-are easy to overlook are individually significant: the \emph{oil separator} holds 40\,L
-of discharge vapour (1.37\,kg), and the suction and discharge lines together hold
-1.12\,kg. The exchangers, despite the confirmed 195\,$\times$\,600\,mm plate being large,
-contribute comparatively little.
+The total comes to \textbf{5.5--8.7\,kg}, and it is worth naming which items carry it,
+because the answer has been \emph{engineered} rather than merely observed. In an early
+layout the liquid line dominated the whole inventory --- it is the only line holding dense
+subcooled liquid, and at a loose 15\,m it alone would be 6.3\,kg, half the system. So the
+plant is deliberately laid out to make that line short: co-locating the condenser and
+evaporator holds the liquid line to \textbf{4\,m and 1.69\,kg} (\S\ref{safe:sec:linelength}).
+
+With that done, no single item dominates any more. The largest is now the
+\textbf{condenser two-phase holdup (1.7--2.9\,kg)}, followed by the liquid line
+(1.69\,kg) and the \emph{oil separator}'s 40\,L of discharge vapour (1.37\,kg). The
+suction and discharge lines, being low-density vapour, together hold only
+\textbf{0.3\,kg} despite their length --- which is exactly why the layout effort is spent
+on the liquid line and not on them.
 
 \noindent Had a \textbf{liquid receiver} been fitted, the inventory would read
-\textbf{13.9--20.3\,kg} --- roughly 25\,\% higher, and enough to make every EN~378
-obligation in Part~B correspondingly heavier. Omitting it is the single largest
-charge-reduction decision in the design (\S\ref{receiver:sec:charge_cost}).
+\textbf{8.4--14.8\,kg} --- and because the rest of the plant is now so lean, that receiver
+would be a \emph{third to a half} of the whole charge
+(\S\ref{receiver:sec:charge_cost}), making every EN~378 obligation in Part~B
+correspondingly heavier. Omitting it is the single largest charge-reduction decision in
+the design; minimizing the liquid line is the second.
 
-\subsection{The Dominant Uncertainty --- and the Design Lever}
+\subsection{The Liquid Line: the Lever, and Where It Bottoms Out}
 \label{safe:sec:linelength}
 
-The single largest line item is the \textbf{liquid line at 6.33\,kg}, and it rests
-entirely on an \assumed{} 15\,m length --- the project brief scopes piping to
-diameters only (\S\ref{piping:sec:scope}). The charge scales almost linearly with
-it:
+The liquid line is the one line whose length matters to charge, at
+\textbf{0.42\,kg/m} of dense subcooled liquid --- roughly 25 times the suction line's
+contribution per metre. The project brief scopes piping to diameters only
+(\S\ref{piping:sec:scope}), so its length is a layout choice, and this design spends that
+choice: the condenser and evaporator are placed adjacent so the run is \textbf{4\,m},
+which is about the practical floor once isolation valves, bend radii and service
+clearance are allowed for. The charge scales almost linearly with it:
 
 \begin{table}[h!]
-\caption{System charge vs.\ the assumed liquid-line length. The liquid line is both
-the dominant uncertainty and, now that the receiver is gone, the most effective
-remaining charge-reduction lever.}
+\caption{System charge vs.\ liquid-line length (suction/discharge held at the adopted
+4\,/\,5\,m). The 4\,m row is the design; longer rows show what a looser layout would cost.}
 \label{tab:charge_sensitivity}
 \begin{tabularx}{\linewidth}{lLL}
 \toprule
-\textbf{Liquid-line length} & \textbf{Total charge} & \textbf{vs.\ the 15\,m baseline} \\
+\textbf{Liquid-line length} & \textbf{Total charge} & \textbf{vs.\ the 4\,m design} \\
 \midrule
-5\,m  & 6.7--9.9\,kg   & $-39$\,\% \\
-10\,m & 8.8--12.0\,kg  & $-18$\,\% \\
-\textbf{15\,m (assumed)} & \textbf{10.9--14.1\,kg} & baseline \\
-20\,m & 13.0--16.2\,kg & $+16$\,\% \\
-25\,m & 15.1--18.3\,kg & $+33$\,\% \\
+3\,m  & 5.0--8.2\,kg   & $-8$\,\% \\
+\textbf{4\,m (adopted)} & \textbf{5.5--8.7\,kg} & baseline \\
+5\,m  & 5.9--9.1\,kg   & $+8$\,\% \\
+10\,m & 8.0--11.2\,kg  & $+46$\,\% \\
+15\,m & 10.1--13.3\,kg & $+84$\,\% \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent This is not merely an uncertainty to be flagged --- it is an actionable
-design instruction. For an A3 refrigerant, \textbf{every metre of liquid line is
-charge}, and charge is what drives the EN~378 obligations of Part~B. The
-architecture should therefore \textbf{co-locate the compressor pack and condenser as
-tightly as the layout permits}, and the liquid line should be the first thing
-shortened when the plant room is laid out for real. A 5\,m run would take the whole
-system under 10\,kg.
+\noindent The message is the same one, now acted on: for an A3 refrigerant, \textbf{every
+metre of liquid line is charge}, and charge is what drives the EN~378 obligations of
+Part~B. A careless 15\,m run would have put this plant at 13\,kg; the 4\,m layout keeps it
+under 9\,kg. The plant-room drawing must therefore \textbf{hold the condenser, evaporator
+and compressor pack tightly together}, and any layout change that lengthens the liquid
+line has to be treated as a safety regression, not a convenience.
 
 \zonedivider{Part B \quad---\quad EN 378 Safety Assessment}
 
@@ -5216,19 +5226,20 @@ room volume, against the EN~378 thresholds.}
 \end{figure}
 
 The assessment is decisive and is worth stating plainly. Diluting a full
-14.1\,kg release below R-290's practical limit by room volume alone would require a
-\textbf{1{,}763\,m$^3$} plant room; even reaching the bare LFL needs
-\textbf{371\,m$^3$}. A realistically sized machinery room for a 150\,kW chiller
-($\approx$90\,m$^3$) would reach $\approx$157\,g/m$^3$ --- \textbf{4.1$\times$ the
+8.7\,kg release below R-290's practical limit by room volume alone would require a
+\textbf{1{,}084\,m$^3$} plant room; even reaching the bare LFL needs
+\textbf{229\,m$^3$}. A realistically sized machinery room for a 150\,kW chiller
+($\approx$90\,m$^3$) would reach $\approx$97\,g/m$^3$ --- \textbf{2.5$\times$ the
 LFL}. \textbf{Room volume is therefore not a viable safety strategy}, and the
 installation cannot rely on dilution.
 
-This conclusion is robust to the charge decisions taken elsewhere in the report: even
-the receiver-less 10.9\,kg lower bound would need a 273\,m$^3$ room to reach the bare
-LFL, and a 1{,}363\,m$^3$ room to reach the practical limit. \textbf{No plausible
-plant room dilutes this charge to safety.} Omitting the receiver
-(Chapter~\ref{ch:receiver}) lowers every number in Part~B --- ventilation falls from
-375 to 294\,m$^3$/h --- but it does not, and could not, change the conclusion.
+This conclusion is robust to every charge decision taken in the report: even the
+charge-minimized 5.5\,kg lower bound would need a 145\,m$^3$ room to reach the bare LFL,
+and a 688\,m$^3$ room to reach the practical limit. \textbf{No plausible plant room
+dilutes this charge to safety.} The charge-reduction measures --- omitting the receiver
+(Chapter~\ref{ch:receiver}) and the 4\,m liquid line (\S\ref{safe:sec:linelength}) --- cut
+every number in Part~B, ventilation from 303 to \textbf{213\,m$^3$/h}, but they do not,
+and could not, change the conclusion.
 
 Compliance instead rests on treating the plant room as a \textbf{dedicated
 refrigerating machinery room} under EN~378, whose provisions decouple the permitted
@@ -5239,7 +5250,7 @@ charge from room volume:
         ($\mathbf{7.6\,g/m^3}$), which alarms and starts emergency ventilation
         long before a flammable mixture can form.
   \item \textbf{Emergency mechanical ventilation} of
-        $\dot V = 0.014\,m^{2/3} = \mathbf{294\,m^3/h}$ (0.082\,m$^3$/s) per
+        $\dot V = 0.014\,m^{2/3} = \mathbf{213\,m^3/h}$ (0.059\,m$^3$/s) per
         EN~378-3 --- a modest fan, and a reminder that \emph{detection plus
         ventilation}, not volume, is what makes A3 installations safe.
   \item \textbf{Ignition-source control} in the machinery room: no open flames, and
@@ -5273,12 +5284,12 @@ outdoor location, never into the plant room & \S\ref{ch:oilsep} \\
 Pressure vessels rated 28--45\,bar & All clear the 19.07\,bar 55\,\textdegree C
 standstill pressure with large margin & \S\ref{ch:evap}, \S\ref{ch:oilsep} \\
 \midrule
-\textbf{No liquid receiver} & Removes 2.97--6.16\,kg ($\approx$25\,\%) of charge and
-two more joints --- the largest single charge reduction available, and it
-\emph{improves} the COP rather than costing it & Ch.~\ref{ch:receiver} \\
-\textbf{Short liquid line} (recommended) & The most effective \emph{remaining}
-charge-reduction lever: a 5\,m run would take the system under 10\,kg &
-\S\ref{safe:sec:linelength} \\
+\textbf{No liquid receiver} & Removes 2.97--6.16\,kg (a third to a half of the charge)
+and two more joints --- the largest single charge reduction, and it \emph{improves} the
+COP rather than costing it & Ch.~\ref{ch:receiver} \\
+\textbf{Short (4\,m) liquid line} & Condenser and evaporator co-located so the only
+liquid-holding line is 4\,m, not a loose 15\,m --- keeps the system under 9\,kg instead
+of over 13\,kg & \S\ref{safe:sec:linelength} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -5675,9 +5686,10 @@ N$+$1: see \S\ref{imp:sec:architecture} \\
 \textbf{Genuine 5:1 turndown} & VFD $+$ staging covers 150\,kW to the 30\,kW minimum
 without hot-gas bypass (\S\ref{perf:sec:iplv}) & Resolves the turndown floor the
 fixed-speed design could not, and lifts IPLV.IP from 4.43 to 5.23 \\
-\textbf{Low refrigerant charge} & 10.9--14.1\,kg, no receiver
+\textbf{Low refrigerant charge} & 5.5--8.7\,kg, no receiver
 (Ch.~\ref{ch:receiver}) & For an A3 fluid, charge is the safety currency. Omitting the
-receiver cut $\approx$25\,\% of it \emph{and} improved the COP \\
+receiver \emph{and} co-locating the exchangers for a 4\,m liquid line together nearly
+halve the charge, receiver removal also improving the COP \\
 \textbf{Refrigerant never leaves the plant room} & Double-wall BPHEs plus the glycol
 loop (\S\ref{safe:sec:minimisation}) & The occupied data hall sees only water. This is
 the design's most important safety property, and it is a \emph{consequence} of the
@@ -5707,7 +5719,7 @@ hit here, and why compliance costs a 1{,}949\,m$^2$ dry cooler \\
 re-selection, and on assumed $U$ values (\S\ref{perf:sec:uvalues}). \textbf{The most
 fragile claim in the report} \\
 \textbf{A3 flammability drives real obligations} & No plausible plant room dilutes the
-charge below LFL; compliance rests on detection at 7.6\,g/m$^3$ $+$ 294\,m$^3$/h
+charge below LFL; compliance rests on detection at 7.6\,g/m$^3$ $+$ 213\,m$^3$/h
 ventilation (\S\ref{safe:sec:en378}) & A genuine cost of R-290 --- the price paid for
 GWP\,3. Manageable and well-precedented, but not free \\
 \textbf{Critical charge, no buffer} & No receiver, so charge must be correct rather
@@ -5833,15 +5845,17 @@ explicitly to the client. The strengths table (\S\ref{pc:sec:pros}) is worded to
 standard --- ``compressor redundancy'', not ``N$+$1'' --- and any client-facing summary
 should keep it that way.
 
-\section{Priority 3 --- Shorten the Liquid Line}
+\section{Priority 3 --- Protect the Short Liquid Line at Layout Stage}
 \label{imp:sec:liquidline}
 
-The liquid line holds 6.33\,kg on an assumed 15\,m --- \textbf{the largest single item
-in the charge inventory} and the most effective remaining lever
-(\S\ref{safe:sec:linelength}). A 5\,m run would take the whole system under 10\,kg,
-easing every EN~378 obligation. For an A3 refrigerant, \textbf{plant-room layout is a
-safety decision}: co-locate the compressor pack and condenser as tightly as the
-building permits.
+The design already takes the liquid line to \textbf{4\,m} by co-locating the condenser
+and evaporator, which is most of why the charge is 5.5--8.7\,kg rather than over 13\,kg
+(\S\ref{safe:sec:linelength}). \textbf{The risk is that this is undone on the drawing
+board}: a real plant-room layout, routed for pipefitter convenience or to clear other
+equipment, can silently stretch that run and add charge back. For an A3 refrigerant that
+is a safety regression, not a detailing choice. The recommendation is therefore to carry
+the 4\,m liquid line as a \textbf{fixed constraint into the P\&ID and the plant-room
+general arrangement}, and to re-run the charge and EN~378 numbers if it cannot be held.
 
 \section{Priority 4 --- Float the Economizer Changeover}
 \label{imp:sec:floating}
