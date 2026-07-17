@@ -343,17 +343,29 @@ chw_pump = CHWPump(
 )
 chw_pump.select_trim()
 
-# Dry cooler fan power at the mechanical-mode design point, for the RE-SELECTED
-# Kelvion ULF-PA106K4V-091F095 (6 x 0.910 m EC fans @ 950 rpm).
+# Dry cooler RATED fan power, for the RE-SELECTED Kelvion ULF-PA106K4V-091F095
+# (6 x 0.910 m EC fans) at its 196.5 kW / 100%-air-flow selection point.
 # ESTIMATE, not vendor-confirmed: the Select RT results table does not report fan
-# power, so this is scaled from the original unit's confirmed 2.685 kW/fan
+# power, so this is scaled from a same-family confirmed 2.685 kW/fan
 # (0.960 m @ 1000 rpm) by the fan laws, P ~ N^3 * D^5:
 #     6 x 2.685 * (950/1000)^3 * (0.910/0.960)^5 = 10.6 kW
-# Nearly unchanged from the original 10.74 kW despite 50% more fans, because the
-# 2.1x coil surface lowers face velocity and hence air-side dP per unit flow
-# (specific fan power 0.113 vs 0.150 kW/kcfm). CONFIRM from the datasheet -- this
-# is the single largest uncertainty in the revised PUE.
-P_FAN_DESIGN = 10.6e3
+# CONFIRM from the datasheet -- this is the single largest uncertainty in the PUE.
+#
+# This is the power at the coil's full SELECTION duty (196.5 kW). The plant only
+# rejects ~182 kW at the 35 C design day, and the unit has 8% capacity margin, so
+# the fans do NOT run at full design flow there -- the off-design solve below finds
+# the actual speed (86.8%) and the cube law gives the actual design-day fan power
+# (~6.9 kW). Using the flat 10.6 kW would charge the PUE for capacity the plant
+# never uses.
+P_FAN_RATED = 10.6e3
+P_FAN_DESIGN = P_FAN_RATED   # kept for the annual sim's fan_power() reference
+
+# Design-day fan power: solve the fan speed that rejects the actual 182 kW condenser
+# duty at 35 C, then apply the cube law -- the same machinery the annual sim uses,
+# so the design-day PUE is now consistent with the monthly/seasonal numbers.
+_fan_design = DRY_COOLER.predict_off_design(
+    Q_target=condenser.Q, T_glycol_hot_in=condenser.T_glycol_out, T_air_in=T_AIR_DESIGN_C + 273.15)
+P_fan_designday = DRY_COOLER.fan_power(_fan_design["fan_speed_frac"], P_FAN_RATED)
 
 P_compressor = bank_result["P_total_w"]
 P_glycol_pump = glycol_pump.P_elec_mech
@@ -361,7 +373,7 @@ P_glycol_pump = glycol_pump.P_elec_mech
 # matches the glycol pump's motor-efficiency assumption (no CHW motor-efficiency
 # stage built into CHWPump itself, so applied here explicitly)
 P_chw_pump = chw_pump.shaft_power_w(eta_pump=0.60) / 0.90
-P_other = P_compressor + P_glycol_pump + P_FAN_DESIGN + P_chw_pump
+P_other = P_compressor + P_glycol_pump + P_fan_designday + P_chw_pump
 PUE = (Q_TARGET + P_other) / Q_TARGET
 
 # TUE (Total-power Usage Effectiveness, Patterson et al. 2013):
@@ -437,7 +449,8 @@ print("=== DESIGN-DAY PUE / TUE ===")
 print(f"IT load (proxy)      : {Q_TARGET/1e3:.1f} kW")
 print(f"Compressor bank      : {P_compressor/1e3:.2f} kW")
 print(f"Glycol loop pump     : {P_glycol_pump/1e3:.2f} kW")
-print(f"Dry cooler fans      : {P_FAN_DESIGN/1e3:.2f} kW  (fan-law estimate, re-selected unit)")
+print(f"Dry cooler fans      : {P_fan_designday/1e3:.2f} kW  (off-design solve at 35 C, "
+      f"{_fan_design['fan_speed_frac']*100:.0f}% of {P_FAN_RATED/1e3:.1f} kW rated)")
 print(f"CHW/CRAH pump        : {P_chw_pump/1e3:.2f} kW")
 print(f"Other facility loads : {P_other/1e3:.2f} kW")
 print(f"PUE = (IT + other)/IT = {PUE:.3f}")

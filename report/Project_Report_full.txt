@@ -2342,19 +2342,30 @@ Data source                  & Kelvion Select RT                    & \texttt{dr
 \section{Open Item: Fan Power Not Vendor-Reported}
 \label{dry:sec:fanpower_open}
 
-The Select RT results table does not report fan power. The value carried in the model
-(\textbf{10.6\,kW}) is therefore an \textbf{estimate}, scaled by the fan laws
-($P \sim N^3 D^5$) from a confirmed datasheet figure for the same \texttt{ULF} fan family
-(2.685\,kW/fan for a 0.960\,m fan at 1000\,rpm, \S\ref{dry:sec:validation}):
+The Select RT results table does not report fan power. The \textbf{rated} value carried in
+the model (\textbf{10.6\,kW}, at the coil's full 196.5\,kW selection duty) is therefore an
+\textbf{estimate}, scaled by the fan laws ($P \sim N^3 D^5$) from a confirmed datasheet
+figure for the same \texttt{ULF} fan family (2.685\,kW/fan for a 0.960\,m fan at
+1000\,rpm, \S\ref{dry:sec:validation}):
 $6 \times 2.685 \times (950/1000)^3 \times (0.910/0.960)^5 = 10.6$\,kW.
 
 That six 0.910\,m fans should draw about what four 0.960\,m fans draw is not as odd as it
 first looks: this coil's large surface means a low face velocity, and hence a lower
-air-side $\Delta P$ per unit of flow (specific fan power 0.113 vs.\ 0.150\,kW/kcfm). The
-scaling is physically consistent --- but it is not confirmed. \textbf{This is the single
-largest remaining uncertainty in the design-day PUE} (\S\ref{perf:sec:pue}) and must be
-read off the unit's own datasheet. The free-cooling operating point should be re-run at
-the same time.
+air-side $\Delta P$ per unit of flow (specific fan power 0.113 vs.\ 0.150\,kW/kcfm).
+
+\begin{quote}
+\textbf{Rated vs.\ operating fan power.} The 10.6\,kW is the power at 100\,\% design air
+flow. The plant only rejects $\approx$182\,kW at the 35\,\textdegree C design day against
+the coil's 196.5\,kW rating, so the variable-speed fans run at \textbf{86.8\,\% of design
+flow}, and the cube law gives $10.6 \times 0.868^3 = \mathbf{6.9\,kW}$ --- the value that
+enters the design-day PUE (\S\ref{perf:sec:pue}). Every hour of the annual simulation
+uses this same off-design solve, so the design-day and seasonal numbers are consistent.
+\end{quote}
+
+\noindent The scaling behind the 10.6\,kW rating is physically consistent but not
+confirmed. \textbf{It remains the single largest uncertainty in the design-day PUE} and
+must be read off the unit's own datasheet; the free-cooling operating point should be
+re-run at the same time.
 
 % ── §5.13 ──────────────────────────────────────────────────────────────────────
 \section{Air-Side Pressure Drop --- Scope Note}
@@ -4590,22 +4601,27 @@ electrical loads at the 35\,\textdegree C / full-load design point.
 \centering
 \includegraphics[width=\linewidth]{figures/performance/design_point/pue_breakdown.pdf}
 \caption{Design-day facility power breakdown. The compressor bank dominates at
-69\,\% of the non-IT load.}
+75\,\% of the non-IT load.}
 \label{fig:pue_breakdown}
 \end{figure}
 
-The design-day PUE is \textbf{1.31}, dominated by the compressor bank at 32.1\,kW of the
-46.4\,kW of non-IT load --- \textbf{69\,\% of everything the plant draws beyond the IT
+The design-day PUE is \textbf{1.285}, dominated by the compressor bank at 32.1\,kW of the
+42.7\,kW of non-IT load --- \textbf{75\,\% of everything the plant draws beyond the IT
 itself}. That single fact frames the whole design: the compressor is the only load worth
 attacking, which is precisely why the condensing approach was driven down to 10\,K at the
 cost of a very large dry cooler.
 
-The remaining loads are the price of the architecture rather than of the compressor. The
-glycol pump draws 2.57\,kW because the tight 4\,K glycol range demands high flow, and
-because the selected dry cooler's 8\,psi (\S\ref{dry:sec:datasheet}) and the condenser's
-$\approx$35.8\,kPa both sit on its system curve. Fan power is 10.6\,kW
-(\S\ref{dry:sec:fanpower_open} --- an \textbf{estimate}, and the largest remaining
-uncertainty in this figure).
+The remaining loads are the price of the architecture rather than of the compressor. Fan
+power is \textbf{6.9\,kW} --- not the 10.6\,kW rated value: the coil is sized for
+196.5\,kW but the plant rejects only $\approx$182\,kW at the design day, so the
+variable-speed fans run at 86.8\,\% of design air flow and the cube law gives
+$10.6 \times 0.868^3 = 6.9$\,kW (\S\ref{dry:sec:fanpower_open}). This is the same
+off-design fan solve the annual simulation uses, so the design-day PUE is consistent with
+the monthly and seasonal numbers below. The glycol pump draws 2.57\,kW because the tight
+4\,K glycol range demands high flow, and because the selected dry cooler's 8\,psi
+(\S\ref{dry:sec:datasheet}) and the condenser's $\approx$35.8\,kPa both sit on its system
+curve. The fan power remains the largest single \textbf{uncertainty} here, since the
+10.6\,kW rating it scales from is itself an estimate.
 
 This is the \emph{worst-case} PUE: it occurs only at the hottest design ambient. The
 seasonal analysis below shows the annual-average is far more favourable, because most of
@@ -4629,7 +4645,7 @@ already, and the design duty makes the 2.5AC frame the more likely selection.
 PUE has a well-known blind spot: it stops at the rack. Every watt crossing into the IT
 equipment counts as ``useful,'' so the losses \emph{inside} the servers --- power-supply
 conversion, on-board voltage regulators, and the servers' own cooling fans --- are
-invisible to it. Two facilities with an identical PUE of 1.31 can therefore deliver
+invisible to it. Two facilities with an identical PUE of 1.285 can therefore deliver
 materially different compute per watt. Worse, the metric can be gamed in the wrong
 direction: moving heat rejection onto the server (bigger on-board fans) \emph{lowers}
 PUE while raising total site power.
@@ -4666,9 +4682,9 @@ put on the TUE columns that follow:
         from PUE --- the free-cooling benefit, the seasonal spread, the compressor's
         dominance of the non-IT load --- is unchanged.
   \item \textbf{Its value is one of honesty about scope.} The design-day TUE of
-        \textbf{1.57} (band 1.44--1.70) says that for every watt of real compute, the
-        site draws about 1.57\,W --- and that the \emph{cooling plant is responsible for
-        only part of that overhead}. Of the 0.57 of overhead, roughly 0.31 is this
+        \textbf{1.54} (band 1.41--1.67) says that for every watt of real compute, the
+        site draws about 1.54\,W --- and that the \emph{cooling plant is responsible for
+        only part of that overhead}. Of the 0.54 of overhead, roughly 0.28 is this
         project's mechanical plant and roughly 0.26 is IT-internal losses this project
         does not control and has not designed.
 \end{itemize}
@@ -4676,7 +4692,7 @@ put on the TUE columns that follow:
 \noindent A defensible TUE for this facility would require measured server power data
 (compute vs.\ PSU vs.\ fan), which sits outside the project scope. The figure is
 reported because the metric was requested and because it correctly frames how much of
-the total energy problem the chiller design can actually address --- not because 1.57
+the total energy problem the chiller design can actually address --- not because 1.54
 is a validated result.
 
 \zonedivider{Part B \quad---\quad Seasonal Weather-Driven Performance}
@@ -4702,7 +4718,7 @@ thresholds and the dry cooler's 35\,\textdegree C design ambient.}
 \noindent Two things are worth reading off it. First, the 35\,\textdegree C dry-cooler
 design ambient is reached for only a handful of hours a year --- the design-day
 condition that sizes the whole plant is genuinely a worst case, not a typical one, which
-is exactly why the design-day PUE of 1.31 overstates the annual average. Second, the
+is exactly why the design-day PUE of 1.285 overstates the annual average. Second, the
 curve falls below 4\,\textdegree C for 2{,}542\,h and reaches $-27.4$\,\textdegree C at
 its extreme, which is what makes the free-cooling architecture pay in this climate.
 
@@ -4764,7 +4780,7 @@ The seasonal picture is strongly favourable and stands in deliberate contrast to
 worst-case design-day metrics of Part~A. Winter runs entirely in free cooling
 (compressor off, PUE 1.01, TUE 1.21, total-system COP near 88), while even the hottest
 monthly average (July) holds PUE 1.21 / TUE 1.46, against the worst-case design day's
-1.31 / 1.57. Spring and Fall now sit at PUE 1.11 and 1.12 --- markedly better than the
+1.285 / 1.54. Spring and Fall now sit at PUE 1.11 and 1.12 --- markedly better than the
 1.14/1.15 they showed before the partial band was modelled --- because each contains one
 month that runs integrated rather than mechanical. Across the year the economizer
 delivers \textbf{526\,MWh of the 1{,}314\,MWh} of cooling the hall needs
@@ -4808,7 +4824,7 @@ Full-load COP (project 15\,\textdegree C LCHW) & (reported) & \textbf{4.67} & --
 IPLV.IP & $\geq 5.0$ & \textbf{5.23} & \textbf{Met} \\
 Economizer activation & $\leq 10$\,\textdegree C OAT & 10\,\textdegree C, 50\,\% of load carried & \textbf{Met} (\S\ref{econ:sec:partialmodel}) \\
 Economizer full free cooling & $\leq 4$\,\textdegree C OAT & 4\,\textdegree C, 100\,\% load & \textbf{Met} (Ch.~\ref{ch:dry}) \\
-Design-day PUE & (report) & \textbf{1.31} & --- \\
+Design-day PUE & (report) & \textbf{1.285} & --- \\
 \bottomrule
 \end{tabularx}
 \end{table}

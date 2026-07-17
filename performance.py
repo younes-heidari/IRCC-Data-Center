@@ -44,17 +44,21 @@ Q_DESIGN_W = 150e3
 COP_TARGET = 3.5
 IPLV_TARGET = 5.0
 
-# Design-day PUE breakdown (from main.py's REVISED design-point run; restated
-# here so the performance chapter is self-contained). These are the
-# mechanical-mode design-point electrical loads at 35 C ambient / 150 kW full
-# load. Compressor power reflects the VFD-trimmed operating point (to=10 C,
-# tc=45 C, COP 4.67); fan power is the fan-law estimate for the re-selected
-# Kelvion ULF-PA106K4V-091F095 (see main.py's P_FAN_DESIGN note -- the single
-# largest remaining uncertainty in this figure).
+# Design-day PUE breakdown (from main.py's design-point run; restated here so the
+# performance chapter is self-contained). These are the mechanical-mode
+# design-point electrical loads at 35 C ambient / 150 kW full load. Compressor
+# power reflects the VFD-trimmed operating point (to=10 C, tc=45 C, COP 4.67).
+#
+# Dry cooler fans: 6.93 kW, NOT the 10.6 kW rated value. The coil is sized for
+# 196.5 kW but the plant rejects ~182 kW at the design day, so the fans run at
+# 86.8% of design air flow; the cube law gives 10.6 x 0.868^3 = 6.93 kW. This is
+# main.py's own off-design solve at 35 C -- the same machinery the annual sim
+# uses -- so the design-day PUE matches the monthly/seasonal numbers. Still the
+# single largest uncertainty here, since the 10.6 kW rating is itself an estimate.
 PUE_LOADS_KW = {
     "Compressor bank": 32.12,
     "Glycol loop pump": 2.57,
-    "Dry cooler fans": 10.60,
+    "Dry cooler fans": 6.93,
     "CHW/CRAH pump": 1.11,
 }
 
