@@ -258,11 +258,18 @@ def plot_hx_profiles(out_path):
 
 
 def plot_pue_breakdown(out_path):
-    """Where the design-day facility power actually goes."""
-    import matplotlib.pyplot as plt
+    """Where the design-day facility power actually goes.
 
-    loads = [("Compressor bank", 31.72, BLUE), ("Dry cooler fans", 10.60, AQUA),
-             ("Glycol loop pump", 2.56, YELLOW), ("CHW/CRAH pump", 1.11, GREEN)]
+    Loads are pulled from performance.py's PUE_LOADS_KW -- the single source of
+    truth also used by the design-day PUE table -- so the figure and the table
+    cannot drift apart (they previously did: this figure carried stale 31.72 /
+    2.56 kW values against the table's 32.12 / 2.57)."""
+    import matplotlib.pyplot as plt
+    from performance import PUE_LOADS_KW
+
+    _c = {"Compressor bank": BLUE, "Dry cooler fans": AQUA,
+          "Glycol loop pump": YELLOW, "CHW/CRAH pump": GREEN}
+    loads = [(name, PUE_LOADS_KW[name], _c[name]) for name in _c]
     tot = sum(v for _, v, _ in loads)
     fig, ax = plt.subplots(figsize=(10, 3.2), facecolor=SURFACE)
     _style(ax, grid_axis="x")

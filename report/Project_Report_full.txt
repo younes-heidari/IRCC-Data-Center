@@ -4931,7 +4931,7 @@ whole plant.} The 3\,K approach is what makes it this large
 the fan ceiling \\
 Glycol loop & 11.6\,kg/s at a 4\,K range, condenser $\Delta P \approx$35.8\,kPa, dry
 cooler 8\,psi & The tight 4\,K range demands high flow, so pump electrical power is
-2.56\,kW. System curve and trim in Ch.~\ref{ch:pump} predate these numbers ---
+2.57\,kW. System curve and trim in Ch.~\ref{ch:pump} predate these numbers ---
 re-derive against the 2.5AC frame (\S\ref{perf:sec:pue}, Ch.~\ref{ch:pump} open
 item~3) \\
 Compressors & 2 $\times$ 4FEP-35Z with VFDs & Standard drive addition; delivers the

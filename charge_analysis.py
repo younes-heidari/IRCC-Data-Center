@@ -207,20 +207,28 @@ def plot_concentration(m_charge, out_path):
     _style(ax)
     ax.plot(V, c * 1000, color=BLUE, linewidth=2.5, zorder=5,
             label=f"Concentration after full {m_charge:.1f} kg release")
-    # practical limit (8) and 20% LFL (7.6) nearly coincide -- separate their labels
-    for lim, col, lbl, xl, dy in (
-            (LFL, RED, f"LFL = {LFL*1000:.0f} g/m$^3$ (flammable above)", 1490, 1.10),
+    # The practical limit (8) and 20% LFL (7.6) g/m3 lines nearly coincide, so
+    # their crossing-volume dots (1084 / 1141 m3) sit almost on top of each other.
+    # Each threshold therefore gets an explicit label anchor (x, y-mult, h-align)
+    # AND a dot-annotation offset direction, so nothing overlaps.
+    #   lim, colour, label, (label_x, y_mult, ha), (dot dx, dot dy)
+    for lim, col, lbl, lab, dot in (
+            (LFL, RED, f"LFL = {LFL*1000:.0f} g/m$^3$ (flammable above)",
+             (1490, 1.12, "right"), (10, 9)),
             (PRACTICAL_LIMIT, GREEN,
-             f"Practical limit {PRACTICAL_LIMIT*1000:.0f} g/m$^3$ (EN 378 occupied space)", 1490, 1.14),
+             f"Practical limit = {PRACTICAL_LIMIT*1000:.0f} g/m$^3$ (EN 378 occupied space)",
+             (330, 1.55, "left"), (12, 12)),
             (DETECTION_FRACTION*LFL, YELLOW,
-             f"20% LFL = {DETECTION_FRACTION*LFL*1000:.1f} g/m$^3$ (detection setpoint)", 400, 0.72)):
+             f"20% LFL = {DETECTION_FRACTION*LFL*1000:.1f} g/m$^3$ (detection setpoint)",
+             (330, 0.62, "left"), (12, -20))):
+        xl, ym, ha = lab
         ax.axhline(lim*1000, color=col, linestyle="--", linewidth=1.6, zorder=4)
-        ax.text(xl, lim*1000*dy, lbl, ha="right", fontsize=8.5, color=SECONDARY)
+        ax.text(xl, lim*1000*ym, lbl, ha=ha, fontsize=8.5, color=SECONDARY)
         Vx = m_charge/lim
         if V[0] <= Vx <= V[-1]:
             ax.plot([Vx], [lim*1000], "o", color=col, markersize=8, zorder=6)
             ax.annotate(f"{Vx:.0f} m$^3$", (Vx, lim*1000), textcoords="offset points",
-                        xytext=(10, 8), fontsize=8.5, color=col, fontweight="bold")
+                        xytext=dot, fontsize=8.5, color=col, fontweight="bold")
 
     V_room = 90.0
     ax.axvline(V_room, color=VIOLET, linestyle=":", linewidth=1.8, zorder=4)
