@@ -49,16 +49,17 @@ IPLV_TARGET = 5.0
 # design-point electrical loads at 35 C ambient / 150 kW full load. Compressor
 # power reflects the VFD-trimmed operating point (to=10 C, tc=45 C, COP 4.67).
 #
-# Dry cooler fans: 6.93 kW, NOT the 10.6 kW rated value. The coil is sized for
+# Dry cooler fans: 7.91 kW, NOT the 10.6 kW rated value. The coil is sized for
 # 196.5 kW but the plant rejects ~182 kW at the design day, so the fans run at
-# 86.8% of design air flow; the cube law gives 10.6 x 0.868^3 = 6.93 kW. This is
-# main.py's own off-design solve at 35 C -- the same machinery the annual sim
-# uses -- so the design-day PUE matches the monthly/seasonal numbers. Still the
-# single largest uncertainty here, since the 10.6 kW rating is itself an estimate.
+# 90.7% of design air flow; the cube law gives 10.6 x 0.907^3 = 7.91 kW. This is
+# main.py's own off-design solve at 35 C, fed the ACTUAL loop glycol flow
+# (11.64 kg/s, condenser duty over the 4 K range) rather than the coil's
+# rating-point flow -- the same machinery the annual sim uses. Still the single
+# largest uncertainty here, since the 10.6 kW rating is itself an estimate.
 PUE_LOADS_KW = {
     "Compressor bank": 32.12,
     "Glycol loop pump": 2.57,
-    "Dry cooler fans": 6.93,
+    "Dry cooler fans": 7.91,
     "CHW/CRAH pump": 1.11,
 }
 

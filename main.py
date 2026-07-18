@@ -89,6 +89,9 @@ APPROACH_K = (T_c - 273.15) - T_AIR_DESIGN_C  # 10 K, fixed condensing approach 
 GLYCOL_APPROACH_K = 3.0    # tc -> condenser glycol-leaving-temp approach (45->42 C at design)
 GLYCOL_RANGE_K = 4.0       # condenser glycol supply/return range (38->42 C at design,
                            # matches DRY_COOLER's revised 38/42 C design point below)
+CP_GLYCOL_NOMINAL = 3835.0 # J/kgK, 30% PG at ~40 C -- for the mechanical-mode loop
+                           # glycol flow = Q_cond / (cp x range); used only to hand the
+                           # dry cooler the real loop flow (not its rating-point flow)
 FREE_COOLING_THRESHOLD_C = 4.0  # ASHRAE 90.1 full free-cooling threshold (economizer.py)
 ECON_L, ECON_L_W = 0.70, 0.25    # economizer's own larger frame (economizer.py's design point)
 
@@ -364,7 +367,8 @@ P_FAN_DESIGN = P_FAN_RATED   # kept for the annual sim's fan_power() reference
 # duty at 35 C, then apply the cube law -- the same machinery the annual sim uses,
 # so the design-day PUE is now consistent with the monthly/seasonal numbers.
 _fan_design = DRY_COOLER.predict_off_design(
-    Q_target=condenser.Q, T_glycol_hot_in=condenser.T_glycol_out, T_air_in=T_AIR_DESIGN_C + 273.15)
+    Q_target=condenser.Q, T_glycol_hot_in=condenser.T_glycol_out, T_air_in=T_AIR_DESIGN_C + 273.15,
+    m_dot_glycol=condenser.m_dot_glycol)   # the actual loop flow (11.64), not the unit rating flow
 P_fan_designday = DRY_COOLER.fan_power(_fan_design["fan_speed_frac"], P_FAN_RATED)
 
 P_compressor = bank_result["P_total_w"]
@@ -591,6 +595,7 @@ def run_annual_simulation():
         if T_air_C <= FREE_COOLING_THRESHOLD_C:
             r = free_cooling_hour(T_air_C)
             T_glycol_hot_in_hour = 15 + 273.15
+            m_dot_glycol_hour = None   # free cooling: economizer-loop flow, open item
         elif T_air_C <= PARTIAL_FC_THRESHOLD_C:
             r = partial_free_cooling_hour(bank_obj, T_air_C)
             # Common glycol loop at its free-cooling flow: it leaves the dry
@@ -600,9 +605,14 @@ def run_annual_simulation():
             Q_reject_hour = r["Q_delivered_w"] + r["P_compressor_w"]
             T_glycol_hot_in_hour = ((r["T_glycol_C"] + Q_reject_hour / C_glycol_free)
                                     + 273.15)
+            m_dot_glycol_hour = None   # free/partial: economizer-loop flow, open item; use default
         else:
             r = mechanical_hour(bank_obj, T_air_C)
             T_glycol_hot_in_hour = (r["tc_C"] - GLYCOL_APPROACH_K) + 273.15
+            # Mechanical loop flow = condenser duty / (cp x 4 K range), the real flow
+            # the loop carries (not the coil's rating-point flow).
+            m_dot_glycol_hour = (r["Q_delivered_w"] + r["P_compressor_w"]) / (
+                CP_GLYCOL_NOMINAL * GLYCOL_RANGE_K)
 
         # The dry cooler rejects everything the plant absorbs -- the full IT load
         # plus whatever compressor work was needed. True in all three regimes,
@@ -610,6 +620,7 @@ def run_annual_simulation():
         Q_cond_hour = r["Q_delivered_w"] + r["P_compressor_w"]
         fan_result = DRY_COOLER.predict_off_design(
             Q_target=Q_cond_hour, T_glycol_hot_in=T_glycol_hot_in_hour, T_air_in=T_air_C + 273.15,
+            m_dot_glycol=m_dot_glycol_hour,
         )
         r["fan_speed_frac"] = fan_result["fan_speed_frac"]
         r["P_fan_w"] = DRY_COOLER.fan_power(fan_result["fan_speed_frac"], P_FAN_RATED)
@@ -909,8 +920,13 @@ def run_full_cycle(T_air_C, label=""):
         T_glycol_hot_p = T_glycol_out_p
         P_glycol_pump_p = glycol_pump.P_elec_mech
 
+    # Pure mechanical mode: the loop carries the condenser's own glycol flow.
+    # Partial band: the glycol serves both economizer and condenser at the
+    # free-cooling flow (open item), so fall back to the model default there.
+    m_dot_glycol_p = condenser_p.m_dot_glycol if Q_econ_row == 0 else None
     fan_result = DRY_COOLER.predict_off_design(
         Q_target=Q_reject_p, T_glycol_hot_in=T_glycol_hot_p, T_air_in=T_air_C + 273.15,
+        m_dot_glycol=m_dot_glycol_p,
     )
     P_fan = DRY_COOLER.fan_power(fan_result["fan_speed_frac"], P_FAN_DESIGN)
 

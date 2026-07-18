@@ -150,8 +150,14 @@ class DryCooler:
         return self.UA_design * (m_dot_air / self.m_dot_air_design) ** self.air_side_UA_exponent
 
     def predict_off_design(self, Q_target, T_glycol_hot_in, T_air_in,
-                            m_dot_air_bounds=None):
-        m_dot_glycol = self.m_dot_glycol_design  # fixed-speed glycol pump assumption
+                            m_dot_air_bounds=None, m_dot_glycol=None):
+        # Glycol flow: the ACTUAL loop flow if the caller supplies it, else the
+        # unit's rating-point flow. The rating flow (from Q_design) over-states
+        # the real loop flow -- the loop only carries what the condenser needs
+        # (its duty / cp / range), which is less than the coil's full rating --
+        # and that under-states the fan power. Pass the real loop flow.
+        if m_dot_glycol is None:
+            m_dot_glycol = self.m_dot_glycol_design
         cp_glycol = PropsSI('CPMASS', 'T', T_glycol_hot_in, 'P', 101325, self.glycol)
         C_glycol = m_dot_glycol * cp_glycol
 

@@ -1302,10 +1302,10 @@ channel count and geometry family pending vendor confirmation.
 
 \texttt{calc\_glycol\_pressure\_drop()} in \texttt{condenser.py} calls the same
 \texttt{\_martin\_dp()} helper used by the economizer and the evaporator's water side,
-evaluated at the mean glycol temperature (43\,\textdegree C, the average of the
-corrected 40/46\,\textdegree C in/out design values --- see \S\ref{cond:sec:lmtd}) with
-$\mdot_{\mathrm{glycol}} = 9.07$\,kg/s, the dry-cooler-matched loop flow (Chapter~\ref{ch:dry}),
-not the module's earlier internal demo value. As with the other single-phase streams in
+evaluated at the mean glycol temperature (40\,\textdegree C, the average of the
+38/42\,\textdegree C in/out design values --- see \S\ref{cond:sec:lmtd}) with
+$\mdot_{\mathrm{glycol}} = 11.64$\,kg/s, the dry-cooler-matched loop flow (Chapter~\ref{ch:dry}:
+the 182\,kW condenser duty over the 4\,K glycol range). As with the other single-phase streams in
 this report, there is no zone splitting: the glycol pass is treated as one sensible pass
 over the full plate length $L_v$.
 
@@ -1315,20 +1315,20 @@ over the full plate length $L_v$.
 \toprule
 \textbf{Quantity} & \textbf{Value} \\
 \midrule
-Glycol mass flow, $\mdot_{\mathrm{glycol}}$ & 9.07\,kg/s \\
-Flow area, $A_{\mathrm{flow,glycol}}$       & 0.0112\,m$^2$ \\
-Channel mass flux, $G$                      & 807.5\,kg\,m$^{-2}$s$^{-1}$ \\
-Channel velocity, $G/\rho$                  & 0.80\,m/s \\
-Reynolds number, $Re$                       & 2{,}221 \\
-Friction factor, $f$ (Eq.\,Martin\,1)       & 0.1086 \\
-\textbf{Pressure drop}, $\Delta P_{\mathrm{glycol}}$ (Eq.\,Martin\,3) & \textbf{17.50\,kPa} \\
+Glycol mass flow, $\mdot_{\mathrm{glycol}}$ & 11.64\,kg/s \\
+Flow area, $A_{\mathrm{flow,glycol}}$       & 0.0110\,m$^2$ \\
+Channel mass flux, $G$                      & 1{,}063.2\,kg\,m$^{-2}$s$^{-1}$ \\
+Channel velocity, $G/\rho$                  & 1.05\,m/s \\
+Reynolds number, $Re$                       & 2{,}703 \\
+Friction factor, $f$ (Eq.\,Martin\,1)       & 0.1073 \\
+\textbf{Pressure drop}, $\Delta P_{\mathrm{glycol}}$ (Eq.\,Martin\,3) & \textbf{35.91\,kPa} \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-The glycol-side drop is larger than the evaporator's water-side drop (7.73\,kPa,
+The glycol-side drop is much larger than the evaporator's water-side drop (7.73\,kPa,
 \S\ref{evap:sec:martin}) despite the identical assumed flow area, because the condenser's
-glycol mass flow (9.07\,kg/s) is over 50\,\% higher than the evaporator's water flow
+glycol mass flow (11.64\,kg/s) is nearly double the evaporator's water flow
 (5.973\,kg/s) and glycol is both denser and more viscous than water at these
 temperatures --- both raise $G$ and, through $G^2$ in Eq.~(Martin\,3), the resulting
 $\Delta P$. The glycol temperature range used here is the one the condenser actually runs
@@ -1883,6 +1883,15 @@ $NTU$                                     & 1.500                    & Root-foun
 \S\ref{dry:sec:validation}. The 3.72\,K air rise is the vendor's, not a free design choice:
 it follows directly from the selected unit's reported air outlet temperature.
 
+\begin{quote}
+\textbf{Rated flow vs.\ loop flow.} The 12.56\,kg/s above is the glycol flow at the unit's
+full 196.5\,kW \emph{rating}, which fixes its $UA$. In service the loop actually carries
+\textbf{11.64\,kg/s} --- the 182\,kW condenser duty over the 4\,K glycol range
+(Chapter~\ref{ch:cond}) --- and the coil runs at 90.7\,\% fan, leaving 8\,\% capacity
+margin. \textbf{11.64\,kg/s is the loop flow used throughout the condenser, glycol-pump
+and piping chapters}; the 12.56\,kg/s appears only here, as the unit's rating basis.
+\end{quote}
+
 % ── §5.4 ──────────────────────────────────────────────────────────────────────
 \section{Free-Cooling Performance Check}
 \label{dry:sec:freecool}
@@ -2290,16 +2299,16 @@ implemented as \texttt{DryCooler.scale\_pressure\_drop()}.
 \midrule
 Glycol temperatures        & 42.0\,$\to$\,38.0\,\textdegree C & 15.0\,$\to$\,9.0\,\textdegree C \\
 Average temperature        & 40.0\,\textdegree C               & 12.0\,\textdegree C \\
-Glycol mass flow           & 12.56\,kg/s                       & 6.52\,kg/s \\
+Glycol mass flow           & 11.64\,kg/s                       & 6.52\,kg/s \\
 Density, $\rho$            & 1{,}013.4\,kg/m$^3$               & 1{,}027.2\,kg/m$^3$ \\
 \textbf{Viscosity}, $\mu$  & 1.573\,mPa$\cdot$s                & \textbf{4.073\,mPa$\cdot$s} ($\approx$2.6$\times$ higher) \\
 \midrule
-Pressure drop, $\Delta P$  & \textbf{55.16\,kPa} (8\,psi, Kelvion) & \textbf{20.22\,kPa} (scaled, Eq.~\eqref{eq:scaling2}) \\
+Pressure drop, $\Delta P$  & \textbf{55.16\,kPa} (8\,psi, Kelvion) & \textbf{23.18\,kPa} (scaled, Eq.~\eqref{eq:scaling2}) \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent The scaling ratio $\Delta P_2/\Delta P_1 = 0.367$. Two competing effects
+\noindent The scaling ratio $\Delta P_2/\Delta P_1 = 0.420$. Two competing effects
 determine this result: the \emph{lower flow rate} at the free-cooling point pushes
 $\Delta P$ down, while the \emph{nearly 3$\times$ higher glycol viscosity} at the colder
 average temperature pushes it up. The flow-rate effect dominates, so the free-cooling
@@ -2312,7 +2321,7 @@ $\Rightarrow$ lower pressure drop'' is not obvious on inspection.
 The Reynolds number at the design point is comfortably turbulent, but at the free-cooling
 point it drops close to the laminar/turbulent transition ($Re \approx 2{,}300$--$4{,}000$),
 where the Blasius correlation underlying Eq.~\eqref{eq:scaling1} is not rigorously
-validated. The scaled 20.22\,kPa should therefore be treated as a \textbf{reasonable
+validated. The scaled 23.18\,kPa should therefore be treated as a \textbf{reasonable
 extrapolation}, not an exact result, pending vendor confirmation at that specific
 operating point (see \S\ref{dry:sec:openitems}).
 
@@ -2334,9 +2343,9 @@ should be resolved together with that item.
 Duty, $Q$                    & 182\,kW required / 196.5\,kW rated & 150\,kW \\
 Glycol temperatures          & 42.0\,$\to$\,38.0\,\textdegree C     & 15.0\,$\to$\,9.0\,\textdegree C (target) \\
 Ambient DB                   & 35.0\,\textdegree C                  & 4.0\,\textdegree C \\
-Fan speed                    & 86.8\,\% (design-day duty)           & $\approx$32.3\,\% (model) \\
-Fan power                    & 6.9\,kW (of 10.6\,kW rated, est.)    & 0.11\,kW avg (model) \\
-Glycol-side $\Delta P$       & \textbf{55.16\,kPa} (8\,psi, Kelvion)& 20.22\,kPa (scaled, \S\ref{dry:sec:dpscaling}) \\
+Fan speed                    & 90.7\,\% (design-day duty)           & $\approx$32.3\,\% (model) \\
+Fan power                    & 7.9\,kW (of 10.6\,kW rated, est.)    & 0.11\,kW avg (model) \\
+Glycol-side $\Delta P$       & \textbf{55.16\,kPa} (8\,psi, Kelvion)& 23.18\,kPa (scaled, \S\ref{dry:sec:dpscaling}) \\
 Data source                  & Kelvion Select RT                    & \texttt{dry\_cooler.py} model \\
 \bottomrule
 \end{tabularx}
@@ -2360,10 +2369,11 @@ air-side $\Delta P$ per unit of flow (specific fan power 0.113 vs.\ 0.150\,kW/kc
 \begin{quote}
 \textbf{Rated vs.\ operating fan power.} The 10.6\,kW is the power at 100\,\% design air
 flow. The plant only rejects $\approx$182\,kW at the 35\,\textdegree C design day against
-the coil's 196.5\,kW rating, so the variable-speed fans run at \textbf{86.8\,\% of design
-flow}, and the cube law gives $10.6 \times 0.868^3 = \mathbf{6.9\,kW}$ --- the value that
-enters the design-day PUE (\S\ref{perf:sec:pue}). Every hour of the annual simulation
-uses this same off-design solve, so the design-day and seasonal numbers are consistent.
+the coil's 196.5\,kW rating, so the variable-speed fans run at \textbf{90.7\,\% of design
+flow}, and the cube law gives $10.6 \times 0.907^3 = \mathbf{7.9\,kW}$ --- the value that
+enters the design-day PUE (\S\ref{perf:sec:pue}). The off-design solve is fed the real
+loop glycol flow (11.64\,kg/s), and every hour of the annual simulation uses the same
+machinery, so the design-day and seasonal numbers are consistent.
 \end{quote}
 
 \noindent The scaling behind the 10.6\,kW rating is physically consistent but not
@@ -2649,7 +2659,7 @@ plant operating mode:
 \begin{itemize}
   \item \textbf{Mechanical mode}: Dry Cooler $\leftrightarrow$ Condenser
         (Chapters~\ref{ch:dry}, \ref{ch:cond}), compressor running, glycol flow
-        $\mdot_{\mathrm{glycol}} = 9.07$\,kg/s.
+        $\mdot_{\mathrm{glycol}} = 11.64$\,kg/s.
   \item \textbf{Free-cooling mode}: Dry Cooler $\leftrightarrow$ Economizer
         (Chapters~\ref{ch:dry}, \ref{ch:econ}), compressor off, glycol flow
         $\mdot_{\mathrm{glycol}} = 6.52$\,kg/s.
@@ -2682,7 +2692,7 @@ active. Two independent system curves therefore exist:
 
 Each component term is evaluated using the SAME correlation and geometry already
 validated in that component's own chapter --- the condenser term is the Martin (1996)
-correlation of \S\ref{cond:sec:martin} (corrected 40/46\,\textdegree C, 9.07\,kg/s design
+correlation of \S\ref{cond:sec:martin} (38/42\,\textdegree C, 11.64\,kg/s design
 point), the economizer term is \S\ref{econ:sec:martin}'s value as-is, and the dry cooler
 terms are the vendor-confirmed mechanical-mode value and its free-cooling rescaling
 (Chapter~\ref{ch:dry}), evaluated PARAMETRICALLY in $\mdot$ (not only at the single design
@@ -2692,13 +2702,13 @@ point) so a real intersection with the pump curve (\S\ref{pump:sec:curve}) can b
 \caption{System curve component breakdown at each mode's design flow.}
 \begin{tabularx}{\linewidth}{lLL}
 \toprule
-\textbf{Component} & \textbf{Mechanical (9.07\,kg/s)} & \textbf{Free-cooling (6.52\,kg/s)} \\
+\textbf{Component} & \textbf{Mechanical (11.64\,kg/s)} & \textbf{Free-cooling (6.52\,kg/s)} \\
 \midrule
-Dry cooler                & 48.26\,kPa (vendor)         & 32.24\,kPa (rescaled) \\
-Condenser / Economizer    & 17.50\,kPa (Martin)         & 10.43\,kPa (as-modeled) \\
-Piping (\S\ref{pump:sec:piping}) & 30.91\,kPa           & 19.55\,kPa \\
+Dry cooler                & 55.16\,kPa (8\,psi, vendor) & 23.18\,kPa (rescaled) \\
+Condenser / Economizer    & 35.91\,kPa (Martin)         & 10.43\,kPa (as-modeled) \\
+Piping (\S\ref{pump:sec:piping}) & 49.85\,kPa           & 19.55\,kPa \\
 \midrule
-\textbf{Total}            & \textbf{96.67\,kPa = 9.74\,m} & \textbf{62.22\,kPa = 6.17\,m} \\
+\textbf{Total}            & \textbf{140.92\,kPa = 14.18\,m} & \textbf{53.16\,kPa = 5.28\,m} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -2748,12 +2758,27 @@ curve). A 10\,\% flow / 18\,\% head margin is applied --- the same philosophy as
 area margin already used for the condenser (\S\ref{cond:sec:lmtd}):
 
 \[
-  Q_{\mathrm{select}} = 1.10 \times 32.27 = 35.50\;\mathrm{m^3/h}, \qquad
-  H_{\mathrm{select}} = 1.18 \times 9.74 = 11.49\;\mathrm{m}
+  Q_{\mathrm{select}} = 1.10 \times 41.36 = 45.50\;\mathrm{m^3/h}, \qquad
+  H_{\mathrm{select}} = 1.18 \times 14.18 = 16.73\;\mathrm{m}
 \]
 
 No separate margin is applied to the free-cooling point; the VFD's speed turndown already
 provides ample headroom there.
+
+\begin{quote}
+\textbf{Frame outcome --- 2AD superseded, 2.5AC required.} At this reconciled duty
+(41.36\,m$^3$/h @ 14.18\,m, from the 11.64\,kg/s loop flow) \textbf{no 2AD impeller trim
+clears the margined point} --- the 2AD envelope tops out below 16.73\,m at 45.50\,m$^3$/h.
+The 2AD trim walkthrough that follows was performed at the earlier, lower duty and is
+\emph{superseded}; it is retained as the method. The \textbf{Bell \& Gossett e-1510
+2.5AC} frame (the next size up, whose envelope covers this point --- see
+Table~\ref{tab:pump_frames}) is the selected pump, closing this chapter's open item~3.
+The pump \emph{power} is unchanged by the frame choice: the electrical draw of
+\textbf{2.57\,kW} (mechanical) / 0.54\,kW (free cooling) is the hydraulic duty
+$\rho g \dot V H / \eta$ to move the glycol, independent of which casing delivers it.
+The remaining task is to digitize the 2.5AC trim curves and re-run the exact trim and
+VFD-speed selection on that frame.
+\end{quote}
 
 % ── §7.5 ──────────────────────────────────────────────────────────────────────
 \section{Vendor Pump Curve and Trim Selection}
@@ -2765,7 +2790,9 @@ a quadratic $H(Q) = c_2 Q^2 + c_1 Q + c_0$ (least squares, $Q$ in m$^3$/h, $H$ i
 trim's 100\,\%-speed curve was evaluated against the margined selection point:
 
 \begin{table}[h!]
-\caption{Trim comparison at the margined selection point (35.50\,m$^3$/h @ 11.49\,m).}
+\caption{Trim comparison at the \emph{superseded} margined point (35.50\,m$^3$/h @
+11.49\,m), on the undersized 2AD frame. Shown as the method; the current duty
+(45.50\,m$^3$/h @ 16.73\,m) requires the 2.5AC frame.}
 \begin{tabularx}{\linewidth}{lLLL}
 \toprule
 \textbf{Trim} & \textbf{$H$ @ mech.\ $Q$} & \textbf{$H$ @ selection $Q$} & \textbf{Clears margin?} \\
@@ -2820,6 +2847,7 @@ rather than relying on the coarser composite envelope.
 
 \begin{table}[h!]
 \caption{Digitized 1750\,RPM composite chart coverage envelope, candidate frame sizes.}
+\label{tab:pump_frames}
 \label{tab:composite}
 \begin{tabularx}{\linewidth}{lLL}
 \toprule
@@ -2833,11 +2861,12 @@ rather than relying on the coarser composite envelope.
 \end{tabularx}
 \end{table}
 
-The \textbf{2AD} model (the same frame size the 7.0\,in trim in
-\S\ref{pump:sec:curve} belongs to) is confirmed as the correct frame size: its composite
-envelope covers the required flow range (116--188\,GPM against a 156.3\,GPM target), and
-the individual-curve digitization resolves the head question the composite chart alone
-could not.
+At the \emph{superseded} lower duty (156.3\,GPM target) the 2AD frame's composite envelope
+(116--188\,GPM) just covered the flow. At the reconciled duty it does not: the operating
+point is \textbf{182\,GPM @ 46.5\,ft}, above the 2AD envelope's 188\,GPM / 36\,ft ceiling,
+so the \textbf{2.5AC} frame is selected (105--343\,GPM, 18--49\,ft ---
+Table~\ref{tab:pump_frames}), as set out in the frame-outcome note of \S7.4. The analysis
+below is retained as the method on the 2AD frame.
 
 \subsection{Cross-Check: Direct Trim Interpolation}
 
@@ -2849,10 +2878,10 @@ margined selection flow (156.3\,GPM, target head 37.7\,ft) gives a required trim
   D_{\mathrm{trim}} = 7.0 - 0.5 \times \frac{39.9 - 37.7}{39.9 - 30.6} \approx 6.9\;\mathrm{in}
 \]
 
-This is in good agreement with the 7.0\,in selection (the largest trim available for the
-2AD frame, and the nearest stock size above the interpolated 6.9\,in) --- confirming the
-duty point sits near, but just within, the top of this frame's operating envelope, exactly
-as the composite chart screening above already indicated.
+This 6.9\,in interpolation applies to the \emph{superseded} 2AD analysis; it confirmed the
+old duty sat right at the top of the 2AD envelope --- which is precisely why the higher
+reconciled duty pushes past it to the 2.5AC frame (\S7.4). The equivalent trim
+interpolation on the 2.5AC curves is the remaining pump task.
 
 % ── §7.6 ──────────────────────────────────────────────────────────────────────
 \section{Variable-Speed Operation}
@@ -2868,10 +2897,12 @@ curve pass exactly through that mode's design duty point is solved from
 via root-finding (Brent's method) on the fitted $H_{100\%}(Q)$ curve.
 
 \begin{table}[h!]
-\caption{Required VFD speed fraction at each operating point.}
+\caption{Required VFD speed fraction at each operating point --- \emph{superseded 2AD
+frame}. The current duty is 41.36\,m$^3$/h @ 14.18\,m (mechanical); these speeds are to
+be re-derived on the selected 2.5AC frame.}
 \begin{tabularx}{\linewidth}{lLL}
 \toprule
-\textbf{Operating point} & \textbf{Duty} & \textbf{Required speed} \\
+\textbf{Operating point} & \textbf{Duty (superseded 2AD)} & \textbf{Required speed} \\
 \midrule
 Mechanical (exact design point)  & 32.27\,m$^3$/h @ 9.74\,m  & 90.0\,\% \\
 Free-cooling (exact design point) & 22.85\,m$^3$/h @ 6.17\,m  & 69.5\,\% \\
@@ -2957,12 +2988,13 @@ reasonable.
         it sits alongside; motor efficiency (90\,\%) remains a generic assumption pending
         nameplate data. Both should be confirmed via the manufacturer's ESP-Plus selection
         software or a vendor quotation.
-  \item \textbf{Margin at maximum trim.} The selected 7.0\,in trim is the largest available
-        for the 2AD frame and operates near the top of that frame's envelope
-        (\S\ref{pump:sec:vendor}). Any upward revision to system head --- e.g.\ from a
-        finalized piping layout longer than the assumed 65\,m, additional fittings, or a
-        different glycol concentration --- may push the duty point outside 2AD's envelope,
-        requiring the next frame size (2.5AC).
+  \item \textbf{Frame moved to 2.5AC (this open item is now resolved, and a task remains).}
+        Reconciling the glycol loop to its true 11.64\,kg/s flow raised the mechanical duty
+        to 41.36\,m$^3$/h @ 14.18\,m, which sits \emph{outside} the 2AD envelope --- so the
+        2.5AC frame is selected (\S7.4). The pump \emph{power} (2.57\,kW) is unaffected, but
+        the exact trim and VFD-speed selection must be re-run once the 2.5AC vendor curves
+        are digitized. A finalized piping layout longer than the assumed 65\,m would raise
+        the head further and should be checked against the 2.5AC envelope.
   \item \textbf{Condenser/economizer channel-count split ($N_{cp,\mathrm{glycol}}=24$)
         remains an assumed placeholder} (\S\ref{cond:sec:martin}, \S\ref{econ:sec:martin}),
         pending vendor-confirmed plate geometry.
@@ -3131,16 +3163,16 @@ actual design duty (94.8\,GPM @ 27.7\,ft), which the VFD then trims back down
 (\S\ref{chwpump:sec:vfd}).
 
 % ── §8.5b ─────────────────────────────────────────────────────────────────────
-\subsection{Frame Size: Why 1.5AD Rather Than the Glycol Pump's 2AD}
+\subsection{Frame Size: Why 1.5AD Rather Than the Glycol Pump's Frame}
 \label{chwpump:sec:frame}
 
-The glycol pump (Chapter~\ref{ch:pump}) uses the \textbf{2AD} frame at its much larger
-duty ($\approx$156\,GPM @ $\approx$38\,ft). Re-using the same 2AD casing was considered for
+The glycol pump (Chapter~\ref{ch:pump}) uses the larger \textbf{2.5AC} frame at its much
+larger duty ($\approx$182\,GPM @ $\approx$47\,ft). Re-using that casing was considered for
 parts commonality, but was rejected: at this pump's much smaller duty
-($\approx$95\,GPM @ $\approx$28\,ft), the 2AD's own composite coverage floor is 116\,GPM
+($\approx$95\,GPM @ $\approx$28\,ft), the larger frame's composite coverage floor is 105\,GPM
 (Table~\ref{tab:composite}, Chapter~\ref{ch:pump}) --- meaning our duty point falls
-\emph{below} that frame's intended operating window entirely. Digitizing the 2AD curve at
-this flow shows the pump would run at only $\approx$40--50\,\% efficiency there (per the
+\emph{below} that frame's intended operating window entirely. At this flow the larger
+casing would run at only $\approx$40--50\,\% efficiency (per the
 B-261G contour lines), far to the left of its best-efficiency point --- an oversized-pump
 penalty that works directly against the project's PUE target every one of the 8760
 operating hours.
@@ -4103,12 +4135,12 @@ the two.
 \section{Glycol Loop Piping}
 \label{piping:sec:glycol}
 
-The glycol loop diameter was already established in Chapter~\ref{ch:pump}
+The glycol loop diameter was established in Chapter~\ref{ch:pump}
 (\S\ref{pump:sec:piping}), sized against the higher of its two design flows (mechanical
-mode, 9.07\,kg/s):
+mode, 11.64\,kg/s):
 
 \[
-  v_{\mathrm{design}} \approx 1.8\;\mathrm{m/s} \quad \Rightarrow \quad
+  v_{\mathrm{design}} \approx 2.4\;\mathrm{m/s} \quad \Rightarrow \quad
   \textbf{3\,in Schedule 40 steel (77.9\,mm ID)}
 \]
 
@@ -4120,16 +4152,19 @@ This chapter re-checks that same pipe against \emph{both} glycol-loop operating 
 \toprule
 \textbf{Mode} & \textbf{Flow} & \textbf{Density} & \textbf{Velocity} & \textbf{Reynolds} \\
 \midrule
-Mechanical (dry cooler $\leftrightarrow$ condenser) & 9.07\,kg/s & 1011.7\,kg/m$^3$ & 1.88\,m/s & $\approx1.02\times10^{5}$ \\
+Mechanical (dry cooler $\leftrightarrow$ condenser) & 11.64\,kg/s & 1013.4\,kg/m$^3$ & 2.41\,m/s & $\approx1.21\times10^{5}$ \\
 Free-cooling (dry cooler $\leftrightarrow$ economizer) & 6.52\,kg/s & 1027.2\,kg/m$^3$ & 1.33\,m/s & $\approx2.62\times10^{4}$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 Both modes fall inside the 1--2.4\,m/s hydronic guideline through the \emph{same} fixed
-pipe --- no separate diameter is needed for the free-cooling mode, since the lower flow
-simply produces a lower (and still acceptable) velocity. This is consistent with, but
-independent of, the still-open glycol-flow-rate reconciliation flagged in
+pipe. Mechanical mode now sits \textbf{right at the 2.4\,m/s ceiling} (2.41\,m/s), a
+direct consequence of the 4\,K glycol range demanding a high flow; 3\,in is retained as
+acceptable, but a 4\,in line would be the conservative choice if pumping loss or noise
+became a concern. Free-cooling mode, at the lower economizer flow, has ample margin. This
+is consistent with, but independent of, the still-open glycol-flow-rate reconciliation
+flagged in
 Chapter~\ref{ch:dry} (\S\ref{dry:sec:openflow}): whichever flow the eventual VFD control
 strategy settles on, both candidate values check out against this pipe size.
 
@@ -4184,7 +4219,7 @@ placeholder be replaced with a calculated value.
 Refrigerant --- suction    & 0.553\,kg/s & 2-5/8\,in & ACR copper, Type L & 14.67\,m/s \\
 Refrigerant --- discharge  & 0.553\,kg/s & 1-5/8\,in & ACR copper, Type L & 13.80\,m/s \\
 Refrigerant --- liquid     & 0.553\,kg/s & 1-5/8\,in & ACR copper, Type L & 1.06\,m/s \\
-Glycol loop                & 9.07\,kg/s (mech.) & 3\,in Sch.\,40 & Steel & 1.88\,m/s \\
+Glycol loop                & 11.64\,kg/s (mech.) & 3\,in Sch.\,40 & Steel & 2.41\,m/s \\
 Chilled-water loop          & 5.97\,kg/s & 2-1/2\,in Sch.\,40 & Steel & 1.94\,m/s \\
 \bottomrule
 \end{tabularx}
@@ -4609,17 +4644,17 @@ electrical loads at the 35\,\textdegree C / full-load design point.
 \label{fig:pue_breakdown}
 \end{figure}
 
-The design-day PUE is \textbf{1.285}, dominated by the compressor bank at 32.1\,kW of the
-42.7\,kW of non-IT load --- \textbf{75\,\% of everything the plant draws beyond the IT
+The design-day PUE is \textbf{1.291}, dominated by the compressor bank at 32.1\,kW of the
+43.7\,kW of non-IT load --- \textbf{74\,\% of everything the plant draws beyond the IT
 itself}. That single fact frames the whole design: the compressor is the only load worth
 attacking, which is precisely why the condensing approach was driven down to 10\,K at the
 cost of a very large dry cooler.
 
 The remaining loads are the price of the architecture rather than of the compressor. Fan
-power is \textbf{6.9\,kW} --- not the 10.6\,kW rated value: the coil is sized for
+power is \textbf{7.9\,kW} --- not the 10.6\,kW rated value: the coil is sized for
 196.5\,kW but the plant rejects only $\approx$182\,kW at the design day, so the
-variable-speed fans run at 86.8\,\% of design air flow and the cube law gives
-$10.6 \times 0.868^3 = 6.9$\,kW (\S\ref{dry:sec:fanpower_open}). This is the same
+variable-speed fans run at 90.7\,\% of design air flow and the cube law gives
+$10.6 \times 0.907^3 = 7.9$\,kW (\S\ref{dry:sec:fanpower_open}). This is the same
 off-design fan solve the annual simulation uses, so the design-day PUE is consistent with
 the monthly and seasonal numbers below. The glycol pump draws 2.57\,kW because the tight
 4\,K glycol range demands high flow, and because the selected dry cooler's 8\,psi
@@ -4649,7 +4684,7 @@ already, and the design duty makes the 2.5AC frame the more likely selection.
 PUE has a well-known blind spot: it stops at the rack. Every watt crossing into the IT
 equipment counts as ``useful,'' so the losses \emph{inside} the servers --- power-supply
 conversion, on-board voltage regulators, and the servers' own cooling fans --- are
-invisible to it. Two facilities with an identical PUE of 1.285 can therefore deliver
+invisible to it. Two facilities with an identical PUE of 1.291 can therefore deliver
 materially different compute per watt. Worse, the metric can be gamed in the wrong
 direction: moving heat rejection onto the server (bigger on-board fans) \emph{lowers}
 PUE while raising total site power.
@@ -4686,9 +4721,9 @@ put on the TUE columns that follow:
         from PUE --- the free-cooling benefit, the seasonal spread, the compressor's
         dominance of the non-IT load --- is unchanged.
   \item \textbf{Its value is one of honesty about scope.} The design-day TUE of
-        \textbf{1.54} (band 1.41--1.67) says that for every watt of real compute, the
-        site draws about 1.54\,W --- and that the \emph{cooling plant is responsible for
-        only part of that overhead}. Of the 0.54 of overhead, roughly 0.28 is this
+        \textbf{1.55} (band 1.42--1.68) says that for every watt of real compute, the
+        site draws about 1.55\,W --- and that the \emph{cooling plant is responsible for
+        only part of that overhead}. Of the 0.55 of overhead, roughly 0.29 is this
         project's mechanical plant and roughly 0.26 is IT-internal losses this project
         does not control and has not designed.
 \end{itemize}
@@ -4696,7 +4731,7 @@ put on the TUE columns that follow:
 \noindent A defensible TUE for this facility would require measured server power data
 (compute vs.\ PSU vs.\ fan), which sits outside the project scope. The figure is
 reported because the metric was requested and because it correctly frames how much of
-the total energy problem the chiller design can actually address --- not because 1.54
+the total energy problem the chiller design can actually address --- not because 1.55
 is a validated result.
 
 \zonedivider{Part B \quad---\quad Seasonal Weather-Driven Performance}
@@ -4722,7 +4757,7 @@ thresholds and the dry cooler's 35\,\textdegree C design ambient.}
 \noindent Two things are worth reading off it. First, the 35\,\textdegree C dry-cooler
 design ambient is reached for only a handful of hours a year --- the design-day
 condition that sizes the whole plant is genuinely a worst case, not a typical one, which
-is exactly why the design-day PUE of 1.285 overstates the annual average. Second, the
+is exactly why the design-day PUE of 1.291 overstates the annual average. Second, the
 curve falls below 4\,\textdegree C for 2{,}542\,h and reaches $-27.4$\,\textdegree C at
 its extreme, which is what makes the free-cooling architecture pay in this climate.
 
@@ -4784,7 +4819,7 @@ The seasonal picture is strongly favourable and stands in deliberate contrast to
 worst-case design-day metrics of Part~A. Winter runs entirely in free cooling
 (compressor off, PUE 1.01, TUE 1.21, total-system COP near 88), while even the hottest
 monthly average (July) holds PUE 1.21 / TUE 1.46, against the worst-case design day's
-1.285 / 1.54. Spring and Fall now sit at PUE 1.11 and 1.12 --- markedly better than the
+1.291 / 1.55. Spring and Fall now sit at PUE 1.11 and 1.12 --- markedly better than the
 1.14/1.15 they showed before the partial band was modelled --- because each contains one
 month that runs integrated rather than mechanical. Across the year the economizer
 delivers \textbf{526\,MWh of the 1{,}314\,MWh} of cooling the hall needs
@@ -4828,7 +4863,7 @@ Full-load COP (project 15\,\textdegree C LCHW) & (reported) & \textbf{4.67} & --
 IPLV.IP & $\geq 5.0$ & \textbf{5.23} & \textbf{Met} \\
 Economizer activation & $\leq 10$\,\textdegree C OAT & 10\,\textdegree C, 50\,\% of load carried & \textbf{Met} (\S\ref{econ:sec:partialmodel}) \\
 Economizer full free cooling & $\leq 4$\,\textdegree C OAT & 4\,\textdegree C, 100\,\% load & \textbf{Met} (Ch.~\ref{ch:dry}) \\
-Design-day PUE & (report) & \textbf{1.285} & --- \\
+Design-day PUE & (report) & \textbf{1.291} & --- \\
 \bottomrule
 \end{tabularx}
 \end{table}
