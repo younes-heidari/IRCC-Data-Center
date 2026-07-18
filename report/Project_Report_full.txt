@@ -452,8 +452,24 @@ The water flow rate follows directly from the specified capacity and temperature
         \approx 95\;\text{US\,GPM}
 \]
 
+\begin{quote}
+\noindent\textbf{Original design point --- superseded on the refrigerant side.} The
+water-side duty (150\,kW, 21/15\,\textdegree C, 5.97\,kg/s) is the fixed project spec and
+is unchanged (its pressure-drop table, \S\ref{evap:sec:martin}, is at the confirmed
+Kelvion plate). The \emph{refrigerant} side of this chapter's thermal worked example,
+however, is at the \emph{original} evaporating temperature ($t_o = 7$\,\textdegree C,
+$\approx$5.9\,bar, $U = 3{,}000$), retained as the LMTD sizing method. The efficiency revision tightened the
+evaporator approach and moved the plant to \textbf{$t_o = 10$\,\textdegree C}
+(6.37\,bar); the confirmed sizing at that point --- $U = 2{,}400$ (double-wall),
+$\approx$84 plates in the Kelvion HP\,DW\,500H frame --- is carried in
+Chapter~\ref{ch:performance}, \S\ref{perf:sec:hardware}, and is what the model
+(\texttt{main.py}), the EEV chapter (Chapter~\ref{ch:eev}) and the p-h chart use. Read
+the refrigerant-side worked example below with that in mind.
+\end{quote}
+
 \begin{table}[h!]
-\caption{Evaporator design basis.}
+\caption{Evaporator design basis (original design point on the refrigerant side; see the
+note above).}
 \begin{tabularx}{\linewidth}{lL}
 \toprule
 \textbf{Parameter} & \textbf{Value} \\
@@ -819,20 +835,20 @@ plate length $L_v$ is treated as one pass, exactly as in the economizer model.
 \textbf{Quantity} & \textbf{Value} \\
 \midrule
 Water mass flow, $\mdot_{\mathrm{water}}$ & 5.973\,kg/s \\
-Flow area, $A_{\mathrm{flow,water}}$      & 0.0112\,m$^2$ \\
-Channel mass flux, $G$                    & 531.8\,kg\,m$^{-2}$s$^{-1}$ \\
-Channel velocity, $G/\rho$                & 0.53\,m/s \\
-Reynolds number, $Re$                     & 2{,}021 \\
-Friction factor, $f$ (Eq.\,Martin\,1)     & 0.1093 \\
-\textbf{Pressure drop}, $\Delta P_{\mathrm{water}}$ (Eq.\,Martin\,3) & \textbf{7.73\,kPa} \\
+Flow area, $A_{\mathrm{flow,water}}$      & 0.0110\,m$^2$ \\
+Channel mass flux, $G$                    & 545.4\,kg\,m$^{-2}$s$^{-1}$ \\
+Channel velocity, $G/\rho$                & 0.55\,m/s \\
+Reynolds number, $Re$                     & 2{,}072 \\
+Friction factor, $f$ (Eq.\,Martin\,1)     & 0.1091 \\
+\textbf{Pressure drop}, $\Delta P_{\mathrm{water}}$ (Eq.\,Martin\,3) & \textbf{9.75\,kPa} \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-At $Re \approx 2{,}021$ the water side sits right at the laminar/turbulent transition used
+At $Re \approx 2{,}072$ the water side sits right at the laminar/turbulent transition used
 to switch between Eqs.~(Martin\,2a) and (Martin\,2b); this is consistent with the
 comparable water-side Reynolds number found for the economizer (\S\ref{econ:sec:martin}).
-A 7.73\,kPa water-side loss is modest relative to the overall chilled-water loop and
+A 9.75\,kPa water-side loss is modest relative to the overall chilled-water loop and
 plays into chilled-water pump sizing alongside the piping diameters sized in
 Chapter~\ref{ch:piping}.
 
@@ -1341,7 +1357,7 @@ Friction factor, $f$ (Eq.\,Martin\,1)       & 0.1073 \\
 \end{tabularx}
 \end{table}
 
-The glycol-side drop is much larger than the evaporator's water-side drop (7.73\,kPa,
+The glycol-side drop is much larger than the evaporator's water-side drop (9.75\,kPa,
 \S\ref{evap:sec:martin}) despite the identical assumed flow area, because the condenser's
 glycol mass flow (11.64\,kg/s) is nearly double the evaporator's water flow
 (5.973\,kg/s) and glycol is both denser and more viscous than water at these
@@ -3088,12 +3104,12 @@ both branches carry the same flow, the pump is sized on the higher-resistance br
 \toprule
 \textbf{Component} & \textbf{$\Delta P$} \\
 \midrule
-Evaporator, water side (Martin, worst-case branch) & 7.73\,kPa \\
+Evaporator, water side (Martin, worst-case branch) & 9.75\,kPa \\
 Economizer, water side (Martin, for reference)      & 6.67\,kPa \\
 CRAH coil (\S\ref{chwpump:sec:crah}, \textbf{assumed}) & 50.0\,kPa \\
-Piping/fittings (\S\ref{chwpump:sec:crah}, \textbf{assumed}) & 25.0\,kPa \\
+Piping/fittings (Darcy--Weisbach, 65\,m equiv.\ length, \S\ref{chwpump:sec:crah}) & 40.77\,kPa \\
 \midrule
-\textbf{Total (design basis)} & \textbf{82.7\,kPa = 8.45\,m = 27.7\,ft} \\
+\textbf{Total (design basis)} & \textbf{100.5\,kPa = 10.27\,m = 33.7\,ft} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -3113,17 +3129,15 @@ or vendor data} and are flagged explicitly:
         chilled-water fan-coil/CRAH unit at this flow (typical range 40--70\,kPa); it
         should be replaced with a real vendor coil $\Delta P$ once a CRAH unit is selected
         for the 8\,m\,$\times$\,12\,m, $\approx$25-rack data hall.
-  \item \textbf{Piping/fittings (25.0\,kPa, assumed)}: the project brief states that
-        \emph{pressure losses within the piping are to be neglected}, in contrast to the
-        glycol loop chapter's own 65\,m equivalent-length calculation
-        (\S\ref{pump:sec:piping}), which is a deliberate, documented deviation from that
-        instruction for the glycol side. Per project decision, this term is
-        \textbf{retained here too, as an explicit over-design margin} rather than set to
-        zero --- i.e., this chapter intentionally selects against the more conservative
-        82.7\,kPa total rather than the $\approx$58\,kPa total that would result from
-        following the brief literally and dropping this term. If a real piping layout
-        becomes available, this term should be replaced with an actual Darcy--Weisbach
-        calculation, following the same method as \S\ref{pump:sec:piping}.
+  \item \textbf{Piping/fittings (40.77\,kPa, Darcy--Weisbach)}: the project brief states
+        that \emph{pressure losses within the piping are to be neglected}, but this term is
+        \textbf{retained as an explicit over-design margin}, computed the same way as the
+        glycol loop (Darcy--Weisbach over a 65\,m equivalent length,
+        \S\ref{pump:sec:piping}) rather than left as a flat placeholder. This is a
+        deliberate, documented deviation from the brief for the water side, mirroring the
+        glycol side. Dropping it (following the brief literally) would give a
+        $\approx$60\,kPa total; retaining it gives the more conservative 100.5\,kPa used
+        here. It should be replaced with an actual layout's value once one exists.
 \end{itemize}
 
 These two terms together make up $\approx$91\,\% of the total system head --- by far the
@@ -3142,7 +3156,7 @@ applied here, since this loop has only one design duty point:
 
 \[
   Q_{\mathrm{design}} = 21.5\;\mathrm{m^3/h}\;(94.8\;\mathrm{GPM}), \qquad
-  H_{\mathrm{select}} = 1.10 \times 8.45\;\mathrm{m} = 9.30\;\mathrm{m}\;(30.5\;\mathrm{ft})
+  H_{\mathrm{select}} = 1.10 \times 10.27\;\mathrm{m} = 11.30\;\mathrm{m}\;(37.1\;\mathrm{ft})
 \]
 
 % ── §8.5 ──────────────────────────────────────────────────────────────────────
@@ -3159,23 +3173,28 @@ impeller trims (5.0--7.0\,in), and fit to a quadratic $H(Q) = c_2 Q^2 + c_1 Q + 
 \caption{Trim comparison at the design flow (94.8\,GPM), 1.5AD frame, 1750\,RPM.}
 \begin{tabularx}{\linewidth}{lLL}
 \toprule
-\textbf{Trim} & \textbf{$H$ @ 94.8\,GPM} & \textbf{Clears 30.5\,ft margin?} \\
+\textbf{Trim} & \textbf{$H$ @ 94.8\,GPM} & \textbf{Clears 37.1\,ft margin?} \\
 \midrule
 5.0\,in & 13.8\,ft & No \\
 5.5\,in & 18.6\,ft & No \\
 6.0\,in & 24.3\,ft & No \\
 6.5\,in & 29.5\,ft & No \\
-\textbf{7.0\,in} & \textbf{34.0\,ft} & \textbf{Yes} \\
+\textbf{7.0\,in} & \textbf{33.9\,ft} & \textbf{No (fallback)} \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-The \textbf{7.0\,in trim} is the smallest of the five that clears the margined target and
-is therefore selected. At 100\,\% speed (uncontrolled), the 7.0\,in curve intersects the
-system curve of \S\ref{chwpump:sec:syscurve} at \textbf{102.0\,GPM @ 32.1\,ft} (23.17
-m$^3$/h @ 9.79\,m) --- confirming the selected trim carries head/flow margin above the
-actual design duty (94.8\,GPM @ 27.7\,ft), which the VFD then trims back down
-(\S\ref{chwpump:sec:vfd}).
+\begin{quote}
+\noindent\textbf{The 1.5AD frame is at its limit.} With the water-side piping computed by
+Darcy--Weisbach (\S\ref{chwpump:sec:syscurve}) rather than a flat placeholder, the design
+head is 33.7\,ft and the 10\,\%-margined target is 37.1\,ft --- which \emph{no} 1.5AD trim
+reaches (the largest, 7.0\,in, tops out at 33.9\,ft at the design flow). The 7.0\,in trim
+is therefore the fallback: at 100\,\% speed it intersects the system curve at
+\textbf{95.1\,GPM @ 33.9\,ft}, essentially \emph{on} the design duty (94.8\,GPM @
+33.7\,ft) with no head margin. It meets the duty but leaves no reserve; the next frame up
+should be evaluated if any margin is wanted. The pump \emph{power} (1.11\,kW) is the
+hydraulic duty and is unaffected by the frame choice.
+\end{quote}
 
 % ── §8.5b ─────────────────────────────────────────────────────────────────────
 \subsection{Frame Size: Why 1.5AD Rather Than the Glycol Pump's Frame}
@@ -3183,8 +3202,8 @@ actual design duty (94.8\,GPM @ 27.7\,ft), which the VFD then trims back down
 
 The glycol pump (Chapter~\ref{ch:pump}) uses the larger \textbf{2.5AC} frame at its much
 larger duty ($\approx$182\,GPM @ $\approx$47\,ft). Re-using that casing was considered for
-parts commonality, but was rejected: at this pump's much smaller duty
-($\approx$95\,GPM @ $\approx$28\,ft), the larger frame's composite coverage floor is 105\,GPM
+parts commonality, but was rejected: at this pump's much smaller flow
+($\approx$95\,GPM @ $\approx$34\,ft), the larger frame's composite coverage floor is 105\,GPM
 (Table~\ref{tab:composite}, Chapter~\ref{ch:pump}) --- meaning our duty point falls
 \emph{below} that frame's intended operating window entirely. At this flow the larger
 casing would run at only $\approx$40--50\,\% efficiency (per the
@@ -3216,14 +3235,17 @@ design duty point is solved from
 \toprule
 \textbf{Operating point} & \textbf{Duty} & \textbf{Required speed} \\
 \midrule
-Design point (exact) & 21.5\,m$^3$/h @ 8.45\,m & 92.9\,\% (1626\,RPM) \\
-100\,\%-speed intersection & 23.17\,m$^3$/h @ 9.79\,m & 100\,\% (reference) \\
+Design point (exact) & 21.5\,m$^3$/h @ 10.27\,m & 99.7\,\% (1745\,RPM) \\
+100\,\%-speed intersection & 21.6\,m$^3$/h @ 10.33\,m & 100\,\% (reference) \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-92.9\,\% sits comfortably within normal VFD turndown range, confirming the 7.0\,in trim is
-an appropriately tight selection rather than an oversized one.
+99.7\,\% means the 7.0\,in trim runs \emph{essentially flat out} at the design duty ---
+the direct consequence of the 1.5AD frame being at its head limit
+(\S\ref{chwpump:sec:curve}). It meets the duty but with no VFD headroom above it; only
+downward turndown is available. This is the trade for keeping the pump small enough to
+stay near its best-efficiency point rather than oversizing to the next frame.
 
 \textbf{Open item --- low-load turndown:} at the 30\,kW minimum-IT-load condition, if CHW
 flow is throttled proportionally with load (20\,\% of design flow, $\approx$19\,GPM), the
@@ -3256,18 +3278,21 @@ annual-energy/PUE calculations.
 \toprule
 \textbf{Duty} & \textbf{Hydraulic power} & \textbf{Shaft power} & \textbf{Electrical power (90\,\% motor eff.)} \\
 \midrule
-Design point (21.5\,m$^3$/h @ 8.45\,m) & 0.495\,kW & 0.825\,kW & 0.917\,kW \\
+Design point (21.5\,m$^3$/h @ 10.27\,m) & 0.601\,kW & 1.00\,kW & 1.11\,kW \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
+\noindent The 1.11\,kW electrical draw is the value carried into the design-day PUE
+(\S\ref{perf:sec:pue}).
+
 \subsection{Motor Selection}
 
-The required shaft power (0.825\,kW $\approx$ 1.11\,hp) rounds up to the next standard
+The required shaft power (1.00\,kW $\approx$ 1.35\,hp) rounds up to the next standard
 NEMA frame size: \textbf{1.5\,hp, 1750\,RPM}. The resulting headroom
-($\approx$1.12\,kW rated output against a 0.825\,kW requirement, $\approx$35\,\%) is
-generous by normal NEMA practice, reflecting this chapter's deliberately conservative
-(over-designed) system curve --- see \S\ref{chwpump:sec:crah}.
+($\approx$1.12\,kW rated output against a 1.00\,kW requirement, $\approx$12\,\%) is
+adequate but not generous --- consistent with the pump running near the top of the 1.5AD
+frame (\S\ref{chwpump:sec:curve}).
 
 % ── §8.8 ──────────────────────────────────────────────────────────────────────
 \section{Limitations and Open Items}
