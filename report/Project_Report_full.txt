@@ -3957,10 +3957,11 @@ size is then rechecked against the band.
 \section{Refrigerant State Points and Properties}
 \label{piping:sec:states}
 
-Refrigerant mass flow is taken as $\mdot_r = 0.553$\,kg/s throughout, consistent with
-Chapters~\ref{ch:evap}, \ref{ch:cond}, and \ref{ch:eev} --- itself provisional pending the
-compressor module's confirmed value (Chapter~\ref{ch:comp}, \S\ref{comp:sec:limitations}).
-Three state points bound the circuit:
+Refrigerant mass flow is the confirmed design-point value from the compressor chapter,
+$\mdot_r = 0.511$\,kg/s (150\,kW $\div$ the 293.3\,kJ/kg refrigerating effect,
+Chapter~\ref{ch:comp}), superseding the earlier provisional 0.553\,kg/s. The state points
+are the revised cycle's ($t_o = 10$, $t_c = 45$\,\textdegree C). Three state points bound
+the circuit:
 
 \begin{table}[h!]
 \caption{Refrigerant state points used for line sizing (CoolProp, R-290).}
@@ -3968,9 +3969,9 @@ Three state points bound the circuit:
 \toprule
 \textbf{Line} & \textbf{State} & \textbf{$T$} & \textbf{$p$} \\
 \midrule
-Suction     & 7\,\textdegree C sat.\ + 8\,K superheat & 15.0\,\textdegree C & 5.842\,bar(a) \\
-Discharge   & compressor outlet (desuperheated approach, Ch.~\ref{ch:cond}) & 72.0\,\textdegree C & 17.890\,bar(a) \\
-Liquid      & condenser outlet, 5\,K subcooled        & 47.0\,\textdegree C & 17.890\,bar(a) \\
+Suction     & 10\,\textdegree C sat.\ + 8\,K superheat & 18.0\,\textdegree C & 6.366\,bar(a) \\
+Discharge   & compressor outlet (desuperheated approach, Ch.~\ref{ch:cond}) & 64.8\,\textdegree C & 15.343\,bar(a) \\
+Liquid      & condenser outlet, 5\,K subcooled        & 40.0\,\textdegree C & 15.343\,bar(a) \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -3981,15 +3982,15 @@ Liquid      & condenser outlet, 5\,K subcooled        & 47.0\,\textdegree C & 17
 \toprule
 \textbf{Line} & \textbf{Density, $\rho$} & \textbf{Dynamic viscosity, $\mu$} \\
 \midrule
-Suction     & 12.14\,kg/m$^3$  & $7.89\times10^{-6}$\,Pa\,s \\
-Discharge   & 34.92\,kg/m$^3$  & $9.93\times10^{-6}$\,Pa\,s \\
-Liquid      & 455.6\,kg/m$^3$  & $7.71\times10^{-5}$\,Pa\,s \\
+Suction     & 13.20\,kg/m$^3$  & $7.98\times10^{-6}$\,Pa\,s \\
+Discharge   & 29.81\,kg/m$^3$  & $9.60\times10^{-6}$\,Pa\,s \\
+Liquid      & 468.18\,kg/m$^3$  & $8.32\times10^{-5}$\,Pa\,s \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \noindent The suction-line density is notably low --- a direct consequence of propane's
-low molar mass and the modest 5.84\,bar(a) evaporating pressure. This is a known
+low molar mass and the modest 6.37\,bar(a) evaporating pressure. This is a known
 characteristic of R-290 systems relative to higher-pressure synthetic refrigerants and is
 the reason the suction line below sizes out so much larger than the discharge or liquid
 lines despite carrying the same mass flow.
@@ -4005,8 +4006,8 @@ erosion) and comfortably above the floor (oil entrainment back to the compressor
 
 \[
   v_{\mathrm{design}} = 15\;\mathrm{m/s} \quad \Rightarrow \quad
-  D_{\mathrm{req}} = \sqrt{\frac{4 \times 0.553}{\pi \times 12.14 \times 15}}
-  = 62.2\;\mathrm{mm}
+  D_{\mathrm{req}} = \sqrt{\frac{4 \times 0.511}{\pi \times 13.20 \times 15}}
+  = 57.3\;\mathrm{mm}
 \]
 
 \begin{table}[h!]
@@ -4015,11 +4016,11 @@ erosion) and comfortably above the floor (oil entrainment back to the compressor
 \toprule
 \textbf{Parameter} & \textbf{Value} \\
 \midrule
-Required ID (design basis)     & 62.2\,mm \\
+Required ID (design basis)     & 57.3\,mm \\
 \textbf{Selected tube}          & \textbf{2-5/8\,in ACR copper, Type L} \\
 Actual ID                       & 62.87\,mm \\
-Actual velocity                & 14.67\,m/s \\
-Reynolds number                & $\approx 1.42\times10^{6}$ (fully turbulent) \\
+Actual velocity                & 12.48\,m/s \\
+Reynolds number                & $\approx 1.30\times10^{6}$ (fully turbulent) \\
 \textbf{In Table 1 band?}       & \textbf{Yes} (4.5--20\,m/s) \\
 \bottomrule
 \end{tabularx}
@@ -4036,8 +4037,8 @@ the required diameter just inside the next standard tube size without excess mar
 
 \[
   v_{\mathrm{design}} = 14\;\mathrm{m/s} \quad \Rightarrow \quad
-  D_{\mathrm{req}} = \sqrt{\frac{4 \times 0.553}{\pi \times 34.92 \times 14}}
-  = 38.0\;\mathrm{mm}
+  D_{\mathrm{req}} = \sqrt{\frac{4 \times 0.511}{\pi \times 29.81 \times 14}}
+  = 39.5\;\mathrm{mm}
 \]
 
 \begin{table}[h!]
@@ -4046,11 +4047,11 @@ the required diameter just inside the next standard tube size without excess mar
 \toprule
 \textbf{Parameter} & \textbf{Value} \\
 \midrule
-Required ID (design basis)     & 38.0\,mm \\
+Required ID (design basis)     & 39.5\,mm \\
 \textbf{Selected tube}          & \textbf{1-5/8\,in ACR copper, Type L} \\
 Actual ID                       & 38.23\,mm \\
-Actual velocity                & 13.80\,m/s \\
-Reynolds number                & $\approx 1.85\times10^{6}$ (fully turbulent) \\
+Actual velocity                & 14.95\,m/s \\
+Reynolds number                & $\approx 1.75\times10^{6}$ (fully turbulent) \\
 \textbf{In Table 1 band?}       & \textbf{Yes} (10--18\,m/s) \\
 \bottomrule
 \end{tabularx}
@@ -4061,35 +4062,32 @@ Reynolds number                & $\approx 1.85\times10^{6}$ (fully turbulent) \\
 \label{piping:sec:liquid}
 
 The liquid line falls in Table~1's \textbf{liquid} band ($<1.5$\,m/s, no stated floor).
-This line is the tightest fit of the three: the standard tube sizes bracket the
-$v = 1.5$\,m/s ceiling almost exactly, with essentially no size that clears the ceiling
-with meaningful margin.
 
 \[
-  v_{\mathrm{design}} = 1.49\;\mathrm{m/s} \quad \Rightarrow \quad
-  D_{\mathrm{req}} = \sqrt{\frac{4 \times 0.553}{\pi \times 455.6 \times 1.49}}
-  = 32.2\;\mathrm{mm}
+  v_{\mathrm{design}} = 1.2\;\mathrm{m/s} \quad \Rightarrow \quad
+  D_{\mathrm{req}} = \sqrt{\frac{4 \times 0.511}{\pi \times 468.18 \times 1.2}}
+  = 34.0\;\mathrm{mm}
 \]
 
 \begin{table}[h!]
-\caption{Liquid line: candidate tube sizes.}
+\caption{Liquid line: candidate tube sizes at the confirmed 0.511\,kg/s flow.}
 \label{tab:liquid_candidates}
 \begin{tabularx}{\linewidth}{lLLL}
 \toprule
 \textbf{Candidate} & \textbf{ID} & \textbf{Velocity} & \textbf{Margin to 1.5\,m/s} \\
 \midrule
-1-3/8\,in ACR Cu & 32.13\,mm & 1.496\,m/s & $\approx$0.3\,\% --- negligible \\
-\textbf{1-5/8\,in ACR Cu (selected)} & \textbf{38.23\,mm} & \textbf{1.057\,m/s} & \textbf{$\approx$30\,\%} \\
+\textbf{1-3/8\,in ACR Cu (selected)} & \textbf{33.88\,mm} & \textbf{1.21\,m/s} & \textbf{$\approx$19\,\%} \\
+1-5/8\,in ACR Cu & 38.23\,mm & 0.95\,m/s & $\approx$37\,\% (over-sized) \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\textbf{1-5/8\,in is selected} over the nominally-fitting 1-3/8\,in, since the latter
-leaves zero practical margin against the uncertainty already carried in this chapter's
-inputs (assumed 8\,K suction superheat, 5\,K subcooling, and the provisional 0.553\,kg/s
-mass flow) --- any of those shifting slightly would push 1-3/8\,in over the 1.5\,m/s
-ceiling. 1-3/8\,in remains a valid, cheaper alternative once the compressor chapter's
-mass-flow value is confirmed and the margin can be re-checked directly.
+\textbf{1-3/8\,in is selected.} At the confirmed design flow of 0.511\,kg/s (from the
+completed compressor chapter, lower than the earlier provisional 0.553\,kg/s), 1-3/8\,in
+gives 1.21\,m/s with a comfortable 19\,\% margin to the 1.5\,m/s ceiling. The next size up
+(1-5/8\,in) would run at only 0.95\,m/s --- unnecessarily over-sized, and it holds more
+of the dense liquid that dominates the A3 charge inventory (Chapter~\ref{ch:safety}), so
+the smaller line is preferred on both counts.
 
 \begin{table}[h!]
 \caption{Liquid line selection (as adopted).}
@@ -4097,11 +4095,11 @@ mass-flow value is confirmed and the margin can be re-checked directly.
 \toprule
 \textbf{Parameter} & \textbf{Value} \\
 \midrule
-Required ID (design basis)     & 32.2\,mm \\
-\textbf{Selected tube}          & \textbf{1-5/8\,in ACR copper, Type L} \\
-Actual ID                       & 38.23\,mm \\
-Actual velocity                & 1.06\,m/s \\
-Reynolds number                & $\approx 2.39\times10^{5}$ (fully turbulent) \\
+Required ID (design basis)     & 34.0\,mm \\
+\textbf{Selected tube}          & \textbf{1-3/8\,in ACR copper, Type L} \\
+Actual ID                       & 33.88\,mm \\
+Actual velocity                & 1.21\,m/s \\
+Reynolds number                & $\approx 2.6\times10^{5}$ (fully turbulent) \\
 \textbf{In Table 1 band?}       & \textbf{Yes} ($<1.5$\,m/s) \\
 \bottomrule
 \end{tabularx}
@@ -4112,22 +4110,23 @@ Reynolds number                & $\approx 2.39\times10^{5}$ (fully turbulent) \\
 \label{piping:sec:tuning}
 
 \begin{table}[h!]
-\caption{Refrigerant line sizing summary, $\mdot_r = 0.553$\,kg/s throughout.}
+\caption{Refrigerant line sizing summary, $\mdot_r = 0.511$\,kg/s throughout.}
 \begin{tabularx}{\linewidth}{lLLLL}
 \toprule
 \textbf{Line} & \textbf{Table 1 band} & \textbf{Selected tube} & \textbf{Actual ID} & \textbf{Actual $v$} \\
 \midrule
-Suction              & 4.5--20\,m/s & 2-5/8\,in ACR Cu & 62.87\,mm & 14.67\,m/s \\
-Discharge (hot gas)   & 10--18\,m/s  & 1-5/8\,in ACR Cu & 38.23\,mm & 13.80\,m/s \\
-Liquid                & $<1.5$\,m/s  & 1-5/8\,in ACR Cu & 38.23\,mm & 1.06\,m/s \\
+Suction              & 4.5--20\,m/s & 2-5/8\,in ACR Cu & 62.87\,mm & 12.48\,m/s \\
+Discharge (hot gas)   & 10--18\,m/s  & 1-5/8\,in ACR Cu & 38.23\,mm & 14.95\,m/s \\
+Liquid                & $<1.5$\,m/s  & 1-3/8\,in ACR Cu & 33.88\,mm & 1.21\,m/s \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Note the discharge and liquid lines happen to share the same 1-5/8\,in nominal size
-despite very different velocities and densities --- a coincidence of where each line's
-required diameter falls relative to the standard-size ladder, not a physical link between
-the two.
+Note the discharge (1-5/8\,in) and liquid (1-3/8\,in) lines come out only one nominal
+size apart despite carrying the same mass flow at wildly different densities --- the dense
+subcooled liquid needs far less area than the hot discharge gas, but the low target
+velocity for liquid ($<1.5$\,m/s vs.\ 14\,m/s) nearly cancels that, leaving the two lines
+close in size.
 
 \zonedivider{Part B \quad---\quad Secondary-Fluid Loop Piping}
 
@@ -4216,9 +4215,9 @@ placeholder be replaced with a calculated value.
 \toprule
 \textbf{Circuit / line} & \textbf{Design flow} & \textbf{Selected size} & \textbf{Material} & \textbf{Actual $v$} \\
 \midrule
-Refrigerant --- suction    & 0.553\,kg/s & 2-5/8\,in & ACR copper, Type L & 14.67\,m/s \\
-Refrigerant --- discharge  & 0.553\,kg/s & 1-5/8\,in & ACR copper, Type L & 13.80\,m/s \\
-Refrigerant --- liquid     & 0.553\,kg/s & 1-5/8\,in & ACR copper, Type L & 1.06\,m/s \\
+Refrigerant --- suction    & 0.511\,kg/s & 2-5/8\,in & ACR copper, Type L & 12.48\,m/s \\
+Refrigerant --- discharge  & 0.511\,kg/s & 1-5/8\,in & ACR copper, Type L & 14.95\,m/s \\
+Refrigerant --- liquid     & 0.511\,kg/s & 1-3/8\,in & ACR copper, Type L & 1.21\,m/s \\
 Glycol loop                & 11.64\,kg/s (mech.) & 3\,in Sch.\,40 & Steel & 2.41\,m/s \\
 Chilled-water loop          & 5.97\,kg/s & 2-1/2\,in Sch.\,40 & Steel & 1.94\,m/s \\
 \bottomrule
@@ -4230,20 +4229,18 @@ Chilled-water loop          & 5.97\,kg/s & 2-1/2\,in Sch.\,40 & Steel & 1.94\,m/
 \label{piping:sec:limitations}
 
 \begin{enumerate}
-  \item \textbf{Refrigerant mass flow (0.553\,kg/s) is provisional}, carried over from the
-        190\,kW preliminary condenser duty (Chapter~\ref{ch:cond}) rather than a confirmed
-        compressor-module value (Chapter~\ref{ch:comp}, \S\ref{comp:sec:limitations}).
-        All three refrigerant-line sizes in this chapter should be re-checked once that
-        value is finalised --- the liquid line especially, given its near-zero margin
-        (\S\ref{piping:sec:liquid}).
-  \item \textbf{Liquid-line selection is a judgment call, not a unique answer.} 1-3/8\,in
-        technically satisfies Table 1's $<1.5$\,m/s limit at the current design point but
-        with negligible margin; 1-5/8\,in is adopted here for robustness against input
-        uncertainty. This trade-off should be revisited once inputs are finalised.
-  \item \textbf{Suction and discharge superheat/desuperheat assumptions} (8\,K suction
-        superheat; discharge taken at the condenser chapter's $T_{\mathrm{sat}}+20$\,K
-        approach) are carried over from earlier chapters and are not yet reconciled with
-        an actual compressor performance map (Chapter~\ref{ch:comp}).
+  \item \textbf{Refrigerant mass flow is the confirmed 0.511\,kg/s} from the completed
+        compressor chapter (150\,kW $\div$ 293.3\,kJ/kg refrigerating effect), and all
+        three lines are sized at it, at the revised cycle's state points ($t_o=10$,
+        $t_c=45$\,\textdegree C). \emph{Note: the condenser and EEV chapters still quote the
+        earlier provisional 0.553\,kg/s for their channel-count and $K_v$ sizing; that
+        geometry retains ample margin at the lower confirmed flow, but those two chapters
+        are the ones still to be brought onto the confirmed value.}
+  \item \textbf{Liquid line is 1-3/8\,in} (1.21\,m/s, 19\,\% margin to the 1.5\,m/s
+        ceiling at the confirmed flow), matching the bill of materials
+        (Ch.~\ref{ch:bom}) and the charge inventory (Ch.~\ref{ch:safety}). The larger
+        1-5/8\,in would be over-sized and would hold more A3 charge, so 1-3/8\,in is
+        preferred.
   \item \textbf{No lengths, fittings, elevation, or supports are sized here}, per the
         project brief's explicit scope (``diameters only''). The glycol loop's 65\,m
         equivalent-length pressure-drop calculation (Chapter~\ref{ch:pump},
