@@ -1017,8 +1017,37 @@ def _row_cop_total(row):
     """Unified system COP = Q_delivered / P_other, valid in either mode:
     algebraically identical to 1/(PUE-1) since PUE = (Q+P_other)/Q, so this
     single formula reproduces both COP_compressor-derived (mechanical) and
-    COP_sys_fc (free-cooling) without needing an if/else on mode."""
+    COP_sys_fc (free-cooling) without needing an if/else on mode. A pre-
+    aggregated seasonal row carries its own 'cop_total' (mean of the monthly
+    COPs), which is used in preference so the seasonal FIGURE matches the
+    seasonal TABLE (performance.py) exactly."""
+    if row.get("cop_total") is not None:
+        return row["cop_total"]
     return 1.0 / (row["PUE"] - 1.0)
+
+
+def aggregate_seasonal_from_monthly(monthly_rows):
+    """Group the 12 monthly rows into the 4 standard meteorological seasons,
+    using the SAME averaging as performance.py's seasonal table (mean PUE,
+    mean of monthly COPs, mean TUE) so the seasonal figure and the seasonal
+    table cannot disagree. Colour by the season's least-free mode."""
+    season_of = {1: "Winter", 2: "Winter", 3: "Spring", 4: "Spring", 5: "Spring",
+                 6: "Summer", 7: "Summer", 8: "Summer", 9: "Fall", 10: "Fall",
+                 11: "Fall", 12: "Winter"}
+    order = ["Winter", "Spring", "Summer", "Fall"]
+    mode_rank = {"free_cooling": 0, "partial_free_cooling": 1, "mechanical": 2}
+    groups = {s: [] for s in order}
+    for i, r in enumerate(monthly_rows):     # monthly_rows are Jan..Dec
+        groups[season_of[i + 1]].append(r)
+    out = []
+    for s in order:
+        g = groups[s]
+        pue = sum(r["PUE"] for r in g) / len(g)
+        cop = sum(1.0 / (r["PUE"] - 1.0) for r in g) / len(g)
+        tue = sum(r["TUE"] for r in g) / len(g)
+        mode = max((r["mode"] for r in g), key=lambda m: mode_rank[m])
+        out.append({"label": s, "mode": mode, "PUE": pue, "TUE": tue, "cop_total": cop})
+    return out
 
 
 def plot_economizer_band(save_path=None):
@@ -1246,8 +1275,13 @@ plot_period_performance(
     monthly_rows, os.path.join(FIG_PERF_MONTHLY, "monthly_cop_pue.png"),
     "Monthly-average total system COP, PUE and TUE (Champaign, IL TMY3)",
 )
+# Seasonal FIGURE aggregates the monthly rows (mean PUE/COP/TUE), matching the
+# seasonal TABLE (performance.py). This is more representative than running a
+# single cycle at the seasonal-mean temperature, which would miss that March and
+# November run partial-free-cooling while the seasonal mean is mechanical.
+seasonal_fig_rows = aggregate_seasonal_from_monthly(monthly_rows)
 plot_period_performance(
-    seasonal_rows, os.path.join(FIG_PERF_SEASONAL, "seasonal_cop_pue.png"),
+    seasonal_fig_rows, os.path.join(FIG_PERF_SEASONAL, "seasonal_cop_pue.png"),
     "Seasonal-average total system COP, PUE and TUE (Champaign, IL TMY3)",
 )
 _TUE_NOTE = (rf" TUE $=$ ITUE $\times$ PUE with ITUE $= {ITUE:.2f}$ \textbf{{assumed}} "

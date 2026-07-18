@@ -4658,7 +4658,7 @@ $10.6 \times 0.907^3 = 7.9$\,kW (\S\ref{dry:sec:fanpower_open}). This is the sam
 off-design fan solve the annual simulation uses, so the design-day PUE is consistent with
 the monthly and seasonal numbers below. The glycol pump draws 2.57\,kW because the tight
 4\,K glycol range demands high flow, and because the selected dry cooler's 8\,psi
-(\S\ref{dry:sec:datasheet}) and the condenser's $\approx$35.8\,kPa both sit on its system
+(\S\ref{dry:sec:datasheet}) and the condenser's $\approx$35.9\,kPa both sit on its system
 curve. The fan power remains the largest single \textbf{uncertainty} here, since the
 10.6\,kW rating it scales from is itself an estimate.
 
@@ -4666,16 +4666,15 @@ This is the \emph{worst-case} PUE: it occurs only at the hottest design ambient.
 seasonal analysis below shows the annual-average is far more favourable, because most of
 the year runs at part load or in free cooling.
 
-\noindent \textbf{Open item --- glycol pump system curve.} The design's glycol flow and
-the confirmed plate geometry put the condenser's glycol-side pressure drop at
-$\approx$35.8\,kPa as computed by the model, against the 17.50\,kPa carried in
-Chapter~\ref{ch:pump}'s system-curve table (\S\ref{pump:sec:syscurve}). The
-pump's electrical power reported above is derived live from the model's actual system
-curve and so already reflects this; \textbf{the tabulated duty point and trim
-selection in Chapter~\ref{ch:pump} do not} --- they predate both this pressure drop and
-the selected dry cooler's 8\,psi, and must be re-derived against both. This reinforces
-that chapter's existing open item~3: the 2AD frame sat near the top of its envelope
-already, and the design duty makes the 2.5AC frame the more likely selection.
+\noindent \textbf{Glycol pump --- reconciled, one task remaining.} The glycol loop is now
+carried consistently at its true 11.64\,kg/s flow throughout: the condenser's glycol-side
+pressure drop is $\approx$35.9\,kPa, and Chapter~\ref{ch:pump}'s system curve is rebuilt
+on that value plus the selected dry cooler's 8\,psi, giving a mechanical duty of
+41.36\,m$^3$/h @ 14.18\,m. That duty falls \emph{outside} the 2AD frame's envelope, so the
+pump frame is now the \textbf{2.5AC} (Chapter~\ref{ch:pump}, \S7.4). The pump's electrical
+power (2.57\,kW) is the hydraulic duty $\rho g \dot V H/\eta$ and is unchanged by the frame
+choice. The one remaining task is to digitize the 2.5AC vendor curves and fix the exact
+trim and VFD speed on that frame.
 
 % ── §12.4b ────────────────────────────────────────────────────────────────────
 \subsection{Beyond PUE: TUE and the Losses PUE Cannot See}
@@ -4818,8 +4817,8 @@ shading marks free-cooling hours.}
 The seasonal picture is strongly favourable and stands in deliberate contrast to the
 worst-case design-day metrics of Part~A. Winter runs entirely in free cooling
 (compressor off, PUE 1.01, TUE 1.21, total-system COP near 88), while even the hottest
-monthly average (July) holds PUE 1.21 / TUE 1.46, against the worst-case design day's
-1.291 / 1.55. Spring and Fall now sit at PUE 1.11 and 1.12 --- markedly better than the
+monthly average (July) holds PUE 1.22 / TUE 1.47, against the worst-case design day's
+1.291 / 1.55. Spring and Fall now sit at PUE 1.12 --- markedly better than the
 1.14/1.15 they showed before the partial band was modelled --- because each contains one
 month that runs integrated rather than mechanical. Across the year the economizer
 delivers \textbf{526\,MWh of the 1{,}314\,MWh} of cooling the hall needs
@@ -4984,11 +4983,11 @@ Dry cooler & \textbf{Kelvion ULF-PA106K4V-091F095}, 1{,}949\,m$^2$, $UA \approx
 whole plant.} The 3\,K approach is what makes it this large
 (\S\ref{dry:sec:capacity_trap}); the fan headroom is what keeps all 8{,}760 hours off
 the fan ceiling \\
-Glycol loop & 11.6\,kg/s at a 4\,K range, condenser $\Delta P \approx$35.8\,kPa, dry
+Glycol loop & 11.64\,kg/s at a 4\,K range, condenser $\Delta P \approx$35.9\,kPa, dry
 cooler 8\,psi & The tight 4\,K range demands high flow, so pump electrical power is
-2.57\,kW. System curve and trim in Ch.~\ref{ch:pump} predate these numbers ---
-re-derive against the 2.5AC frame (\S\ref{perf:sec:pue}, Ch.~\ref{ch:pump} open
-item~3) \\
+2.57\,kW. Ch.~\ref{ch:pump}'s system curve is rebuilt on these values; the duty falls
+outside the 2AD envelope, so the frame is now the \textbf{2.5AC} (exact 2.5AC trim/speed
+still to fix) \\
 Compressors & 2 $\times$ 4FEP-35Z with VFDs & Standard drive addition; delivers the
 5:1 turndown to the 30\,kW minimum load without hot-gas bypass \\
 \bottomrule
