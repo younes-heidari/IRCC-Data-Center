@@ -863,8 +863,23 @@ with a 5\,K approach, glycol leaves the dry cooler at 40\,\textdegree C. A 6\,K 
 through the condenser gives glycol leaving at 46\,\textdegree C. Condensing temperature
 is set to 52\,\textdegree C, placing a 6\,K minimum approach on the glycol-outlet side.
 
+\begin{quote}
+\noindent\textbf{Original design point --- superseded for the reported plant.} This
+chapter's worked example sizes the condenser at the \emph{original} design point
+(190\,kW, $t_c = 52$\,\textdegree C, 40/46\,\textdegree C glycol, $U = 2{,}500$), and is
+retained as the LMTD sizing method. The \textbf{efficiency revision moved the plant to
+$t_c = 45$\,\textdegree C, 182\,kW, 38/42\,\textdegree C glycol}; the confirmed sizing at
+that point --- $U = 2{,}000$ (double-wall), $\approx$104 plates in the Kelvion
+HP\,DW\,500H frame --- is carried in Chapter~\ref{ch:performance},
+\S\ref{perf:sec:hardware}, and is what the model (\texttt{main.py}) and the BOM use. The
+glycol-side pressure-drop and channel-count results later in this chapter
+(\S\ref{cond:sec:martin}) \emph{have} been updated to the revised 38/42\,\textdegree C
+point; the thermal worked example below has not, and the two should be read with that in
+mind.
+\end{quote}
+
 \begin{table}[h!]
-\caption{Condenser design basis.}
+\caption{Condenser design basis (original design point; see the note above).}
 \begin{tabularx}{\linewidth}{lL}
 \toprule
 \textbf{Parameter} & \textbf{Value} \\
@@ -2484,15 +2499,12 @@ flagged in \S\ref{eev:sec:limitations}).
 \textbf{Parameter} & \textbf{Value} & \textbf{Basis} \\
 \midrule
 Refrigerant                          & R-290 (propane)     & Project spec \\
-Inlet pressure, $p_{\mathrm{in}}$    & 17.89\,bar(a)        & Condensing pressure, 52\,\textdegree C sat.\ (Ch.~\ref{ch:cond}) \\
-Inlet enthalpy, $h_{\mathrm{in}}$    & 327.6\,kJ/kg         & Subcooled outlet, 47\,\textdegree C (Ch.~\ref{ch:cond}, \S\ref{cond:sec:subcool}) \\
-Refrigerant mass flow, $\mdot_r$     & 0.553\,kg/s\textsuperscript{*} & From condenser: $\mdot_r = Q_{\mathrm{cond}}/\Delta h$ \\
+Inlet pressure, $p_{\mathrm{in}}$    & 15.34\,bar(a)        & Condensing pressure, 45\,\textdegree C sat.\ (Ch.~\ref{ch:cond}) \\
+Inlet enthalpy, $h_{\mathrm{in}}$    & 307.1\,kJ/kg         & Subcooled outlet, 40\,\textdegree C (Ch.~\ref{ch:cond}, \S\ref{cond:sec:subcool}) \\
+Refrigerant mass flow, $\mdot_r$     & 0.511\,kg/s          & Confirmed design flow (Ch.~\ref{ch:comp}): $Q_{\mathrm{cool}}/\Delta h$ \\
 Valve discharge coefficient, $C_d$   & 0.65                 & \assumed\ --- typical EEV range 0.6--0.7 \\
 \bottomrule
 \end{tabularx}
-
-{\small \textsuperscript{*}Recheck against confirmed $\mdot_r$ from the compressor module, consistent
-with the same caveat carried in Chapters~\ref{ch:evap} and~\ref{ch:cond}.}
 \end{table}
 
 \texttt{calc\_inlet\_state()} recovers the valve-inlet temperature and subcooling from
@@ -2507,12 +2519,13 @@ $(p_{\mathrm{in}}, h_{\mathrm{in}})$ via CoolProp:
 \subsection{Consistency Check Against the Condenser Chapter}
 \label{eev:sec:consistency}
 
-Evaluating this independently returns $T_{\mathrm{in}} = 47.01$\,\textdegree C and
-$\Delta T_{\mathrm{sub}} = 4.99$\,K --- matching the condenser chapter's stated 47\,\textdegree C
-outlet temperature and 5\,K design subcooling (\S\ref{cond:sec:subcool}) to within
-rounding. This is a genuine cross-chapter validation: the condenser and EEV models were
-built independently but agree on the same thermodynamic state, confirming the enthalpy
-value carried between the two chapters is internally consistent.
+Evaluating this independently returns $T_{\mathrm{in}} = 40.0$\,\textdegree C and
+$\Delta T_{\mathrm{sub}} = 5.0$\,K at the revised design point ($t_c = 45$\,\textdegree C),
+consistent with the 5\,K design subcooling and the 40\,\textdegree C condenser outlet the
+model and the p-h chart (Chapter~\ref{ch:cyclerep}, Fig.~\ref{fig:phchart}) both carry.
+\emph{Note:} the condenser chapter's worked example still tabulates the original-design
+47\,\textdegree C outlet ($t_c = 52$\,\textdegree C, Chapter~\ref{ch:cond} superseding
+note); the value used here is the revised 40\,\textdegree C, matching the code.
 
 % ── §6.3 ──────────────────────────────────────────────────────────────────────
 \section{Outlet State: Isenthalpic Flash to the Evaporating Pressure}
@@ -2528,21 +2541,21 @@ The outlet pressure is set by the evaporator's operating pressure
 \toprule
 \textbf{Parameter} & \textbf{Value} & \textbf{Basis} \\
 \midrule
-Outlet pressure, $p_{\mathrm{out}}$   & 5.84\,bar(a)        & Evaporating pressure, 7\,\textdegree C sat.\ (project spec) \\
-Outlet enthalpy, $h_{\mathrm{out}}$   & 327.6\,kJ/kg $=h_{\mathrm{in}}$ & Isenthalpic \\
-\textbf{Evaporating temperature}, $T_{\mathrm{out}}$ & \textbf{7.00\,\textdegree C} & Saturation temp.\ at $p_{\mathrm{out}}$ \\
-\textbf{Outlet quality (flash gas)}, $x_{\mathrm{out}}$ & \textbf{0.301 (30.1\,\%)} & $(h_{\mathrm{out}} - h_f)/(h_g - h_f)$ \\
-Pressure drop across valve, $\Delta P$ & 12.05\,bar (1{,}204.8\,kPa) & $= p_{\mathrm{in}} - p_{\mathrm{out}}$ \\
+Outlet pressure, $p_{\mathrm{out}}$   & 6.37\,bar(a)        & Evaporating pressure, 10\,\textdegree C sat.\ (design LCHW basis) \\
+Outlet enthalpy, $h_{\mathrm{out}}$   & 307.1\,kJ/kg $=h_{\mathrm{in}}$ & Isenthalpic \\
+\textbf{Evaporating temperature}, $T_{\mathrm{out}}$ & \textbf{10.00\,\textdegree C} & Saturation temp.\ at $p_{\mathrm{out}}$ \\
+\textbf{Outlet quality (flash gas)}, $x_{\mathrm{out}}$ & \textbf{0.227 (22.7\,\%)} & $(h_{\mathrm{out}} - h_f)/(h_g - h_f)$ \\
+Pressure drop across valve, $\Delta P$ & 8.98\,bar (897.7\,kPa) & $= p_{\mathrm{in}} - p_{\mathrm{out}}$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\subsection{Interpreting the 30\,\% Flash Gas Fraction}
+\subsection{Interpreting the 22.7\,\% Flash Gas Fraction}
 
-Roughly 30\,\% of the refrigerant mass flashes to vapour \emph{immediately upon throttling},
+Roughly 23\,\% of the refrigerant mass flashes to vapour \emph{immediately upon throttling},
 before any heat is absorbed in the evaporator. This is normal and expected: the liquid
-entering the valve at 47\,\textdegree C is far hotter than the 7\,\textdegree C saturation
-temperature on the low-pressure side, so a large fraction of the enthalpy difference is
+entering the valve at 40\,\textdegree C is warmer than the 10\,\textdegree C saturation
+temperature on the low-pressure side, so a fraction of the enthalpy difference is
 released as flash gas rather than being available for useful refrigeration. This directly
 motivates the condenser's 5\,K design subcooling (Chapter~\ref{ch:cond},
 \S\ref{cond:sec:subcool}): every additional kelvin of subcooling reduces the flash-gas
@@ -2577,13 +2590,13 @@ evaluated at the liquid inlet state:
 \end{equation}
 
 with $\rho_{\mathrm{in}}$ the subcooled liquid density at the valve inlet (from CoolProp,
-$\rho_{\mathrm{in}} = 455.6$\,kg/m$^3$ at the design state).
+$\rho_{\mathrm{in}} = 468.2$\,kg/m$^3$ at the design state).
 
 \subsection{Why This Is a First-Cut Estimate, Not a Final Selection}
 \label{eev:sec:whyfirstcut}
 
 Equation~\eqref{eq:orifice} assumes single-phase incompressible flow through the orifice.
-In reality, the flow begins flashing \emph{inside} the valve port itself (the 30.1\,\%
+In reality, the flow begins flashing \emph{inside} the valve port itself (the 22.7\,\%
 outlet quality of \S\ref{eev:sec:outlet} does not appear instantaneously at the valve exit
 plane; some of it forms within the throttling passage), which increases the specific
 volume and alters the effective discharge behaviour relative to a purely liquid orifice.
@@ -2601,11 +2614,11 @@ not a substitute for that vendor's own capacity table.
 \toprule
 \textbf{Quantity} & \textbf{Value} \\
 \midrule
-Liquid density at inlet, $\rho_{\mathrm{in}}$ & 455.6\,kg/m$^3$ \\
-Pressure drop, $\Delta P$                     & 1{,}204.8\,kPa (12.05\,bar) \\
+Liquid density at inlet, $\rho_{\mathrm{in}}$ & 468.2\,kg/m$^3$ \\
+Pressure drop, $\Delta P$                     & 897.7\,kPa (8.98\,bar) \\
 Discharge coefficient, $C_d$                  & 0.65 (\assumed) \\
-\textbf{Orifice flow area}, $A_{\mathrm{orifice}}$ & \textbf{25.68\,mm$^2$} \\
-\textbf{Orifice diameter}, $d_{\mathrm{orifice}}$  & \textbf{5.72\,mm} \\
+\textbf{Orifice flow area}, $A_{\mathrm{orifice}}$ & \textbf{27.1\,mm$^2$} \\
+\textbf{Orifice diameter}, $d_{\mathrm{orifice}}$  & \textbf{5.87\,mm} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -2631,13 +2644,15 @@ capacity table, per \S\ref{eev:sec:whyfirstcut}.
         sized in Chapter~\ref{ch:piping} (\S\ref{piping:sec:liquid}), but its length and
         fittings remain unspecified per the project brief's scope; reasonable for a short,
         insulated run, but should be revisited once an actual piping layout is available.
-  \item \textbf{Mass flow is compressor-dependent.} As in Chapters~\ref{ch:evap} and
-        \ref{ch:cond}, $\mdot_r = 0.553$\,kg/s is derived from the provisional 190\,kW
-        condenser duty, itself backed out from the COP $\geq 3.5$ requirement rather than a
-        completed compressor model. Reconfirm once the compressor chapter is available.
+  \item \textbf{Mass flow is the confirmed 0.511\,kg/s} from the completed compressor
+        chapter (150\,kW $\div$ 293.3\,kJ/kg refrigerating effect), and this chapter's state
+        points are the revised cycle's ($t_o=10$, $t_c=45$\,\textdegree C). The
+        condenser chapter's channel-count sizing still quotes the earlier provisional
+        0.553\,kg/s; that geometry keeps margin at the lower flow but is the one still to be
+        brought onto the confirmed value.
   \item \textbf{Orifice sizing is a first-cut liquid-orifice estimate}
         (\S\ref{eev:sec:whyfirstcut}), not a vendor-validated two-phase capacity rating.
-        Use $A_{\mathrm{orifice}} = 25.68$\,mm$^2$ / $d_{\mathrm{orifice}} = 5.72$\,mm as a
+        Use $A_{\mathrm{orifice}} = 27.1$\,mm$^2$ / $d_{\mathrm{orifice}} = 5.87$\,mm as a
         starting point for a manufacturer catalog search, not a final selection.
 \end{enumerate}
 
