@@ -301,10 +301,18 @@ def plot_compliance(out_path):
     PUE are different scales."""
     import matplotlib.pyplot as plt
 
+    # Achieved values from the single source of truth (performance.py), so this
+    # figure cannot drift from the compliance table.
+    from performance import full_load_cop, iplv, design_day_pue, COP_TARGET, IPLV_TARGET
+    _cop = full_load_cop()["ahri"]["COP"]
+    _iplv = iplv()["iplv"]
+    _pue = design_day_pue()["PUE"]
     # (title, achieved, target, target label, margin note)
-    panels = [("Full-load COP\n(AHRI 6.7 C LCHW)", 3.53, 3.5, "$\\geq$3.5", "+0.8%"),
-              ("IPLV.IP", 5.23, 5.0, "$\\geq$5.0", "+4.6%"),
-              ("Design-day PUE\n(lower is better)", 1.31, None, None, "no target set")]
+    panels = [("Full-load COP\n(AHRI 6.7 C LCHW)", _cop, COP_TARGET, "$\\geq$3.5",
+               f"+{(_cop/COP_TARGET-1)*100:.1f}%"),
+              ("IPLV.IP", _iplv, IPLV_TARGET, "$\\geq$5.0",
+               f"+{(_iplv/IPLV_TARGET-1)*100:.1f}%"),
+              ("Design-day PUE\n(lower is better)", _pue, None, None, "no target set")]
     fig, axes = plt.subplots(1, 3, figsize=(11, 4.2), facecolor=SURFACE)
     for ax, (title, val, target, tlabel, note) in zip(axes, panels):
         _style(ax, grid_axis="y")
