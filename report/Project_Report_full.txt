@@ -3602,8 +3602,8 @@ Five strategies were available:
         Rejected in favour of continuous control.
   \item \textbf{Hot-gas bypass} --- reaches any load, at a severe efficiency penalty:
         capacity is thrown away as recirculated discharge gas while the compressor still
-        draws near-full power. This is what collapses the 25\,\% IPLV point to COP 2.29
-        (\S\ref{perf:sec:iplv}). Rejected.
+        draws near-full power. It would collapse the 25\,\% IPLV point to COP 2.55
+        (against 4.35 with the VFD, \S\ref{perf:sec:iplv}). Rejected.
   \item \textbf{A smaller trim/pony compressor} for the 20--30\,\% range --- a third
         machine, a third set of spares, more charge, more failure modes. Rejected as
         disproportionate.
@@ -4611,7 +4611,7 @@ carry it:
         reaches 4.62 (weight 0.45). Together those two points are 87\,\% of the metric.
   \item \textbf{VFD capacity modulation at Point~D.} Rather than running at the
         fixed-speed floor and throwing away the excess as recirculated hot gas --- which
-        would collapse this point to COP 2.29 --- the drive slows the compressor so power
+        would collapse this point to COP 2.55 --- the drive slows the compressor so power
         scales down with the delivered duty, holding COP at the floor operating point's
         map value of 4.35. This is deliberately \emph{conservative}: in reality reduced
         speed lets the evaporating temperature float upward (the evaporator is
