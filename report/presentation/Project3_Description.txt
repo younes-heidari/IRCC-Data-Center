@@ -1,0 +1,201 @@
+              International Refrigeration and Compressor Course 2026
+
+   Project #3: Water-Cooled Chiller for High Efficiency Edge Compute Data
+                                              Center Facility
+
+During the IRCC your task is designing an air-cooled chiller for a high efficiency edge compute data
+center facility near Champaign, IL. The cycle architecture for the chiller is entirely up to you and
+must meet the capacity and energy efficiency requirements as stated below. Details regarding the
+load and environmental conditions are given below.
+
+Subtasks:
+     1. Cycle design
+                a) Problem specification:
+                     · Vapor compression refrigerant: to be chosen (GWP < 150, A1 or A2L/A3 only
+                           with charge analysis)
+                     · Chilled fluid: water to Computer Room Air Handler (CRAH)/in-row units (data
+                           hall side)
+                     · Heat rejection: dry cooler with intermediate water/propylene-glycol (PG) loop
+                     · Maximum cooling load: 150 kW ( 42 refrigeration tons) sensible-dominated IT
+                           (i.e. computing) load
+                     · Minimum cooling load: 30 kW (turn-down at low IT utilization)
+                     · Design chilled-water supply / return: 15 / 21 °C (per ASHRAE TC 9.9 W17
+                           envelope)
+                     · Minimum outdoor temperature: TMY3 weather data (Champaign, IL)
+                     · Maximum outdoor temperature: TMY3 weather data; dry-cooler design at 35
+                           °C DB
+                     · Data-hall white-space footprint: 8 m × 12 m, single hall,  25 racks
+                     · IT operates 24/7/365; assume near-constant load (occupancy is not the driver)
+                     · Meets energy efficiency requirements (see table below)
+
+                b) Define the operating conditions
+                c) Compare different working fluid and select the most promising
+                d) Calculation and / or selection of
+
+                     · Evaporator (chilled water side side)
+                     · Condenser (refrigerant  glycol loop)
+                     · Outdoor dry cooler (glycol  ambient air), with variable-speed fans
+                     · Free-cooling / waterside-economizer heat exchanger (glycol  chilled water)
+                     · Compressor(s)
+                     · Electronic expansion valve and any economizer/vapor-injection valve
+                     · Oil separator and liquid receiver, if required by the chosen architecture
+                     · Piping (diameters only -- no lengths, fittings, or supports)
+
+                e) Discuss the pros and cons of the selected system
+                f) Evaluate seasonal performance of the system ­ report full load COP, Integrated
+
+                     Part Load Value (IPLV), and estimate the facility Power Usage Effectiveness (PUE).
+                g) Creation of a parts list / BOM.
+                h) Representation of the designed cycle in
+
+                            p-h-chart
+                            Piping & instrument diagram (accordingly to chosen hardware)
+                i) Selection of appropriate safety measures
+
+     2. Step-by-step description of commissioning
+
+     3. Consideration of
+                a) Pressure losses within the heat exchangers
+                b) Automatic control of compressor ­ expansion device interaction
+                c) Suggestions of improvement
+
+Energy Efficiency Constraints:
+The design must meet the following efficiency targets. Each is tied to a published standard so
+calculations can be performed and verified consistently.
+
+Metric                   Required value           Reference / basis
+
+Full-load COP (cooling)   3.5 at AHRI rating      ASHRAE 90.1-2022 Table 6.8.1-3, air-cooled
+                         conditions               chiller  150 kW; compute at 35 °C
+                                                  condenser entering air, 6.7 °C chilled water
+                                                  leaving temperatre (LCHW) per AHRI
+                                                  550/590.
+
+(Integrated Part Load     5.0                     AHRI Standard 550/590-2023 §5.2;
+                                                  weighted COP at 100/75/50/25 % load.
+Value ) IPLV.IP
+
+Economizer threshold     Activate  10 °C outdoor  ASHRAE 90.1 §6.5.1 (waterside
+                         air temperature (OAT),   economizer); sized for 100 % design load
+                         full free cooling  4 °C  when active.
+                         OAT
+
+Notes on computing each metric:
+
+     · Full-load COP: compute at AHRI 550/590-2023 standard rating conditions (Leaving chilled
+          water temperature (LCHW) 6.7 °C, condenser entering air 35 °C). For this study report
+          COP at the project-specific design point as well.
+
+     · Integrated part load value (IPLV.IP): weighted average per AHRI 550/590-2023 §5.2 --
+          0.01·A + 0.42·B + 0.45·C + 0.12·D where A, B, C, D are COPs at 100/75/50/25 % load with
+          reduced condenser entering temperatures (35 / 26.7 / 18.3 / 12.8 °C).
+
+     · Power useage effectiveness (PUE): (IT load + other facility energy loads) / IT load on a
+          design-day basis.
+
+     · Economizer: required by ASHRAE 90.1-2022 §6.5.1; the dry-cooler loop must be capable
+          of providing 100 % of the design cooling load at the specified outdoor air temperature
+          (OAT), via a glycol-to-CHW plate heat exchanger in parallel with the chiller.
+
+Note:
+· Pressure losses within the piping are to be neglected, pressure losses in heat exchangers
+     are not.
+
+· Subcooling shall be chosen wisely and justified.
+· The temperature differences within the heat exchangers have to be defined and
+
+     considered in the computation.
+· The essential part of any used specification sheet has to be attached on the course work
+
+     documentation (if EES is used, please add a PDF with your EES Code as well)
+· The required properties can be calculated (rounded!) with the software
+
+          o CoolProp (http://www.coolprop.org/)
+· When calculating pipe diameters use Table 1:
+
+                Table 1: Streaming velocities within charge lines
+
+                              state      v in (m/s) 1
+
+                gaseous ­ low pressure   4.5 ­ 20
+                gaseous ­ high pressure  10 ­ 18
+
+                            liquid         <1.5
+
+· As a guideline, the Table 2 lists potential manufacturer as well as suppliers for refrigeration
+     components:
+
+                Table 2: Supplier / Manufacturer for selected components
+
+Part            Supplier /               Link
+
+                Manufacturer
+
+Compressor        Bitzer                       https://www.bitzer.de/websoftware/
+                GEA Bock      https://www.gea.com/en/productgroups/compressors/index.js
+                Emerson
+                                                                      p
+                                    https://climate.emerson.com/en-us/brands/copeland
+
+                MAYEKAWA      http://www.mayekawa.com/products/compressors/
+
+                Sabroe        https://www.sabroe.com/en/products/sales-tools/comp1/
+
+Consumables     Danfoss              https://www.danfoss.com/en/products/
+                 SECOP        https://www.secop.com/solutions/compressor-qa-
+                ITE Sint
+                                             tools/compressor-service/
+                                              http://www.ite-tools.com
+
+                ESK Schultze         http://www.esk-schultze.de/
+
+                Danfoss A/S          https://www.danfoss.com/en/products/
+
+                CARLY                    http://www.carly-sa.com/
+
+Heat Exchanger  Kelvion              https://www.kelvion.com/us/products/
+
+                Güntner              http://www.guntnerus.com/products/
+
+                SWEP                     https://www.swepusa.com/
+
+                Alfa Laval           https://www.alfalaval.com/products/
+
+                Tranter                  https://www.tranter.com/
+
+Pumps           WITT                 https://www.th-witt.com/en/
+
+1 These approximated values are a fair tradeoff considering costs, efficiency, streaming noises as
+well as oil circulation rate (see ASHRAE Handbook, Refrigeration, 2006)
+                 Part    Supplier /                          Link
+References:            Manufacturer
+                                     https://www.grundfos.com/products.html
+                         Grundfos             https://wilo.com/us/en_us/
+                             Wilo
+
+ASHRAE Standard 90.1-2022, Energy Standard for Sites and Buildings Except Low-Rise Residential
+Buildings -- chiller minimum efficiencies (Table 6.8.1-3), economizer requirements (§6.5.1), VSD
+requirements (§6.4.3.10, §6.5.4).
+
+ASHRAE Standard 90.4-2022, Energy Standard for Data Centers -- Mechanical Load Component
+(MLC) and Electrical Loss Component (ELC); climate-zone-specific maxima in Table 6.2.1.2;
+calculation procedure in Normative Appendix A.
+
+AHRI Standard 550/590-2023 (I-P), Performance Rating of Water-Chilling and Heat Pump Water-
+Heating Packages Using the Vapor Compression Cycle -- full-load and IPLV.IP rating procedures and
+test conditions.
+
+ASHRAE Technical Committee 9.9 (2021), Thermal Guidelines for Data Processing Environments, 5th
+ed. -- allowable/recommended inlet-air and chilled-water envelopes (classes A1­A4, W17­W45).
+
+The Green Grid (2014), White Paper #49: PUETM -- A Comprehensive Examination of the Metric --
+definitions of PUE and pPUE.
+
+ASHRAE Handbook -- HVAC Applications (2023), Ch. 20 Data Centers and Telecommunication
+Facilities -- load characterization, dry-cooler sizing, economizer integration.
+
+U.S. EPA AIM Act Final Rule, Technology Transitions §40 CFR Part 84 (2023) -- GWP limits
+applicable to new chillers (informs refrigerant selection).
+
+Your project contact is: Prof. Craig Bradshaw, crbrad@illinois.edu
+
