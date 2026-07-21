@@ -3,6 +3,7 @@
 Everything needed to build slides, in one place. Regenerated from the code —
 `report/presentation/` is a flat copy of the report figures plus the full report.
 
+- **`Project3_Description.pdf`** — the original IRCC 2026 Project #3 assignment brief
 - **`Project_Report_full.pdf`** — the compiled 145-page report
 - **`Project_Report_full.txt`** — the LaTeX source
 - **`figures/`** — every report figure, flat, as both **`.png`** (drop straight
