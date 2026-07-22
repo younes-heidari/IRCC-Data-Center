@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IRCC 2026 Project #3 — R-290 Data-Center Chiller</title>
+
+<style>
+:root{--illini-blue:#13294b;--illini-orange:#ff5f05;--navy:#13294b;--navy-band:#1b4284;--navy-deep:#0e1f3a;--orange:#ff5f05;--orange-deep:#d94f00;--chart-navy:#13294b;--chart-storm:#707372;--chart-altgeld:#c84113;--black:#000;--ink:#232323;--ink-strong:#1f1f1f;--grey-1:#f3f3f3;--grey-2:#ebebeb;--grey-3:#cecece;--grey-4:#9c9c9c;--grey-5:#676767;--white:#fff;--font-sans:Arial,Helvetica,'Helvetica Neue',sans-serif;--radius-sm:4px;--radius-md:6px}
+html,body{margin:0;height:100%;background:#dcdcdc;overflow:hidden;font-family:var(--font-sans)}
+a{color:var(--navy)}a:hover{color:var(--orange-deep)}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#scaler{width:1280px;height:720px;transform-origin:center center;box-shadow:0 30px 90px rgba(0,0,0,.35);overflow:hidden;background:#fff;position:relative}
+.slide{width:1280px;height:720px;position:absolute;inset:0;overflow:hidden;background:#fff;color:var(--ink);font-family:var(--font-sans);display:none}
+.slide.on{display:block}
+.band{position:absolute;top:0;left:0;right:0;height:90px;background:var(--navy);display:flex;align-items:center;justify-content:center;padding:0 40px;box-sizing:border-box}
+.band .eyebrow{color:#fff;font-size:38px;font-weight:700;letter-spacing:.2px;text-align:center}
+.band .blocki{position:absolute;right:40px;top:0;bottom:0;height:61px;margin:auto 0;width:auto;display:block}
+.stage{position:absolute;left:0;right:0;top:90px;bottom:0;padding:26px 40px 54px;box-sizing:border-box;display:flex;flex-direction:column}
+.subtitle{font-size:26px;font-weight:700;color:var(--ink-strong);margin:0}
+.lede{font-size:22px;line-height:1.5;color:var(--ink);margin:12px 0 0;max-width:62ch}
+.hl{font-weight:700}.hl-navy{font-weight:700;color:var(--navy)}
+.footer{position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:11px;color:var(--grey-5)}
+.pagenum{position:absolute;right:40px;bottom:14px;font-size:14px;color:var(--grey-5);font-variant-numeric:tabular-nums}
+.bullets{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:20px}
+.bullets li{position:relative;padding-left:28px;font-size:22px;line-height:1.4;color:var(--ink)}
+.bullets li::before{content:"";position:absolute;left:0;top:10px;width:11px;height:11px;background:var(--navy)}
+.acc-grid{display:grid;grid-template-columns:42% 1fr;grid-template-rows:minmax(0,1fr);gap:48px;align-items:stretch;height:100%}
+.acc-grid .bullets{margin-top:0;gap:26px;align-self:center}
+.acc-fig{margin:0;display:flex;flex-direction:column;min-height:0;justify-content:center}
+.acc-fig-img{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.acc-fig-img img{display:block;width:100%;height:100%;object-fit:contain}
+.acc-fig figcaption{font-size:18px;color:var(--ink);text-align:center;margin-top:12px;line-height:1.35}
+.figrow{display:flex;gap:24px;margin-top:16px;flex:1;min-height:0}
+.fig{flex:1;display:flex;flex-direction:column;min-width:0}
+.fig .frame{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:0}
+.fig .frame img{width:100%;height:100%;object-fit:contain}
+.fig .frame svg{width:100%;height:100%;display:block}
+.fig .cap{font-size:18px;color:var(--ink);text-align:center;margin-top:10px;line-height:1.35}
+.chart-axis{stroke:var(--grey-3);stroke-width:1}.chart-grid{stroke:var(--grey-2);stroke-width:1}
+.axis-lbl{font-size:12px;fill:var(--grey-5);font-family:var(--font-sans)}
+/* title slide */
+.title-navy{background:radial-gradient(125% 95% at 50% 30%,#1d4b8e 0%,#173c74 46%,#0f2a54 100%);color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.85),inset 0 0 0 4px #0c1f3d}
+.title-navy .wc{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:multiply;opacity:.5;pointer-events:none}
+.title-navy .content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 60px 34px;box-sizing:border-box;z-index:2}
+.title-navy .lockup{display:flex;flex-direction:column;align-items:center;gap:16px;max-width:640px}
+.title-navy .lockup img{height:86px;width:auto;display:block}
+.title-navy .cn{font-size:33px;line-height:1.16;color:#fff;font-weight:400}
+.title-navy .hs{position:absolute;top:22px;display:flex;flex-direction:column;align-items:center;width:172px;z-index:3}
+.title-navy .hs.left{left:22px}.title-navy .hs.right{right:22px}
+.title-navy .hs img{width:156px;height:150px;object-fit:cover;border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.4);display:block}
+.title-navy .hs .pill{margin-top:2px;background:#fff;color:var(--navy);font-size:15px;font-weight:700;padding:4px 14px;border-radius:5px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap}
+.title-navy .ttl{font-size:43px;font-weight:800;line-height:1.14;letter-spacing:-.3px;margin:0;max-width:26ch;color:#fff;text-wrap:balance}
+.title-navy .meta{display:flex;flex-direction:column;align-items:center;gap:15px;font-size:23px;line-height:1.2;color:#fff}
+.title-navy .meta>div{white-space:nowrap}.title-navy .meta b{font-weight:700}.title-navy .meta .muted{color:rgba(255,255,255,.9)}
+.title-navy .spring{flex:1;min-height:0}
+/* market spec table */
+.spec{border-collapse:collapse;width:100%;margin-top:16px;font-size:15px}
+.spec th,.spec td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--grey-3)}
+.spec thead th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--grey-5);border-bottom:2px solid var(--navy)}
+.spec td.n{font-variant-numeric:tabular-nums;color:var(--ink)}
+.spec td:first-child{font-weight:700;color:var(--ink-strong)}
+/* validation legend */
+.legend{display:flex;gap:22px;margin-top:10px}
+.legend .k{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--grey-5)}
+.legend .sw{width:16px;height:16px}
+/* four-figure */
+.f4grid{display:grid;grid-template-columns:40% 1fr;gap:40px;flex:1;min-height:0;margin-top:8px;align-items:stretch}
+.f4left{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.f4left .bullets{gap:24px}
+.f4figs{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:16px 22px;min-height:0}
+.f4figs .fig{flex:none;min-height:0}
+/* calibration */
+.split{display:grid;grid-template-columns:1.5fr 1fr;gap:28px;flex:1;min-height:0;margin-top:14px}
+.resultcard{background:var(--navy);border-radius:var(--radius-md);color:#fff;padding:26px 28px;display:flex;flex-direction:column;justify-content:center}
+.resultcard .k{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.66)}
+.resultcard .big{font-size:66px;font-weight:700;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin:8px 0 0}
+.resultcard .big span{font-size:.4em;color:var(--orange);font-weight:700}
+.resultcard .note{font-size:15px;line-height:1.5;color:rgba(255,255,255,.82);margin-top:18px;border-top:1px solid rgba(255,255,255,.18);padding-top:16px}
+.resultcard .note b{color:#fff}
+/* closing */
+.close-left{display:flex;flex-direction:column;height:100%;justify-content:center}
+.close-left .bullets{gap:26px}
+/* acknowledgment */
+.abs{position:absolute}.abs img{width:100%;height:100%;object-fit:cover;display:block}
+.nm{position:absolute;color:var(--navy);font-size:21px;font-weight:700;text-align:center;white-space:nowrap}
+.info{position:absolute;color:var(--navy);font-size:17px;line-height:1.35;text-align:center}
+.ty{position:absolute;color:var(--navy);font-size:38px;font-weight:800;letter-spacing:.2px}
+.logo{position:absolute}.logo img{width:100%;height:100%;object-fit:contain;display:block}
+/* nav chrome */
+.nav{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:var(--navy);border-radius:var(--radius-md);padding:7px 9px;z-index:10;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.nav button{border:0;cursor:pointer;background:transparent;color:#fff;font-family:var(--font-sans);font-size:17px;width:34px;height:34px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;transition:background .15s}
+.nav button:hover{background:rgba(255,255,255,.16)}
+.count{color:rgba(255,255,255,.85);font-size:14px;font-variant-numeric:tabular-nums;min-width:56px;text-align:center;letter-spacing:.4px}
+.zone{position:fixed;top:0;bottom:0;width:22%;z-index:5;cursor:pointer}.zone.l{left:0}.zone.r{right:0}
+.hint{position:fixed;top:16px;left:50%;transform:translateX(-50%);color:#8a8a8a;font-size:12px;z-index:10;letter-spacing:.3px;text-transform:uppercase;font-weight:600}
+/* schematic (slide 3) */
+.sch-box{fill:#fff;stroke:var(--navy);stroke-width:2}
+.sch-lbl{font-size:15px;fill:var(--ink-strong);font-family:var(--font-sans);font-weight:700;text-anchor:middle}
+.sch-sub{font-size:12px;fill:var(--grey-5);font-family:var(--font-sans);text-anchor:middle}
+.sch-loop{fill:none;stroke-width:3}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="scaler">
+
+<!-- 01 ─ Title ────────────────────────────────────────────────────────────── -->
+<div class="slide title-navy on" data-screen-label="01 Title">
+  <img class="wc" src="assets/247cdea3-0685-4d05-9163-f627a44e8dd4.png" alt="">
+  <div class="hs left"><img src="assets/cf9ea2e0-cb04-4bd7-87c3-e1f419995bcb.png" alt="Younes Heidari"><div class="pill">Younes Heidari</div></div>
+  <div class="hs right"><img src="assets/85ea5f8e-35c0-4d12-8cad-2f0757c69caf.png" alt="Nenad Miljkovic"><div class="pill">Nenad Miljkovic</div></div>
+  <div class="content">
+    <div class="lockup"><img src="assets/9f553c0d-1b8f-4580-b9e6-ee4fa79e187b.png" alt="University of Illinois"><div class="cn">Air Conditioning and<br>Refrigeration Center</div></div>
+    <div class="spring"></div>
+    <h1 class="ttl">Small-Footprint R-290 Chiller for an Edge Data Center</h1>
+    <div class="spring"></div>
+    <div class="meta">
+      <div><b>Project Team:</b> Younes Heidari, Nenad Miljkovic</div>
+      <div><b>Course Project:</b> IRCC 2026 — Project&nbsp;#3</div>
+      <div class="muted">150&nbsp;kW water-cooled propane chiller · Champaign, IL</div>
+      <div class="muted">Heat-exchanger selection, cycle modeling &amp; annual performance</div>
+    </div>
+  </div>
+</div>
+
+<!-- 02 ─ Brief & Targets (spec) ─────────────────────────────────────────────── -->
+<div class="slide" data-screen-label="02 Brief &amp; Targets">
+  <div class="band"><div class="eyebrow">Project Overview</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage">
+    <h2 class="subtitle">Design Basis &amp; Mandatory Targets</h2>
+    <p class="lede">A <span class="hl">150&nbsp;kW propane (R-290)</span> water-cooled chiller for a high-efficiency edge data center near Champaign, IL — sized to a strict envelope of efficiency, turndown, and safety requirements.</p>
+    <table class="spec">
+      <thead><tr><th>Parameter</th><th>Value / Requirement</th><th>Reference</th></tr></thead>
+      <tbody>
+        <tr><td>Maximum cooling load</td><td class="n">150&nbsp;kW (≈42&nbsp;RT)</td><td>Project spec</td></tr>
+        <tr><td>Minimum cooling load</td><td class="n">30&nbsp;kW (5:1 turndown)</td><td>Project spec</td></tr>
+        <tr><td>Chilled-water supply / return</td><td class="n">15 / 21&nbsp;°C</td><td>ASHRAE TC 9.9 W17</td></tr>
+        <tr><td>Refrigerant</td><td class="n">R-290, A3, GWP &lt; 3</td><td>US EPA AIM Act</td></tr>
+        <tr><td>Design outdoor temperature</td><td class="n">35&nbsp;°C dry-bulb</td><td>Project spec</td></tr>
+        <tr><td>Full-load COP</td><td class="n">≥ 3.5</td><td>ASHRAE 90.1-2022</td></tr>
+        <tr><td>Integrated Part Load Value</td><td class="n">≥ 5.0</td><td>AHRI 550/590-2023</td></tr>
+        <tr><td>Economizer activation</td><td class="n">≤ 10&nbsp;°C OAT (full ≤ 4&nbsp;°C)</td><td>ASHRAE 90.1 §6.5.1</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">1</div>
+</div>
+
+<!-- 03 ─ Architecture (acc-grid + SVG schematic) ────────────────────────────── -->
+<div class="slide" data-screen-label="03 Architecture">
+  <div class="band"><div class="eyebrow">Three-Loop Architecture</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage"><div class="acc-grid">
+    <ul class="bullets">
+      <li>Three loops in series: <span class="hl">chilled water → R-290 → glycol → air</span></li>
+      <li>The intermediate <span class="hl">30% propylene-glycol</span> loop keeps flammable A3 propane <span class="hl-navy">out of the data hall</span></li>
+      <li>A <span class="hl">waterside economizer</span> bypasses the compressor entirely when the outdoor air is cold enough</li>
+      <li>Heat is finally rejected at an <span class="hl">outdoor dry cooler</span> with variable-speed fans</li>
+    </ul>
+    <figure class="acc-fig"><div class="acc-fig-img">
+      <svg viewBox="0 0 620 470" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+        <!-- loop guide lines -->
+        <path class="sch-loop" stroke="var(--chart-storm)" d="M120 250 H500"></path>
+        <!-- CHW loop (blue) -->
+        <text class="sch-sub" x="90" y="60" text-anchor="start" style="fill:var(--navy);font-weight:700">Chilled-water loop</text>
+        <rect class="sch-box" x="40" y="72" width="150" height="60" rx="4"></rect>
+        <text class="sch-lbl" x="115" y="98">Data Hall</text><text class="sch-sub" x="115" y="116">CRAH · 21 → 15 °C</text>
+        <!-- Refrigerant loop (orange) -->
+        <text class="sch-sub" x="235" y="60" text-anchor="start" style="fill:var(--orange-deep);font-weight:700">R-290 cycle</text>
+        <rect class="sch-box" x="235" y="72" width="150" height="60" rx="4" style="stroke:var(--orange-deep)"></rect>
+        <text class="sch-lbl" x="310" y="98">Evaporator</text><text class="sch-sub" x="310" y="116">R-290 boils</text>
+        <rect class="sch-box" x="235" y="200" width="150" height="60" rx="4" style="stroke:var(--orange-deep)"></rect>
+        <text class="sch-lbl" x="310" y="226">Compressor</text><text class="sch-sub" x="310" y="244">2 × Bitzer 4FEP</text>
+        <rect class="sch-box" x="235" y="328" width="150" height="60" rx="4" style="stroke:var(--orange-deep)"></rect>
+        <text class="sch-lbl" x="310" y="354">Condenser</text><text class="sch-sub" x="310" y="372">R-290 condenses</text>
+        <rect class="sch-box" x="60" y="328" width="110" height="60" rx="4" style="stroke:var(--orange-deep)"></rect>
+        <text class="sch-lbl" x="115" y="362">EEV</text>
+        <!-- Glycol loop + air (grey) -->
+        <text class="sch-sub" x="575" y="60" text-anchor="end" style="fill:var(--grey-5);font-weight:700">Glycol loop → air</text>
+        <rect class="sch-box" x="430" y="200" width="150" height="60" rx="4" style="stroke:var(--grey-5)"></rect>
+        <text class="sch-lbl" x="505" y="226">Dry Cooler</text><text class="sch-sub" x="505" y="244">VFD fans · 35 °C air</text>
+        <!-- economizer -->
+        <rect class="sch-box" x="430" y="72" width="150" height="60" rx="4" style="stroke:var(--navy);stroke-dasharray:5 4"></rect>
+        <text class="sch-lbl" x="505" y="96" style="fill:var(--navy)">Economizer</text><text class="sch-sub" x="505" y="114">free cooling</text>
+        <!-- arrows: refrigerant loop -->
+        <g fill="none" stroke="var(--orange-deep)" stroke-width="2.5">
+          <path d="M310 132 V196" marker-end="url(#ar)"></path>
+          <path d="M310 260 V324" marker-end="url(#ar)"></path>
+          <path d="M235 358 H174" marker-end="url(#ar)"></path>
+          <path d="M115 328 V100 H192" marker-end="url(#ar)"></path>
+        </g>
+        <!-- CHW to evaporator + economizer -->
+        <g fill="none" stroke="var(--navy)" stroke-width="2.5">
+          <path d="M190 102 H231" marker-end="url(#ab)"></path>
+          <path d="M115 132 V250 H430" stroke-dasharray="5 4"></path>
+          <path d="M430 102 H190" stroke-dasharray="5 4" marker-end="url(#ab)"></path>
+        </g>
+        <!-- condenser to dry cooler (glycol) -->
+        <g fill="none" stroke="var(--grey-5)" stroke-width="2.5">
+          <path d="M385 358 H505 V264" marker-end="url(#ag)"></path>
+          <path d="M505 200 V150 M505 200 H430" opacity="0"></path>
+          <path d="M430 230 H385" marker-end="url(#ag)"></path>
+        </g>
+        <defs>
+          <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="var(--orange-deep)"></path></marker>
+          <marker id="ab" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="var(--navy)"></path></marker>
+          <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="var(--grey-5)"></path></marker>
+        </defs>
+      </svg>
+    </div><figcaption>Schematic — refrigerant loop isolated from the hall by the glycol loop</figcaption></figure>
+  </div></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">2</div>
+</div>
+
+<!-- 04 ─ Working fluid (acc-grid) ───────────────────────────────────────────── -->
+<div class="slide" data-screen-label="04 Working fluid">
+  <div class="band"><div class="eyebrow">Working-Fluid Selection</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage"><div class="acc-grid">
+    <ul class="bullets">
+      <li>Screened low-GWP <span class="hl">A2L and A3</span> candidates against a subcritical cycle</li>
+      <li><span class="hl-navy">R-290 (propane)</span> selected: competitive COP with <span class="hl">GWP &lt; 3</span></li>
+      <li>R-1234ze(E) shows a marginally higher COP but needs a meaningfully larger compressor</li>
+      <li>R-290 also fits the existing <span class="hl">Bitzer / Kelvion</span> component ecosystem</li>
+    </ul>
+    <figure class="acc-fig"><div class="acc-fig-img"><img src="figures/refrigerant_comparison_cop.png" alt="Refrigerant COP comparison"></div><figcaption>Cycle COP across screened refrigerant candidates</figcaption></figure>
+  </div></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">3</div>
+</div>
+
+<!-- 05 ─ Plate HX selection (acc-grid) ──────────────────────────────────────── -->
+<div class="slide" data-screen-label="05 Heat exchangers">
+  <div class="band"><div class="eyebrow">Plate Heat-Exchanger Selection</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage"><div class="acc-grid">
+    <ul class="bullets">
+      <li><span class="hl-navy">Kelvion GBH-DW 500H</span> double-wall BPHE for both evaporator and condenser</li>
+      <li>Double-wall construction gives an <span class="hl">A3-safe</span> refrigerant-to-water barrier</li>
+      <li>Thermal sizing by <span class="hl">LMTD</span>; refrigerant-side ΔP from the Han (2003) correlation</li>
+      <li>95-plate margined estimate sits within the 100-plate model limit</li>
+    </ul>
+    <figure class="acc-fig"><div class="acc-fig-img"><img src="figures/hx_profiles.png" alt="Counter-flow HX temperature profiles"></div><figcaption>Counter-flow temperature profiles — condenser &amp; evaporator</figcaption></figure>
+  </div></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">4</div>
+</div>
+
+<!-- 06 ─ Balance of plant (spec) ────────────────────────────────────────────── -->
+<div class="slide" data-screen-label="06 Balance of plant">
+  <div class="band"><div class="eyebrow">Balance of Plant</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage">
+    <h2 class="subtitle">Selected Major Components</h2>
+    <p class="lede">Every major component is drawn from a single <span class="hl">Bitzer / Kelvion</span> ecosystem, sized around the R-290 design point and the 5:1 turndown.</p>
+    <table class="spec">
+      <thead><tr><th>Component</th><th>Selection</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Evaporator / Condenser</td><td>Kelvion GBH-DW 500H</td><td>Double-wall, A3-safe BPHE</td></tr>
+        <tr><td>Compressors</td><td>2 × Bitzer 4FEP-35Z</td><td>Semi-hermetic recip., VFD</td></tr>
+        <tr><td>Oil separator</td><td>Bitzer OA1954</td><td>Primary, sized to 203.6&nbsp;m³/h</td></tr>
+        <tr><td>Expansion device</td><td>Electronic EEV</td><td class="n">5.87&nbsp;mm orifice</td></tr>
+        <tr><td>Glycol pump</td><td>End-suction, ~1.5&nbsp;hp</td><td class="n">1750&nbsp;RPM · 30% PG loop</td></tr>
+        <tr><td>Chilled-water pump</td><td>End-suction</td><td>Data-center / CRAH side</td></tr>
+        <tr><td>Heat rejection</td><td>Outdoor dry cooler</td><td>Variable-speed fans</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">5</div>
+</div>
+
+<!-- 07 ─ Design cycle (acc-grid) ────────────────────────────────────────────── -->
+<div class="slide" data-screen-label="07 Design cycle">
+  <div class="band"><div class="eyebrow">The Design Cycle</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage"><div class="acc-grid">
+    <ul class="bullets">
+      <li>R-290 vapor-compression cycle at <span class="hl">150&nbsp;kW / 35&nbsp;°C</span> design ambient</li>
+      <li>Four state points anchor the model: <span class="hl">t<sub>o</sub> = 10&nbsp;°C</span>, <span class="hl">t<sub>c</sub> = 45&nbsp;°C</span></li>
+      <li>Design-point <span class="hl-navy">COP 4.67</span> at 15&nbsp;°C leaving chilled water</li>
+      <li>All properties from CoolProp; consistent across every downstream chapter</li>
+    </ul>
+    <figure class="acc-fig"><div class="acc-fig-img"><img src="figures/ph_chart.png" alt="R-290 pressure-enthalpy chart"></div><figcaption>R-290 p–h chart of the designed cycle</figcaption></figure>
+  </div></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">6</div>
+</div>
+
+<!-- 08 ─ Temperature cascade (acc-grid) ─────────────────────────────────────── -->
+<div class="slide" data-screen-label="08 Temperature cascade">
+  <div class="band"><div class="eyebrow">Why the Dry Cooler Is Large</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage"><div class="acc-grid">
+    <ul class="bullets">
+      <li>The <span class="hl">10&nbsp;K condensing approach</span> is three stacked steps in series</li>
+      <li><span class="hl">3&nbsp;K</span> dry cooler + <span class="hl">4&nbsp;K</span> glycol rise + <span class="hl">3&nbsp;K</span> condenser</li>
+      <li>Condensing temperature t<sub>c</sub> is the <span class="hl-navy">single biggest lever</span> on full-load COP</li>
+      <li>Each kelvin is bought with heat-transfer area — the price of the glycol loop</li>
+    </ul>
+    <figure class="acc-fig"><div class="acc-fig-img"><img src="figures/temperature_cascade.png" alt="Temperature cascade from air to chilled water"></div><figcaption>Temperature cascade: outdoor air → chilled water</figcaption></figure>
+  </div></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">7</div>
+</div>
+
+<!-- 09 ─ Full-load COP (split + resultcard) ─────────────────────────────────── -->
+<div class="slide" data-screen-label="09 Full-load COP">
+  <div class="band"><div class="eyebrow">Performance</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage">
+    <h2 class="subtitle">Full-Load COP Meets the Target</h2>
+    <p class="lede">At the strict AHRI 550/590 rating condition the full-load COP clears 3.5 — and rises sharply at the warmer project design point.</p>
+    <div class="split">
+      <div class="fig"><div class="frame"><img src="figures/full_load_cop.png" alt="Full-load COP vs target"></div><div class="cap">Full-load COP at the AHRI and project design points vs. the 3.5 target</div></div>
+      <div class="resultcard">
+        <div class="k">Full-load COP · AHRI point</div>
+        <div class="big">3.53</div>
+        <div class="note"><b>≥ 3.5 target met</b> with a ≈1% margin. At the warmer project design point (15&nbsp;°C LCHW) the COP rises to <b>4.67</b>.</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">8</div>
+</div>
+
+<!-- 10 ─ COP sensitivity (acc-grid) ─────────────────────────────────────────── -->
+<div class="slide" data-screen-label="10 COP sensitivity">
+  <div class="band"><div class="eyebrow">COP Sensitivity</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage"><div class="acc-grid">
+    <ul class="bullets">
+      <li>Full-load COP falls steadily as <span class="hl">condensing temperature</span> rises</li>
+      <li>This is <span class="hl-navy">why the dry cooler is sized as large as it is</span></li>
+      <li>It also explains the thin ≈1% margin at the strict AHRI rating point</li>
+      <li>Evaporator approach (5&nbsp;K) sets t<sub>o</sub>; the rest is condenser-driven</li>
+    </ul>
+    <figure class="acc-fig"><div class="acc-fig-img"><img src="figures/cop_tc_sensitivity.png" alt="COP vs condensing temperature"></div><figcaption>Full-load COP vs. condensing temperature at the AHRI point</figcaption></figure>
+  </div></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">9</div>
+</div>
+
+<!-- 11 ─ IPLV / turndown (split + resultcard) ───────────────────────────────── -->
+<div class="slide" data-screen-label="11 IPLV">
+  <div class="band"><div class="eyebrow">Performance</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage">
+    <h2 class="subtitle">Part-Load: IPLV &amp; Turndown</h2>
+    <p class="lede">Variable-speed drives on both compressors deliver the 5:1 turndown and a comfortable IPLV margin.</p>
+    <div class="split">
+      <div class="fig"><div class="frame"><img src="figures/iplv_points.png" alt="IPLV part-load points"></div><div class="cap">IPLV.IP part-load points — 25% point runs on VFD speed modulation</div></div>
+      <div class="resultcard">
+        <div class="k">Integrated Part Load Value</div>
+        <div class="big">5.23</div>
+        <div class="note"><b>≥ 5.0 target met</b> with a 4.6% margin. VFD speed modulation — not hot-gas bypass — makes the 25% point and the 30&nbsp;kW minimum affordable.</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">10</div>
+</div>
+
+<!-- 12 ─ Compressor–EEV control (figrow 2) ──────────────────────────────────── -->
+<div class="slide" data-screen-label="12 Controls">
+  <div class="band"><div class="eyebrow">Controls</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage">
+    <h2 class="subtitle">Compressor–EEV Interaction</h2>
+    <p class="lede">A single electronic expansion valve holds authority across the full <span class="hl">5:1 load turndown</span>, with the superheat setpoint read off the Bitzer compressor map.</p>
+    <div class="figrow">
+      <div class="fig"><div class="frame"><img src="figures/eev_authority.png" alt="EEV opening across turndown"></div><div class="cap">EEV opening required across the 5:1 turndown</div></div>
+      <div class="fig"><div class="frame"><img src="figures/superheat_sensitivity.png" alt="Superheat setpoint sensitivity"></div><div class="cap">Superheat setpoint sensitivity at fixed evaporating temperature</div></div>
+    </div>
+  </div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">11</div>
+</div>
+
+<!-- 13 ─ Design-day power & PUE (split + resultcard) ────────────────────────── -->
+<div class="slide" data-screen-label="13 Design-day PUE">
+  <div class="band"><div class="eyebrow">Performance</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage">
+    <h2 class="subtitle">Design-Day Power &amp; PUE</h2>
+    <p class="lede">At the 35&nbsp;°C design day the compressor bank dominates facility power; fan and pump parasitics stay small.</p>
+    <div class="split">
+      <div class="fig"><div class="frame"><img src="figures/pue_breakdown.png" alt="Design-day power breakdown"></div><div class="cap">Design-day facility power breakdown by component</div></div>
+      <div class="resultcard">
+        <div class="k">Design-day facility PUE</div>
+        <div class="big">1.29</div>
+        <div class="note">The compressor bank dominates at the design day. This is the <b>worst-case</b> point — the annual average is far lower once free cooling is counted.</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">12</div>
+</div>
+
+<!-- 14 ─ Free cooling (acc-grid) ────────────────────────────────────────────── -->
+<div class="slide" data-screen-label="14 Free cooling">
+  <div class="band"><div class="eyebrow">Free Cooling — The Payoff</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage"><div class="acc-grid">
+    <ul class="bullets">
+      <li>Below <span class="hl">4&nbsp;°C</span> outdoor air the economizer carries the <span class="hl-navy">full load with no compressor</span></li>
+      <li>Across the ASHRAE 90.1 economizer band, compressor power collapses</li>
+      <li>The glycol loop that costs COP at the design point <span class="hl">pays back</span> every winter hour</li>
+      <li>Load split shifts continuously from mechanical to free cooling</li>
+    </ul>
+    <figure class="acc-fig"><div class="acc-fig-img"><img src="figures/economizer_band.png" alt="Load split across economizer band"></div><figcaption>Load split &amp; compressor power across the economizer envelope</figcaption></figure>
+  </div></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">13</div>
+</div>
+
+<!-- 15 ─ Champaign climate (acc-grid) ───────────────────────────────────────── -->
+<div class="slide" data-screen-label="15 Climate">
+  <div class="band"><div class="eyebrow">Champaign Climate</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage"><div class="acc-grid">
+    <ul class="bullets">
+      <li>Real <span class="hl">Champaign TMY3</span> hourly weather drives the annual model</li>
+      <li><span class="hl-navy">2,542 hr/yr (29%)</span> fall below the full-free-cooling threshold</li>
+      <li>The duration curve sets how much of the year each mode runs</li>
+      <li>Winters are cold enough to make the economizer a first-order effect</li>
+    </ul>
+    <figure class="acc-fig"><div class="acc-fig-img"><img src="figures/ambient_duration_curve.png" alt="Champaign ambient duration curve"></div><figcaption>Ambient temperature duration curve with the economizer thresholds</figcaption></figure>
+  </div></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">14</div>
+</div>
+
+<!-- 16 ─ Annual performance (acc-grid) ──────────────────────────────────────── -->
+<div class="slide" data-screen-label="16 Annual performance">
+  <div class="band"><div class="eyebrow">Annual Performance</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage"><div class="acc-grid">
+    <ul class="bullets">
+      <li>Delivered load and compressor COP resolved across all <span class="hl">8,760 hours</span></li>
+      <li>Roughly <span class="hl-navy">40% of the year's cooling</span> is done with almost no compressor work</li>
+      <li>COP climbs steeply through the shoulder and winter seasons</li>
+      <li>The design-day PUE of 1.29 overstates the true annual average</li>
+    </ul>
+    <figure class="acc-fig"><div class="acc-fig-img"><img src="figures/annual_cop_load.png" alt="Annual load and COP"></div><figcaption>Delivered cooling load and compressor COP across 8,760 hours</figcaption></figure>
+  </div></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">15</div>
+</div>
+
+<!-- 17 ─ Monthly & seasonal (figrow 2) ──────────────────────────────────────── -->
+<div class="slide" data-screen-label="17 Seasonal">
+  <div class="band"><div class="eyebrow">Seasonal Efficiency</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage">
+    <h2 class="subtitle">Monthly &amp; Seasonal COP / PUE</h2>
+    <p class="lede">Averaged monthly and seasonally, the total-system COP and facility PUE track the weather — with a <span class="hl">near-unity winter PUE</span> and summer setting the ceiling.</p>
+    <div class="figrow">
+      <div class="fig"><div class="frame"><img src="figures/monthly_cop_pue.png" alt="Monthly COP and PUE"></div><div class="cap">Monthly-average total-system COP, PUE and TUE</div></div>
+      <div class="fig"><div class="frame"><img src="figures/seasonal_cop_pue.png" alt="Seasonal COP and PUE"></div><div class="cap">Seasonal-average COP, PUE and TUE (same encoding)</div></div>
+    </div>
+  </div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">16</div>
+</div>
+
+<!-- 18 ─ Safety / charge (figrow 2) ─────────────────────────────────────────── -->
+<div class="slide" data-screen-label="18 Safety">
+  <div class="band"><div class="eyebrow">Safety</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage">
+    <h2 class="subtitle">A3 Refrigerant Charge Analysis</h2>
+    <p class="lede">R-290 is flammable (A3), so the total charge is minimized and a full-release concentration checked against the occupied-space limit.</p>
+    <div class="figrow">
+      <div class="fig"><div class="frame"><img src="figures/charge_inventory.png" alt="R-290 charge inventory"></div><div class="cap">Charge inventory — total 5.5–8.7&nbsp;kg, no receiver</div></div>
+      <div class="fig"><div class="frame"><img src="figures/charge_concentration.png" alt="Room concentration after release"></div><div class="cap">Room concentration after a full release vs. the safety limit</div></div>
+    </div>
+  </div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">17</div>
+</div>
+
+<!-- 19 ─ Summary (split + resultcard) ───────────────────────────────────────── -->
+<div class="slide" data-screen-label="19 Summary">
+  <div class="band"><div class="eyebrow">Summary</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="stage">
+    <h2 class="subtitle">Both Mandatory Targets Met</h2>
+    <p class="lede">The design clears both efficiency mandates while keeping flammable propane out of the data hall — with an honest read on where the margins are thin.</p>
+    <div class="split">
+      <div class="fig"><div class="frame"><img src="figures/compliance.png" alt="Compliance against targets"></div><div class="cap">The design against the two mandatory efficiency targets</div></div>
+      <div class="resultcard">
+        <div class="k">Mandatory targets met</div>
+        <div class="big">2/2</div>
+        <div class="note">COP <b>3.53</b> (margin thin) · IPLV <b>5.23</b> (comfortable). Next: P&amp;ID, vendor drawings for GBH-DW geometry, and a commissioning re-run.</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">18</div>
+</div>
+
+<!-- 20 ─ Acknowledgements ───────────────────────────────────────────────────── -->
+<div class="slide" data-screen-label="20 Acknowledgements">
+  <div class="band"><div class="eyebrow">Acknowledgements</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
+  <div class="abs" style="left:33px;top:132px;width:220px;height:221px"><img src="assets/255bd6fe-7850-449c-9bfb-5e3b19893e35.png" alt="Younes Heidari"></div>
+  <div class="nm" style="left:33px;top:360px;width:220px">Younes Heidari</div>
+  <div class="info" style="left:23px;top:384px;width:240px">2<sup>nd</sup> year PhD<br>Room: MEL 2308<br>heidari3@illinois.edu</div>
+  <div class="abs" style="left:299px;top:132px;width:177px;height:221px"><img src="assets/ed8dd392-d1b5-472c-ae0e-a75769895a8b.jpg" alt="Nenad Miljkovic"></div>
+  <div class="nm" style="left:281px;top:360px;width:213px">Nenad Miljkovic</div>
+  <div class="abs" style="left:521px;top:132px;width:176px;height:221px"><img src="assets/3624449e-9934-400c-b4f5-244075599297.jpg" alt="Parsa Faghihi"></div>
+  <div class="nm" style="left:503px;top:360px;width:212px">Parsa Faghihi</div>
+  <div class="abs" style="left:741px;top:132px;width:158px;height:221px"><img src="assets/d7f3b892-8f72-4043-a884-7fdd5d15b17f.jpg" alt="Omar Abdelhamid"></div>
+  <div class="nm" style="left:714px;top:360px;width:212px">Omar Abdelhamid</div>
+  <div class="abs" style="left:296px;top:409px;width:174px;height:221px"><img src="assets/fa8872f8-079b-4cff-8fff-a3bef990a2f8.jpg" alt="Jiazheng Liu"></div>
+  <div class="nm" style="left:277px;top:638px;width:212px">Jiazheng Liu</div>
+  <div class="abs" style="left:515px;top:409px;width:177px;height:221px"><img src="assets/3364cc39-a35b-4aa7-9743-8fdb305ca1cd.jpg" alt="Ali Salehi"></div>
+  <div class="nm" style="left:497px;top:638px;width:212px">Ali Salehi</div>
+  <div class="abs" style="left:735px;top:409px;width:170px;height:221px"><img src="assets/546f3c7d-7b4b-4636-b58a-14ee2bb9efd3.jpg" alt="Vishwanath Ganesan"></div>
+  <div class="nm" style="left:684px;top:638px;width:272px">Vishwanath Ganesan</div>
+  <div class="abs" style="left:9px;top:464px;width:272px;height:166px"><img src="assets/348301a6-6e39-4c53-be1d-24dfff75ac04.jpg" alt="ETRL research group"></div>
+  <div class="logo" style="left:100px;top:634px;width:89px;height:41px"><img src="assets/490da130-123d-404c-8966-62a29f16964e.png" alt="ETRL"></div>
+  <div class="ty" style="left:981px;top:130px;width:280px;text-align:center">Thank you!</div>
+  <div class="logo" style="left:997px;top:218px;width:216px;height:59px"><img src="assets/81a73efe-9a2c-40cb-a3bc-4392458f36bb.png" alt="ACRC"></div>
+  <div class="logo" style="left:996px;top:302px;width:213px;height:99px"><img src="assets/0a5057cd-bc17-4fc0-88b9-9152b4be8732.svg" alt="LG"></div>
+  <div class="logo" style="left:953px;top:427px;width:304px;height:61px"><img src="assets/75812f3d-60ce-4a02-8a9d-c244e9329d04.png" alt="PolyScience — Temperature Control Solutions"></div>
+  <div class="logo" style="left:964px;top:513px;width:283px;height:52px"><img src="assets/04dc8eb4-fcb7-4ee2-af12-d08832a6e30e.svg" alt="Honeywell"></div>
+  <div class="logo" style="left:934px;top:590px;width:342px;height:59px"><img src="assets/6fbfe18b-86c0-48a1-b0e2-86555f5ea41e.png" alt="Brazeway"></div>
+  <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">19</div>
+</div>
+
+</div></div>
+<div class="zone l" id="zl"></div>
+<div class="zone r" id="zr"></div>
+<div class="hint">IRCC 2026 · Project #3 — ← / → to navigate</div>
+<div class="nav"><button id="prev" aria-label="Previous">‹</button><span class="count" id="count">1 / 20</span><button id="next" aria-label="Next">›</button></div>
+<script>
+var slides=[].slice.call(document.querySelectorAll('.slide')),count=document.getElementById('count');
+var i=Math.min(slides.length-1,Math.max(0,parseInt(localStorage.getItem('ircc-p3-idx')||'0',10)||0));
+function show(){slides.forEach(function(s,k){s.classList.toggle('on',k===i);});count.textContent=(i+1)+' / '+slides.length;localStorage.setItem('ircc-p3-idx',String(i));}
+function go(d){i=(i+d+slides.length)%slides.length;show();}
+function scale(){var s=Math.min(window.innerWidth/1280,(window.innerHeight-40)/720);document.getElementById('scaler').style.transform='scale('+s+')';}
+document.getElementById('prev').onclick=function(){go(-1);};
+document.getElementById('next').onclick=function(){go(1);};
+document.getElementById('zl').onclick=function(){go(-1);};
+document.getElementById('zr').onclick=function(){go(1);};
+window.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '){go(1);}else if(e.key==='ArrowLeft'){go(-1);}});
+window.addEventListener('resize',scale);
+scale();show();
+</script>
+</body></html>
