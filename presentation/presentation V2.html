@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRCC 2026 Project #3 — R-290 Data-Center Chiller</title>
+<title>IRCC 2026 Project #3 — R-290 Data-Center Chiller (Presentation V2)</title>
 
 <style>
 :root{--illini-blue:#13294b;--illini-orange:#ff5f05;--navy:#13294b;--navy-band:#1b4284;--navy-deep:#0e1f3a;--orange:#ff5f05;--orange-deep:#d94f00;--chart-navy:#13294b;--chart-storm:#707372;--chart-altgeld:#c84113;--black:#000;--ink:#232323;--ink-strong:#1f1f1f;--grey-1:#f3f3f3;--grey-2:#ebebeb;--grey-3:#cecece;--grey-4:#9c9c9c;--grey-5:#676767;--white:#fff;--font-sans:Arial,Helvetica,'Helvetica Neue',sans-serif;--radius-sm:4px;--radius-md:6px}
@@ -104,6 +104,9 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
 .eq sub,.eq sup{font-size:.68em}
 .eq .src{display:block;font-size:12px;color:var(--grey-5);margin-top:4px}
 .eqh{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grey-5);margin-bottom:3px}
+.eqimg{display:inline-block;vertical-align:middle;max-width:100%;height:auto;margin:1px 0}
+.comp-left .eq{padding:6px 14px} [data-screen-label="07 Condenser"] .comp-left.tight{gap:5px} [data-screen-label="07 Condenser"] .comp-left .eq{padding:4px 13px} [data-screen-label="07 Condenser"] .comp-left .bullets{gap:6px} [data-screen-label="07 Condenser"] .eqimg{margin:0} [data-screen-label="07 Condenser"] .src{margin-top:2px}
+.comp-left .eq .eqh{margin-bottom:1px}
 .comp-left.tight{gap:8px}
 .comp-left.tight .eq{padding:6px 14px}
 .comp-left.tight .eqh{margin-bottom:2px}
@@ -243,7 +246,7 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
     <h2 class="subtitle">COP of the Screened Low-GWP Candidates</h2>
     <p class="lede">All candidates were run through the <span class="hl">same subcritical cycle</span> at the design conditions. R-1234ze(E) edges ahead on COP — but needs a meaningfully larger compressor for the same capacity.</p>
     <div class="split">
-      <div class="fig"><div class="frame"><img src="figures/refrigerant_comparison_cop.png" alt="Refrigerant COP comparison"></div><div class="cap">Cycle COP across screened refrigerant candidates</div></div>
+      <div class="fig"><div class="frame"><img src="Figure%20V2/refrigerant_comparison_cop.png" alt="Refrigerant COP comparison"></div><div class="cap">Cycle COP across screened refrigerant candidates</div></div>
       <div class="resultcard">
         <div class="k">Selected working fluid</div>
         <div class="big">R-290</div>
@@ -266,9 +269,9 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
         <li>150 kW across ΔT<sub>lm</sub> = 7.6 K needs 8.2 m² at <span class="hl">U = 2,400 W/m²K</span> (double-wall derated): <span class="hl">≈84 plates</span>, ~20% margin.</li>
         <li>R-290 · N<sub>cp</sub> = 38 · <span class="hl">G<sub>c</sub> ≈ 25.3 kg/m²s</span> — inside Han’s 13–34 kg/m²s band.</li>
       </ul>
-      <div class="eq two"><span class="eqh">ΔP — refrigerant side (boiling zone)</span>Δ<i>P</i><sub>fr</sub> = <i>f</i> · (<i>L<sub>v</sub></i> <i>N</i><sub>cp</sub> / <i>D</i><sub>h</sub>) · <i>G</i><sub>Eq</sub>²/<i>ρ</i><sub>f</sub><br><i>f</i> = <i>Ge</i>₃·<i>Re</i><sub>Eq</sub><sup><i>Ge</i>₄</sup> &nbsp;·&nbsp; <i>G</i><sub>Eq</sub> = <i>G<sub>c</sub></i>[(1−<i>x</i>) + <i>x</i>(<i>ρ</i><sub>f</sub>/<i>ρ</i><sub>g</sub>)<sup>½</sup>] &nbsp;·&nbsp; <i>G<sub>c</sub></i> = <i>ṁ</i>/(<i>N</i><sub>cp</sub> <i>b</i> <i>L<sub>w</sub></i>)</div>
-      <div class="eq two"><span class="eqh">ΔP — water side</span>Δ<i>P</i> = 2<i>f</i> · (<i>L<sub>v</sub></i>/<i>D</i><sub>h</sub>) · <i>G</i>²/<i>ρ</i> &nbsp;—&nbsp; Martin (1996), single-phase<span class="src">5.973 kg/s · G = 545 kg/m²s · Re = 2,072 · f = 0.109 → <b>ΔP = 9.75 kPa</b></span></div>
-      <div class="eq two"><span class="eqh">Where f comes from — Han (2003), evaporation set</span><i>Ge</i>₃ = 64,710·(p<sub>co</sub>/D<sub>h</sub>)<sup>−5.27</sup>·(π/2−β)<sup>−3.03</sup><span class="src">At β = 30°, p<sub>co</sub> = 5 mm, D<sub>h</sub> = 4 mm → <b>Ge₃ ≈ 17,361, Ge₄ ≈ −1.120</b></span></div>
+      <div class="eq two"><span class="eqh">ΔP — refrigerant side (boiling zone)</span><img class="eqimg" src="Equations/eq0a.svg" alt=""><br><img class="eqimg" src="Equations/eq0b.svg" alt=""></div>
+      <div class="eq two"><span class="eqh">ΔP — water side</span><img class="eqimg" src="Equations/eq1.svg" alt=""> &nbsp;—&nbsp; Martin (1996), single-phase<span class="src">5.973 kg/s · G = 545 kg/m²s · Re = 2,072 · f = 0.109 → <b>ΔP = 9.75 kPa</b></span></div>
+      <div class="eq two"><span class="eqh">Where f comes from — Han (2003), evaporation set</span><img class="eqimg" src="Equations/eq2.svg" alt=""><span class="src">At β = 30°, p<sub>co</sub> = 5 mm, D<sub>h</sub> = 4 mm → <b>Ge₃ ≈ 17,361, Ge₄ ≈ −1.120</b></span></div>
       <div class="cap-sm" style="text-align:left">D<sub>h</sub> 4 mm · β 30° · p<sub>co</sub> 5 mm · b 2.34 mm (derived) · L<sub>w</sub> 200 mm · L<sub>v</sub> 0.5 m — from HX geometry</div>
       <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">Kelvion HP DW 500H · double-wall · ≈84 plates</span></div>
     </div>
@@ -299,9 +302,9 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
         <li>Three zones by <span class="hl">enthalpy, not length</span> — 14.0 / <span class="hl">81.5</span> / 4.5%: one LMTD suffices; subcool gives the EEV <span class="hl">5 K liquid</span> — no receiver.</li>
         <li>Design point: <span class="hl">182 kW at t<sub>c</sub> = 45 °C</span>, glycol 38 → 42 °C; <span class="hl">U = 2,000 W/m²K</span> → 12.2 m²: <span class="hl">≈104 plates</span>.</li>
       </ul>
-      <div class="eq two"><span class="eqh">ΔP — refrigerant side (condensing zone)</span>Δ<i>P</i><sub>fr</sub> = <i>f</i> · (<i>L<sub>v</sub></i> <i>N</i> / <i>D</i><sub>h</sub>) · <i>G</i><sub>Eq</sub>²/<i>ρ</i><sub>f</sub> &nbsp;—&nbsp; integrated over 200 quality steps, x = 0 → 1 (np.trapezoid)<br>Desuperheat + subcool zones (Blasius): Δ<i>P</i> = 2<i>f</i> · (<i>G</i>²/<i>ρ</i>) · <i>L</i><sub>zone</sub>/<i>D</i><sub>h</sub><span class="src"><b>N = 2 is Han’s rig constant, not N<sub>cp</sub> = 47</b> (else 23.5× over) · G<sub>c</sub> ≈ 25.1 — inside Han’s 13–34 band</span></div>
-      <div class="eq two"><span class="eqh">ΔP — glycol side</span>Δ<i>P</i> = 2<i>f</i> · (<i>L<sub>v</sub></i>/<i>D</i><sub>h</sub>) · <i>G</i>²/<i>ρ</i> &nbsp;—&nbsp; Martin (1996)<span class="src">11.64 kg/s · Re = 2,703 (turbulent branch) · f = 0.107 → <b>ΔP = 35.91 kPa</b></span><span class="src">4× the evaporator water loss at equal area — ~2× flow, denser fluid, ΔP ∝ G²</span></div>
-      <div class="eq two"><span class="eqh">Where f comes from — Han (2003), condensation set</span><i>Ge</i>₃ = 3,521.1·(p<sub>co</sub>/D<sub>h</sub>)<sup>+4.17</sup>·(π/2−β)<sup>−7.75</sup><span class="src">Same β and p<sub>co</sub> as the evaporator → <b>Ge₃ ≈ 6,246, Ge₄ ≈ −0.985</b></span><span class="src">Sign flips (+4.17 vs −5.27): film growth vs nucleation — <b>f ≈ 2.8× lower</b></span></div>
+      <div class="eq two"><span class="eqh">ΔP — refrigerant side (condensing zone)</span><img class="eqimg" src="Equations/eq3a.svg" alt=""> &nbsp;—&nbsp; integrated over 200 quality steps, x = 0 → 1 (np.trapezoid)<br>Desuperheat + subcool zones (Blasius): <img class="eqimg" src="Equations/eq3b.svg" alt=""><span class="src"><b>N = 2 is Han’s rig constant, not N<sub>cp</sub> = 47</b> (else 23.5× over) · G<sub>c</sub> ≈ 25.1 — inside Han’s 13–34 band</span></div>
+      <div class="eq two"><span class="eqh">ΔP — glycol side</span><img class="eqimg" src="Equations/eq1.svg" alt=""> &nbsp;—&nbsp; Martin (1996)<span class="src">11.64 kg/s · Re = 2,703 (turbulent branch) · f = 0.107 → <b>ΔP = 35.91 kPa</b></span><span class="src">4× the evaporator water loss at equal area — ~2× flow, denser fluid, ΔP ∝ G²</span></div>
+      <div class="eq two"><span class="eqh">Where f comes from — Han (2003), condensation set</span><img class="eqimg" src="Equations/eq5.svg" alt=""><span class="src">Same β and p<sub>co</sub> as the evaporator → <b>Ge₃ ≈ 6,246, Ge₄ ≈ −0.985</b></span><span class="src">Sign flips (+4.17 vs −5.27): film growth vs nucleation — <b>f ≈ 2.8× lower</b></span></div>
       <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">Kelvion HP DW 500H · double-wall · ≈104 plates</span></div>
     </div>
     <div class="comp-right">
@@ -332,8 +335,8 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
         <li>LMTD at that point → area → <span class="hl">≈49 plates</span> · single-wall — <span class="hl">no refrigerant contact</span></li>
         <li><span class="hl">Payoff:</span> 2,542 h/yr of compressor-off free cooling — 29% of the year</li>
       </ul>
-      <div class="eq two"><span class="eqh">ΔP — both sides, same equation</span>Δ<i>P</i> = 2<i>f</i> · (<i>L<sub>v</sub></i>/<i>D</i><sub>h</sub>) · <i>G</i>²/<i>ρ</i>, &nbsp; <i>G</i> = <i>ṁ</i>/(<i>N</i><sub>cp</sub> <i>b</i> <i>L<sub>w</sub></i>)<span class="src">Water: Re = 1,617 · f = 0.105 → <b>6.67 kPa</b> &nbsp;|&nbsp; Glycol: Re = 456 · f = 0.142 → <b>10.43 kPa</b></span><span class="src">Both on the laminar branch — the condenser’s glycol at Re = 2,703 is turbulent</span></div>
-      <div class="eq two"><span class="eqh">Where f comes from — Martin (1996)</span>1/√<i>f</i> = cos<i>φ</i>/√(0.045 tan<i>φ</i> + 0.09 sin<i>φ</i> + <i>f</i>₀/cos<i>φ</i>) + (1−cos<i>φ</i>)/√(3.8 <i>f</i>₁)<br>Re &lt; 2000: &nbsp;<i>f</i>₀ = 16/<i>Re</i>, &nbsp;<i>f</i>₁ = 149/<i>Re</i> + 0.9625<span class="src"><i>φ</i> is the chevron angle, used directly as β = 30° — no 90°−β conversion</span><span class="src">One shared _martin_dp() serves every single-phase stream in the plant</span></div>
+      <div class="eq two"><span class="eqh">ΔP — both sides, same equation</span><img class="eqimg" src="Equations/eq6.svg" alt=""><span class="src">Water: Re = 1,617 · f = 0.105 → <b>6.67 kPa</b> &nbsp;|&nbsp; Glycol: Re = 456 · f = 0.142 → <b>10.43 kPa</b></span><span class="src">Both on the laminar branch — the condenser’s glycol at Re = 2,703 is turbulent</span></div>
+      <div class="eq two"><span class="eqh">Where f comes from — Martin (1996)</span><img class="eqimg" src="Equations/eq7a.svg" alt=""><br><img class="eqimg" src="Equations/eq7b.svg" alt=""><span class="src"><i>φ</i> is the chevron angle, used directly as β = 30° — no 90°−β conversion</span><span class="src">One shared _martin_dp() serves every single-phase stream in the plant</span></div>
       <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">Kelvion GB series · single-wall · ≈49 plates</span></div>
     </div>
     <div class="comp-right">
@@ -363,8 +366,8 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
         <li><span class="hl">VFDs</span> trim full-load speed to ≈75% for exactly 150 kW, and carry the 5:1 turndown without hot-gas bypass</li>
         <li><span class="hl">Modeling:</span> three coefficient sets — capacity, power, mass flow — each evaluated at (t<sub>o</sub>, t<sub>c</sub>); <span class="hl">solve_with_vfd()</span> finds the speed that delivers the load exactly</li>
       </ul>
-      <div class="eq"><i>y</i> = <i>c</i>₁ + <i>c</i>₂<i>t<sub>o</sub></i> + <i>c</i>₃<i>t<sub>c</sub></i> + <i>c</i>₄<i>t<sub>o</sub></i>² + <i>c</i>₅<i>t<sub>o</sub>t<sub>c</sub></i> + <i>c</i>₆<i>t<sub>c</sub></i>² + <i>c</i>₇<i>t<sub>o</sub></i>³ + <i>c</i>₈<i>t<sub>c</sub>t<sub>o</sub></i>² + <i>c</i>₉<i>t<sub>o</sub>t<sub>c</sub></i>² + <i>c</i>₁₀<i>t<sub>c</sub></i>³<span class="src">AHRI-540 / EN 12900 — separate coefficient sets for Q̇, P and ṁ</span></div>
-      <div class="eq two"><i>Q̇</i>(<i>N</i>) = (<i>N</i>/<i>N</i>₀) · <i>Q̇</i>₀ &nbsp;&nbsp;·&nbsp;&nbsp; <i>P</i>(<i>N</i>) = (<i>N</i>/<i>N</i>₀) · <i>P</i>₀<span class="src">VFD model — capacity and power scale ≈linearly with speed for a recip, so COP is speed-invariant</span></div>
+      <div class="eq"><img class="eqimg" src="Equations/eq8.svg" alt=""><span class="src">AHRI-540 / EN 12900 — separate coefficient sets for Q̇, P and ṁ</span></div>
+      <div class="eq two"><img class="eqimg" src="Equations/eq9.svg" alt=""><span class="src">VFD model — capacity and power scale ≈linearly with speed for a recip, so COP is speed-invariant</span></div>
       <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">2 × Bitzer 4FEP-35Z · semi-hermetic recip · VFD</span></div>
     </div>
     <div class="comp-right">
@@ -394,8 +397,8 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
         <li><span class="hl">Delivers the spec:</span> <span class="hl">82.6% open</span> at design, <span class="hl">24.3%</span> at 30 kW — controllable across the whole 5:1 band, no low-load hunting from an oversized valve</li>
         <li><span class="hl">Modeling:</span> <span class="hl">calc_orifice()</span> inverts the orifice equation at each load — required area over full area gives the opening fraction tracked across the turndown</li>
       </ul>
-      <div class="eq two"><i>ṁ<sub>r</sub></i> = <i>C<sub>d</sub></i> · <i>A</i><sub>orifice</sub> · √(2 <i>ρ</i><sub>in</sub> · Δ<i>P</i>) &nbsp;&nbsp;→&nbsp;&nbsp; <i>A</i><sub>orifice</sub> = <i>ṁ<sub>r</sub></i> / (<i>C<sub>d</sub></i> √(2 <i>ρ</i><sub>in</sub> Δ<i>P</i>))<span class="src">Incompressible-liquid orifice equation, inverted for the required flow area</span></div>
-      <div class="eq two">opening = <i>A</i><sub>req</sub>(load) / <i>A</i><sub>orifice</sub> &nbsp;→&nbsp; 82.6% at 150 kW · 24.3% at 30 kW<span class="src">Valve-authority check across the 5:1 turndown (controls chapter)</span></div>
+      <div class="eq two"><img class="eqimg" src="Equations/eq10.svg" alt=""><span class="src">Incompressible-liquid orifice equation, inverted for the required flow area</span></div>
+      <div class="eq two"><img class="eqimg" src="Equations/eq11.svg" alt=""> &nbsp;→&nbsp; 82.6% at 150 kW · 24.3% at 30 kW<span class="src">Valve-authority check across the 5:1 turndown (controls chapter)</span></div>
       <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">Danfoss ETS / Emerson EX class · single valve</span></div>
     </div>
     <div class="comp-right">
@@ -425,7 +428,7 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
         <li>18 L oil charge; permitted for R-290 per Bitzer DB-300-9 / DP-500-2</li>
         <li><span class="hl">Modeling:</span> the compressor map’s mass flow and suction density give the worst-case volume flow — no thermal model needed, selection is a chart-band lookup</li>
       </ul>
-      <div class="eq two"><i>V̇</i><sub>suction</sub> = <i>ṁ</i><sub>r</sub> / <i>ρ</i><sub>suction</sub> &nbsp;·&nbsp; 2 units → <span style="font-weight:700">203.6 m³/h</span> &nbsp;→&nbsp; OA1954<span class="src">Bitzer quick-selection chart: sized on combined suction volume flow</span></div>
+      <div class="eq two"><img class="eqimg" src="Equations/eq12.svg" alt=""> &nbsp;·&nbsp; 2 units → <span style="font-weight:700">203.6 m³/h</span> &nbsp;→&nbsp; OA1954<span class="src">Bitzer quick-selection chart: sized on combined suction volume flow</span></div>
       <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">Bitzer OA1954 · primary · A3-rated · 28 bar</span></div>
     </div>
     <div class="comp-right">
@@ -455,8 +458,8 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
         <li><span class="hl">No coil geometry from the vendor</span> → ΔP by <span class="hl">vendor-anchored scaling</span>: in the Blasius ratio, L, D and circuit count cancel — one rated point (55.2 kPa) scales to any condition (23.2 kPa at free cooling)</li>
         <li><span class="hl">Variable-speed EC fans</span> (6 × 0.91 m, 60 dB(A)) — cube-law fan power in the annual model</li>
       </ul>
-      <div class="eq two"><i>ε</i> = 1 − exp{(1/<i>C<sub>r</sub></i>) <i>NTU</i><sup>0.22</sup> [exp(−<i>C<sub>r</sub></i> <i>NTU</i><sup>0.78</sup>) − 1]} &nbsp;·&nbsp; <i>UA</i> = <i>NTU</i> · <i>C</i><sub>min</sub><span class="src">Cross-flow ε-NTU (both streams unmixed) — NTU found by numerical root-finding</span></div>
-      <div class="eq two">Δ<i>P</i>₂/Δ<i>P</i>₁ = (<i>ρ</i>₂/<i>ρ</i>₁)<sup>0.8</sup> (<i>ṁ</i>₂<i>ρ</i>₁/<i>ṁ</i>₁<i>ρ</i>₂)<sup>1.8</sup> (<i>μ</i>₂/<i>μ</i>₁)<sup>0.2</sup><span class="src">Vendor-anchored ΔP scaling — geometry cancels; needs one rated point + CoolProp only</span></div>
+      <div class="eq two"><img class="eqimg" src="Equations/eq13.svg" alt=""><span class="src">Cross-flow ε-NTU (both streams unmixed) — NTU found by numerical root-finding</span></div>
+      <div class="eq two"><img class="eqimg" src="Equations/eq14.svg" alt=""><span class="src">Vendor-anchored ΔP scaling — geometry cancels; needs one rated point + CoolProp only</span></div>
       <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">Kelvion ULF-PA106K4V-091F095 · 6 EC fans</span></div>
     </div>
     <div class="comp-right">
@@ -487,8 +490,8 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
         <li>Both on <span class="hl">VFDs</span> — pump parasitics track flow in the annual PUE model instead of running flat-out</li>
         <li><span class="hl">Modeling:</span> fitted H(Q) intersected with the loop resistance curve; the digitized efficiency map turns duty into shaft power for the 8,760-h PUE model</li>
       </ul>
-      <div class="eq two"><i>H</i>(<i>Q</i>) = <i>c</i>₂<i>Q</i>² + <i>c</i>₁<i>Q</i> + <i>c</i>₀ &nbsp;&nbsp;·&nbsp;&nbsp; <i>P</i><sub>shaft</sub> = <i>ρ</i> <i>g</i> <i>Q</i> <i>H</i> / <i>η</i><sub>pump</sub><span class="src">Quadratic fit to each digitized trim curve · trim chosen where H(Q) clears the margined duty</span></div>
-      <div class="eq two"><i>Q</i> ∝ <i>N</i> &nbsp;·&nbsp; <i>H</i> ∝ <i>N</i>² &nbsp;·&nbsp; <i>P</i> ∝ <i>N</i>³<span class="src">Affinity laws — VFD part-load power in the annual model</span></div>
+      <div class="eq two"><img class="eqimg" src="Equations/eq15.svg" alt=""><span class="src">Quadratic fit to each digitized trim curve · trim chosen where H(Q) clears the margined duty</span></div>
+      <div class="eq two"><img class="eqimg" src="Equations/eq16.svg" alt=""><span class="src">Affinity laws — VFD part-load power in the annual model</span></div>
       <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">Bell &amp; Gossett e-1510 · both VFD · 1750 RPM</span></div>
     </div>
     <div class="comp-right">
@@ -520,7 +523,7 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
     <h2 class="subtitle">Full-Load COP Meets the Target</h2>
     <p class="lede">At the strict AHRI 550/590 rating condition (6.7 °C LCHW, 35 °C air) the design clears 3.5 — and rises sharply at the warmer project design point.</p>
     <div class="split">
-      <div class="fig"><div class="frame"><img src="figures/full_load_cop.png" alt="Full-load COP vs target"></div><div class="cap">Full-load COP at the AHRI and project design points vs. the 3.5 target</div></div>
+      <div class="fig"><div class="frame"><img src="Figure%20V2/full_load_cop.png" alt="Full-load COP vs target"></div><div class="cap">Full-load COP at the AHRI and project design points vs. the 3.5 target</div></div>
       <div class="resultcard">
         <div class="k">Full-load COP · AHRI point</div>
         <div class="big">3.53</div>
@@ -538,7 +541,7 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
     <h2 class="subtitle">IPLV &amp; the 5:1 Turndown</h2>
     <p class="lede">The VFDs modulate capacity down to the 25% rating point — no hot-gas bypass — so part-load COP climbs as the condenser gets colder.</p>
     <div class="split">
-      <div class="fig"><div class="frame"><img src="figures/iplv_points.png" alt="IPLV part-load points"></div><div class="cap">IPLV.IP part-load points A–D per AHRI 550/590-2023 §5.2</div></div>
+      <div class="fig"><div class="frame"><img src="Figure%20V2/iplv_points.png" alt="IPLV part-load points"></div><div class="cap">IPLV.IP part-load points A–D per AHRI 550/590-2023</div></div>
       <div class="resultcard">
         <div class="k">Integrated Part Load Value</div>
         <div class="big">5.23</div>
@@ -556,8 +559,8 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
     <h2 class="subtitle">The Economizer Pays Back Every Winter Hour</h2>
     <p class="lede">Across the economizer band the compressor's share of the load collapses; over the Champaign TMY3 year, <span class="hl">≈40% of all cooling</span> is delivered with almost no compressor work — winter PUE approaches <span class="hl">1.01</span>.</p>
     <div class="figrow">
-      <div class="fig"><div class="frame"><img src="figures/economizer_band.png" alt="Load split across economizer band"></div><div class="cap">Load split &amp; compressor power across the ASHRAE 90.1 economizer envelope</div></div>
-      <div class="fig"><div class="frame"><img src="figures/seasonal_cop_pue.png" alt="Seasonal COP and PUE"></div><div class="cap">Seasonal-average total-system COP, PUE and TUE</div></div>
+      <div class="fig"><div class="frame"><img src="Figure%20V2/economizer_band.png" alt="Load split across economizer band"></div><div class="cap">Load split &amp; compressor power across the ASHRAE 90.1 economizer envelope</div></div>
+      <div class="fig"><div class="frame"><img src="Figure%20V2/seasonal_cop_pue.png" alt="Seasonal COP and PUE"></div><div class="cap">Seasonal-average total-system COP, PUE and TUE</div></div>
     </div>
   </div>
   <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">15</div>
@@ -570,7 +573,7 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
     <h2 class="subtitle">Both Mandatory Targets Cleared</h2>
     <p class="lede">The compressor bank dominates design-day facility power; fans and pumps stay small. The design-day PUE is the worst case — the annual average is far lower.</p>
     <div class="split">
-      <div class="fig"><div class="frame"><img src="figures/compliance.png" alt="Compliance against targets"></div><div class="cap">The design against the two mandatory efficiency targets</div></div>
+      <div class="fig"><div class="frame"><img src="Figure%20V2/compliance.png" alt="Compliance against targets"></div><div class="cap">The design against the two mandatory efficiency targets</div></div>
       <div class="resultcard">
         <div class="k">Design-day facility PUE</div>
         <div class="big">1.29</div>
@@ -586,10 +589,10 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
   <div class="band"><div class="eyebrow">Safety — A3 Charge Analysis</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
   <div class="stage">
     <h2 class="subtitle">Small Charge, Kept Out of the Hall</h2>
-    <p class="lede">Total R-290 charge is <span class="hl">5.5–8.7 kg</span> — no receiver, a 4 m liquid line, and the glycol barrier. A full release into the plant room stays below the flammability limit.</p>
+    <p class="lede">Total R-290 charge is <span class="hl">5.5–8.7 kg</span> — a 4 m liquid line and the glycol barrier. A full release into the plant room stays below the flammability limit.</p>
     <div class="figrow">
-      <div class="fig"><div class="frame"><img src="figures/charge_inventory.png" alt="R-290 charge inventory"></div><div class="cap">Charge inventory at the design point — condenser holdup dominates</div></div>
-      <div class="fig"><div class="frame"><img src="figures/charge_concentration.png" alt="Room concentration after release"></div><div class="cap">Room concentration after a full release vs. the safety limit</div></div>
+      <div class="fig"><div class="frame"><img src="Figure%20V2/charge_inventory.png" alt="R-290 charge inventory"></div><div class="cap">Charge inventory at the design point — condenser holdup dominates</div></div>
+      <div class="fig"><div class="frame"><img src="Figure%20V2/charge_concentration.png" alt="Room concentration after release"></div><div class="cap">Room concentration after a full release vs. the safety limit</div></div>
     </div>
   </div>
   <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">17</div>
@@ -606,9 +609,8 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
       <li>Every major component <span class="hl">vendor-selected</span> on real data (Bitzer, Kelvion, B&amp;G)</li>
       <li>Both mandates met: <span class="hl-navy">COP 3.53 · IPLV 5.23</span> · design-day PUE 1.29</li>
       <li>Champaign winters do <span class="hl">≈40% of the cooling for free</span> via the economizer</li>
-      <li>Next: vendor drawings, commissioning plan, CRAH selection</li>
     </ul></div>
-    <figure class="acc-fig"><div class="acc-fig-img"><img src="figures/ph_chart.png" alt="R-290 p-h chart of the designed cycle"></div><figcaption>The designed cycle — R-290 p–h chart at 150 kW / 35 °C</figcaption></figure>
+    <figure class="acc-fig"><div class="acc-fig-img"><img src="Figure%20V2/ph_chart.png" alt="R-290 p-h chart of the designed cycle"></div><figcaption>The designed cycle — R-290 p–h chart at 150 kW / 35 °C</figcaption></figure>
   </div></div>
   <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">18</div>
 </div>
