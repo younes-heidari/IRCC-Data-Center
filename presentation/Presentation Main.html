@@ -79,6 +79,13 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
 .resultcard .big span{font-size:.4em;color:var(--orange);font-weight:700}
 .resultcard .note{font-size:15px;line-height:1.5;color:rgba(255,255,255,.82);margin-top:18px;border-top:1px solid rgba(255,255,255,.18);padding-top:16px}
 .resultcard .note b{color:#fff}
+.resultcard .rc2k{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.66);border-top:1px solid rgba(255,255,255,.18);padding-top:14px;margin-top:16px}
+.resultcard .rc2big{font-size:46px;font-weight:700;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin:5px 0 0;color:#fff}
+.resultcard .rc2big .up{font-size:.34em;color:var(--orange);font-weight:700;letter-spacing:0;margin-left:6px}
+.rc-benefits{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.rc-benefits li{position:relative;padding-left:20px;font-size:17px;line-height:1.2;color:#fff;letter-spacing:.01em}
+.rc-benefits li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;background:var(--orange);border-radius:50%}
+.rc-tag{margin-top:16px;padding-top:13px;border-top:1px solid rgba(255,255,255,.18);font-size:15px;font-style:italic;color:rgba(255,255,255,.82)}
 /* closing */
 .close-left{display:flex;flex-direction:column;height:100%;justify-content:center}
 .close-left .bullets{gap:26px}
@@ -191,7 +198,7 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
   <div class="band"><div class="eyebrow">The Design Task</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
   <div class="stage">
     <h2 class="subtitle">Deliverables &amp; Hard Targets</h2>
-    <div class="acc-grid" style="grid-template-columns:1fr 40%;gap:40px;height:auto;flex:1;min-height:0;margin-top:2px">
+    <div class="acc-grid" style="grid-template-columns:1fr 48%;gap:32px;height:auto;flex:1;min-height:0;margin-top:2px">
       <div style="align-self:start;min-width:0;padding-top:2px">
         <ul class="bullets b-sm" style="gap:8px">
           <li>Full <span class="hl">cycle design</span> with working-fluid comparison</li>
@@ -214,7 +221,7 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
           </tbody>
         </table>
       </div>
-      <figure class="acc-fig"><div class="acc-fig-img"><img src="Component%20Figures/Datacenter%20V2.jpg" alt="Data center cooling infrastructure"></div><figcaption style="font-size:12px;color:var(--grey-4)">Image: www.gemssensors.com</figcaption></figure>
+      <figure class="acc-fig" style="justify-content:center"><img src="Component%20Figures/Datacenter%20V3.jpg" alt="Data center infrastructure — cooling chain" style="width:100%;height:auto;display:block;border-radius:4px"><figcaption style="font-size:12px;color:var(--grey-4);margin-top:6px;text-align:center">Image: cooltec-systems.com</figcaption></figure>
     </div>
   </div>
   <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">2</div>
@@ -244,13 +251,13 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
   <div class="band"><div class="eyebrow">Working-Fluid Selection</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
   <div class="stage">
     <h2 class="subtitle">COP of the Screened Low-GWP Candidates</h2>
-    <p class="lede">All candidates were run through the <span class="hl">same subcritical cycle</span> at the design conditions. R-1234ze(E) edges ahead on COP — but needs a meaningfully larger compressor for the same capacity.</p>
+    <ul class="bullets b-sm" style="margin-top:10px;gap:9px"><li><span class="hl">R-290 moves ~1.7× more cooling per unit swept volume</span> (3,270 vs 1,880 kJ/m³) — R-1234ze(E) would need a ~1.7× larger compressor for the same 150 kW.</li><li>The penalty is <span class="hl">size, not efficiency</span> — R-1234ze(E)’s COP edge is real but tiny (~2%); its low suction pressure just demands a bigger machine.</li><li>Bigger compressor + larger suction piping means <span class="hl">more cost and floor space</span> — a poor trade in a space-constrained edge hall.</li></ul>
     <div class="split">
-      <div class="fig"><div class="frame"><img src="Figure%20V2/refrigerant_comparison_cop.png" alt="Refrigerant COP comparison"></div><div class="cap">Cycle COP across screened refrigerant candidates</div></div>
+      <div class="fig"><div class="frame"><img src="Figure%20V2/refrigerant_comparison_cop.png" alt="Refrigerant COP comparison"></div><div class="cap">Cycle COP across screened refrigerant candidates</div><div class="cap" style="margin-top:3px;font-size:13px;color:var(--ink)">Idealized single-stage cycle · 7 / 52 °C · 8 K superheat · 5 K subcool · η<sub>isen</sub> = 0.70</div></div>
       <div class="resultcard">
         <div class="k">Selected working fluid</div>
         <div class="big">R-290</div>
-        <div class="note"><b>Propane: GWP 3</b>, competitive COP, and a mature Bitzer/Kelvion A3 component ecosystem. Flammability is handled by <b>charge minimization</b> and the glycol barrier — quantified in the safety analysis.</div>
+        <div class="note"><ul class="rc-benefits"><li>GWP 3</li><li>Zero ODP</li><li>High volumetric capacity</li><li>Low cost</li><li>Widely available</li></ul><div class="rc-tag">A future-proof natural refrigerant</div></div>
       </div>
     </div>
   </div>
@@ -394,12 +401,12 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
       <ul class="bullets b-sm">
         <li>One EEV feeds the <span class="hl">full 150 kW</span> shared circuit, holding target evaporator superheat</li>
         <li>Sized by the incompressible-liquid orifice equation: <span class="hl">A ≈ 27.1 mm² → d ≈ 5.9 mm</span> (C<sub>d</sub> = 0.65)</li>
-        <li><span class="hl">Delivers the spec:</span> <span class="hl">82.6% open</span> at design, <span class="hl">24.3%</span> at 30 kW — controllable across the whole 5:1 band, no low-load hunting from an oversized valve</li>
+        <li><span class="hl">One valve covers the full 5:1 turndown:</span> <span class="hl">82.6% open at 150 kW → 24.3% at 30 kW</span> — always above the ~15% floor where EEV control degrades</li>
         <li><span class="hl">Modeling:</span> <span class="hl">calc_orifice()</span> inverts the orifice equation at each load — required area over full area gives the opening fraction tracked across the turndown</li>
       </ul>
       <div class="eq two"><img class="eqimg" src="Equations/eq10.svg" alt=""><span class="src">Incompressible-liquid orifice equation, inverted for the required flow area</span></div>
       <div class="eq two"><img class="eqimg" src="Equations/eq11.svg" alt=""> &nbsp;→&nbsp; 82.6% at 150 kW · 24.3% at 30 kW<span class="src">Valve-authority check across the 5:1 turndown (controls chapter)</span></div>
-      <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">Danfoss ETS / Emerson EX class · single valve</span></div>
+      <div class="selrow"><span class="sel-lbl">Selected model</span><span class="sel-arrow">→</span><span class="vchip">Emerson EX class · single valve</span></div>
     </div>
     <div class="comp-right">
       <div class="pidbox"><div class="pidwrap">
@@ -520,15 +527,14 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
 <div class="slide" data-screen-label="14 Full-load COP">
   <div class="band"><div class="eyebrow">Results — Full-Load COP</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
   <div class="stage">
-    <h2 class="subtitle">Full-Load COP Meets the Target</h2>
-    <p class="lede">At the strict AHRI 550/590 rating condition (6.7 °C LCHW, 35 °C air) the design clears 3.5 — and rises sharply at the warmer project design point.</p>
-    <div class="split">
-      <div class="fig"><div class="frame"><img src="Figure%20V2/full_load_cop.png" alt="Full-load COP vs target"></div><div class="cap">Full-load COP at the AHRI and project design points vs. the 3.5 target</div></div>
+    <h2 class="subtitle">Full-Load COP — Whole Plant, Every Component Modeled</h2>
+    <div class="split" style="grid-template-columns:1fr 40%;gap:28px;margin-top:10px">
+      <figure class="acc-fig" style="justify-content:center"><div class="acc-fig-img"><img src="Component%20Figures/P%26ID.svg" alt="System P&amp;ID"></div><figcaption>System P&amp;ID — every block is in the performance model</figcaption></figure>
       <div class="resultcard">
-        <div class="k">Full-load COP · AHRI point</div>
-        <div class="big">3.53</div>
-        <div class="note"><b>≥ 3.5 target met</b> (≈1% margin). At the project design point (15 °C LCHW) COP rises to <b>4.67</b> — t<sub>c</sub> is the dominant lever, which is what the dry-cooler sizing buys.</div>
-      </div>
+        <div class="k">Full-load COP · whole plant · design point</div>
+        <div class="big">3.59</div>
+        <div class="note"><b>Every component is modeled</b>, not lumped — compressor (Bitzer AHRI-540 map), dry-cooler EC fans, glycol &amp; chilled-water pumps, economizer and dry cooler — with <b>all parasitics included</b> at the design point.</div>
+        </div>
     </div>
   </div>
   <div class="footer">IRCC 2026 · Project #3 — R-290 Data-Center Chiller</div><div class="pagenum">13</div>
@@ -589,7 +595,7 @@ a{color:var(--navy)}a:hover{color:var(--orange-deep)}
   <div class="band"><div class="eyebrow">Safety — A3 Charge Analysis</div><img class="blocki" src="assets/667c6427-3f18-4840-84ec-0303a5a34bf7.png" alt="Illinois Block-I"></div>
   <div class="stage">
     <h2 class="subtitle">Small Charge, Kept Out of the Hall</h2>
-    <p class="lede">Total R-290 charge is <span class="hl">5.5–8.7 kg</span> — a 4 m liquid line and the glycol barrier. A full release into the plant room stays below the flammability limit.</p>
+    <ul class="bullets b-sm" style="margin-top:10px;gap:10px"><li>Total R-290 charge is <span class="hl">5.5–8.7 kg</span> — minimized (no receiver, 4 m liquid line) and kept out of the hall by the glycol loop.</li><li>Dilution alone <span class="hl">won’t keep the plant room below LFL</span> — a full release reaches ~2.5× LFL.</li><li>Safety rests on an <span class="hl">EN 378 machinery room</span>: 20% LFL gas detection + emergency ventilation.</li></ul>
     <div class="figrow">
       <div class="fig"><div class="frame"><img src="Figure%20V2/charge_inventory.png" alt="R-290 charge inventory"></div><div class="cap">Charge inventory at the design point — condenser holdup dominates</div></div>
       <div class="fig"><div class="frame"><img src="Figure%20V2/charge_concentration.png" alt="Room concentration after release"></div><div class="cap">Room concentration after a full release vs. the safety limit</div></div>
