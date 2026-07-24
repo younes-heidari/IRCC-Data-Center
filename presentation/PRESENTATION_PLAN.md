@@ -1,6 +1,6 @@
 # Presentation plan — IRCC 2026 Project #3 (LOCKED · built)
 
-~25-minute talk · 20 slides · built as `deck.html` (interactive) + `deck.pdf` (print).
+~25-minute talk · 20 slides · built as `Presentation Main.html` (interactive) + `Presentation Main.pdf` (print).
 Evaporator ("two-zone model") and condenser ("three-zone model") slides show the
 structurally different ΔP models; Martin's full form is on the evaporator slide only.
 
@@ -44,10 +44,10 @@ blurred except the component (orange ring) + real vendor photo.
 
 ## Rebuild the PDF after edits
 ```
-msedge --headless --disable-gpu --print-to-pdf="<abs path>\deck.pdf" ^
-  --no-pdf-header-footer --virtual-time-budget=15000 "file:///<abs path>/deck.html"
+msedge --headless --disable-gpu --print-to-pdf="<abs path>\Presentation Main.pdf" ^
+  --no-pdf-header-footer --virtual-time-budget=15000 "file:///<abs path>/Presentation Main.html"
 ```
-(Print CSS in deck.html gives one 1280×720 page per slide.)
+(Print CSS in Presentation Main.html gives one 1280×720 page per slide.)
 
 ## Notes / open items
 - P&ID updated: receiver removed (matches the report's no-receiver architecture),
