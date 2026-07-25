@@ -54,6 +54,6 @@ msedge --headless --disable-gpu --print-to-pdf="<abs path>\Presentation Main.pdf
   economizer labeled, TCE valve repositioned. Spotlight coords re-verified.
 - HX slides (evap/cond/econ) show the design flow: duty → ΔT_lm → assumed U →
   A = Q̇/(U·ΔT_lm) → plate count, plus Han (two-phase) & Martin (single-phase) ΔP.
-- Title/thank-you credit "Younes Heidari, Christian" — **surname pending**.
+- Title/thank-you credit "Younes Heidari, Christian Muller".
 - `Glycol Pump.jpg` is 468×333 — fine at grid size, don't enlarge.
 - CRAH is not vendor-selected (placeholder in report) — named in "next steps".
